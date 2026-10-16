@@ -5,6 +5,8 @@ import { CreateScreen } from './ui/CreateScreen'
 import { StageIntro, StageResultView, StoryScreen } from './ui/EventScreens'
 import { Modal } from './ui/parts'
 import { ResultScreen } from './ui/ResultScreen'
+import { ShowcaseScreen } from './ui/ShowcaseScreen'
+import { pickScenes, type Scene } from './game/showcase'
 import { WeekScreen } from './ui/WeekScreen'
 
 type Popup = { title: string; lines: string[] } | null
@@ -14,6 +16,7 @@ export default function App() {
   const [creating, setCreating] = useState(false)
   const [popup, setPopup] = useState<Popup>(null)
   const [stageShown, setStageShown] = useState(false)
+  const [scenes, setScenes] = useState<Scene[] | null>(null)
   const saved = load()
 
   useEffect(() => {
@@ -112,19 +115,21 @@ export default function App() {
     if (!ev) body = <div className="screen" />
     else if (ev.type === 'story')
       body = <StoryScreen key={`${game.turn}-${ev.key}-${game.pending.length}`} state={game} eventKey={ev.key} params={ev.params} onChoose={(c, t) => apply(resolveStory(game, c, t), 'その結果')} />
-    else
+    else if (scenes)
       body = (
-        <StageIntro
+        <ShowcaseScreen
+          key={`${game.turn}-${game.pending.length}`}
           state={game}
           kind={ev.kind}
-          onNeta={setGame}
-          onPerform={() => {
-            const next = doStage(game)
-            setGame(next)
+          scenes={scenes}
+          onDone={(grades) => {
+            setScenes(null)
+            setGame(doStage(game, grades))
             setStageShown(true)
           }}
         />
       )
+    else body = <StageIntro state={game} kind={ev.kind} onNeta={setGame} onPerform={() => setScenes(pickScenes(game, ev.kind))} />
   }
 
   return (

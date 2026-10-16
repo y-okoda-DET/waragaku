@@ -4,6 +4,7 @@ import { TOTAL_TURNS, turnOf, weekInfo } from './data/calendar'
 import { createGame, doStage, endEvents, resolveStory, runWeek, type DayAction, type NightAction } from './engine'
 import { buildEpilogue } from './epilogue'
 import { STORIES } from './events'
+import { gradeTsukkomi, pickScenes, tsukkomiWindow } from './showcase'
 import type { GameState } from './types'
 
 // 簡単なボット。ネタ作り・ネタ合わせ・バイトを状況に応じて回す
@@ -108,5 +109,37 @@ describe('バランスの目安', () => {
     expect(ranks.size).toBeGreaterThanOrEqual(2)
     // 総代は簡単には取れない
     expect(grads.filter((g) => g === 1).length).toBeLessThan(10)
+  })
+})
+
+describe('ネタ見せの見せ場', () => {
+  const base = () => {
+    let s = createGame({ name: 'a', callName: 'a', background: 'salaryman', origin: 'local', role: 'boke', style: 'manzai', hairColor: '#000', outfit: 'suit', seed: 3 })
+    s = endEvents(drainEvents(s))
+    return { ...s, phase: 'event' as const, pending: [{ type: 'stage' as const, kind: 'netamise' as const }] }
+  }
+
+  it('見せ場の出来が点数と結果文に効く', () => {
+    const s = base()
+    const great = doStage(s, ['great']).lastStage!
+    const miss = doStage(s, ['miss']).lastStage!
+    expect(great.score).toBeGreaterThan(miss.score)
+    expect(great.showcase).toEqual(['great'])
+    expect(great.summary).toMatch(/笑い \d+回/)
+    expect(great.tally).toBeDefined()
+  })
+
+  it('ボケ担当はワード選び、普段の舞台は見せ場1つ', () => {
+    const scenes = pickScenes(base(), 'netamise')
+    expect(scenes).toHaveLength(1)
+    expect(scenes[0].kind).toBe('word')
+  })
+
+  it('ツッコミの間の判定', () => {
+    const s = base()
+    const w = tsukkomiWindow(s)
+    expect(gradeTsukkomi(s, (w.from + w.to) / 2).grade).toBe('great')
+    expect(gradeTsukkomi(s, 0).grade).toBe('miss')
+    expect(gradeTsukkomi(s, null).label).toBe('ツッコミ忘れ')
   })
 })

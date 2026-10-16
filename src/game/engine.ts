@@ -348,13 +348,13 @@ export function resolveStory(prev: GameState, choice: number, text?: string): Ga
   return s
 }
 
-export function doStage(prev: GameState): GameState {
+export function doStage(prev: GameState, showcase: ('great' | 'good' | 'miss')[] = []): GameState {
   const s = clone(prev)
   const ev = s.pending.shift()
   if (!ev || ev.type !== 'stage') return prev
   s.weekLog = []
   withRng(s, (rng) => {
-    const r = performStage(s, ev.kind, rng)
+    const r = performStage(s, ev.kind, rng, showcase)
     applyStageEffects(s, r, rng)
     s.lastStage = r
     s.stageHistory.push(r)

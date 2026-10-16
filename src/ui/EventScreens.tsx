@@ -108,6 +108,17 @@ export function StageResultView({ result }: { result: StageResult }) {
             <span key={i} className={i < cells - 1 ? 'on' : i === cells - 1 ? 'on edge' : ''} />
           ))}
         </div>
+        {result.summary && <p className="summary">{result.summary}</p>}
+        {result.tally && (
+          <div className="tally">
+            <span>笑い<b>{result.tally.warai}</b></span>
+            <span>スベリ<b>{result.tally.suberi}</b></span>
+            <span>噛み<b>{result.tally.kami}</b></span>
+            <span>ネタ飛ばし<b>{result.tally.tobashi}</b></span>
+            <span>拍手笑い<b>{result.tally.hakushu}</b></span>
+            <span className={result.tally.dokudan ? 'on' : ''}>独壇場<b>{result.tally.dokudan ? 'あり' : '―'}</b></span>
+          </div>
+        )}
         {result.lines.map((l, i) => (
           <p key={i}>{l}</p>
         ))}

@@ -71,6 +71,20 @@ export interface StageResult {
   lines: string[]
   passed?: boolean
   rank?: number
+  // 見せ場と結果文（古いセーブにはない）
+  showcase?: ('great' | 'good' | 'miss')[]
+  tally?: Tally
+  summary?: string
+}
+
+// 結果文で数えるもの
+export interface Tally {
+  warai: number // 笑い
+  suberi: number // スベリ
+  kami: number // 噛み
+  tobashi: number // ネタ飛ばし
+  hakushu: number // 拍手笑い
+  dokudan: boolean // 独壇場
 }
 
 // セーブできるよう、イベントはキーと引数だけを持つ。中身は events.ts の定義から作る

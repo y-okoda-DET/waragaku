@@ -1,7 +1,7 @@
 import { CARD_BY_ID } from './data/cards'
 import { has } from './core'
 import type { Rng } from './rng'
-import type { CardSlot, GameState, StageKind, StageResult, StatKey } from './types'
+import type { CardSlot, GameState, StageKind, StageResult, StatKey, Tally } from './types'
 
 export type Audience = 'teacher' | 'uchiwa' | 'general' | 'judge'
 
@@ -195,7 +195,37 @@ function pickComment(state: GameState, b: Breakdown, level: number, rng: Rng): s
   return rng.pick(['「ただの自己満でしょ」', '「お客さん置いてけぼりやな」', '「わけわからん」'])
 }
 
-export function performStage(state: GameState, kind: StageKind, rng: Rng): StageResult {
+type Grade = 'great' | 'good' | 'miss'
+const GRADE_BONUS: Record<Grade, number> = { great: 12, good: 4, miss: -8 }
+
+// 1本のネタの中で起きたことを数える。見せ場の出来とウケの大きさから決める
+function countTally(state: GameState, level: number, showcase: Grade[], slipped: boolean, rng: Rng): Tally {
+  const base = [rng.int(0, 2), rng.int(3, 5), rng.int(6, 8), rng.int(9, 12)][level]
+  const great = showcase.filter((g) => g === 'great').length
+  const miss = showcase.filter((g) => g === 'miss').length
+  const kamiRate = has(state, 'kamanai') ? 0.05 : state.neta.polish < 40 ? 0.45 : 0.2
+  return {
+    warai: Math.max(0, base + great * 2 - miss),
+    suberi: Math.max(0, [rng.int(3, 5), rng.int(1, 3), rng.int(0, 1), 0][level] + miss),
+    kami: rng.chance(kamiRate) ? rng.int(1, 2) : 0,
+    tobashi: slipped ? 1 : 0,
+    hakushu: level >= 3 ? 1 + great : level === 2 && great > 0 ? 1 : 0,
+    dokudan: level >= 3 && great === showcase.length && showcase.length > 0,
+  }
+}
+
+// パワプロの「◯打数◯安打」にあたる、1行の結果文
+function summarize(state: GameState, spec: StageSpec, t: Tally, rank: number | null, field: number | null): string {
+  const who = state.comboName ?? state.player.callName
+  const parts = [`笑い ${t.warai}回`, `スベリ ${t.suberi}回`]
+  if (t.hakushu) parts.push(`拍手笑い ${t.hakushu}回`)
+  if (t.tobashi) parts.push(`ネタ飛ばし ${t.tobashi}回`)
+  const head = rank && field ? `${spec.title}は ${field}組中 ${rank}位。` : `${spec.title}が終わった。`
+  const tail = t.dokudan ? '最後は独壇場だった。' : ''
+  return `${head}${who}は ${parts.join('、')}。${tail}俺は 噛み ${t.kami}回 でした。`
+}
+
+export function performStage(state: GameState, kind: StageKind, rng: Rng, showcase: Grade[] = []): StageResult {
   const spec = STAGES[kind]
   const lines: string[] = []
 
@@ -210,13 +240,17 @@ export function performStage(state: GameState, kind: StageKind, rng: Rng): Stage
     }
   }
 
-  const { score, b } = scoreStage(state, spec, rng, lines)
+  const scored = scoreStage(state, spec, rng, lines)
+  const b = scored.b
+  const score = scored.score + showcase.reduce((sum, g) => sum + GRADE_BONUS[g], 0)
   const margin = score - spec.difficulty
   let level: 0 | 1 | 2 | 3 = margin < 0 ? 0 : margin < 12 ? 1 : margin < 26 ? 2 : 3
 
   // セリフ飛び
   const slip = has(state, 'kamanai') ? 0.01 : 0.06
+  let slipped = false
   if (level > 0 && rng.chance(slip)) {
+    slipped = true
     level = (level - 1) as 0 | 1 | 2
     lines.push('途中でセリフが飛んだ。相方がなんとかつないだ。')
   }
@@ -230,6 +264,11 @@ export function performStage(state: GameState, kind: StageKind, rng: Rng): Stage
   if (level === 2) lines.push('ちゃんと笑いが返ってきた。')
   if (level === 3) lines.push('笑い声で次のセリフが聞こえない。')
 
+  const tally = countTally(state, level, showcase, slipped, rng)
+  // 授業と寄席は組数と順位を出す。大会の合否はイベント側で書く
+  const field = kind === 'netamise' ? 12 : kind === 'live' ? 20 : null
+  const rank = field ? Math.max(1, Math.min(field, Math.round(field * (0.55 - margin / 60)))) : null
+
   return {
     kind,
     title: spec.title,
@@ -237,5 +276,8 @@ export function performStage(state: GameState, kind: StageKind, rng: Rng): Stage
     level,
     comment: spec.audience === 'teacher' ? pickComment(state, b, level, rng) : `${LEVEL_TEXT[level]}。`,
     lines,
+    showcase,
+    tally,
+    summary: summarize(state, spec, tally, rank, field),
   }
 }
