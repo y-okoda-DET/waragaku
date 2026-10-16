@@ -34,9 +34,21 @@ def unwhite(im, tol=30, guard_body=False):
         q.extend(((x+1,y),(x-1,y),(x,y+1),(x,y-1)))
     def white(x,y):
         r,g,b,a = px[x,y]; return r>255-tol and g>255-tol and b>255-tol
-    for _ in range(3):  # ふくらませた分の白い縁を取り戻す
-        add = [(x,y) for y in range(h) for x in range(w) if not bg[y*w+x] and allowed(x,y) and white(x,y) and any(0<=x+dx<w and 0<=y+dy<h and bg[(y+dy)*w+x+dx] for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)))]
-        for x,y in add: bg[y*w+x] = 1
+    # 線をふくらませた分、髪の毛先のすき間などに白が残る。背景から白い画素だけをたどって取り戻す。
+    # 首から上（体が横いっぱいに広がる行より上）は深く、それより下は浅くたどる（服の白に入り込まないように）
+    def strict_white(x,y):
+        r,g,b,a = px[x,y]; return r>238 and g>238 and b>238
+    dist = {}
+    q = deque((x,y,0) for y in range(h) for x in range(w) if bg[y*w+x])
+    while q:
+        x,y,d = q.popleft()
+        for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
+            nx,ny = x+dx,y+dy
+            if nx<0 or ny<0 or nx>=w or ny>=h or bg[ny*w+nx] or not allowed(nx,ny): continue
+            limit = 14 if ny < body else 3
+            if d+1 > limit or not (white(nx,ny) if d < 3 else strict_white(nx,ny)): continue
+            bg[ny*w+nx] = 1
+            q.append((nx,ny,d+1))
     for y in range(h):
         for x in range(w):
             if bg[y*w+x]: px[x,y] = (255,255,255,0)
@@ -57,6 +69,19 @@ def finish(c, guard_body=False):
     c = unwhite(c, guard_body=guard_body)
     bb = c.getbbox(); c = c.crop((bb[0], bb[1], bb[2], c.size[1]))
     c.thumbnail((400, 400))
+    return fade_cut_edges(c)
+
+def fade_cut_edges(c, width=36):
+    # コマの端で体が切れているとき、切れ目が直線に見えないよう、その辺だけ透明へなじませる
+    a = c.getchannel('A'); w, h = c.size; ap = a.load()
+    for side in (0, w-1):
+        if sum(1 for y in range(h) if ap[side,y] > 0) < h*0.12: continue
+        for i in range(min(width, w)):
+            x = side + i if side == 0 else side - i
+            k = i / width
+            for y in range(h):
+                ap[x,y] = int(ap[x,y] * k)
+    c.putalpha(a)
     return c
 
 import glob, os

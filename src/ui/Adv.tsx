@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { weekLabel } from '../game/data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from '../game/data/people'
 import type { GameState } from '../game/types'
-import { background, charaKey, exprOf, portrait, type Expr } from './art'
+import { backgrounds, charaKey, exprOf, portrait, type Expr } from './art'
+import { shotsOf } from './scene'
 import { HAIR, OUTFITS } from './looks'
 import { Avatar, PlayerAvatar } from './parts'
 
@@ -18,32 +19,14 @@ function lookOf(name: string): { hair: string; outfit: string } {
   return { hair: HAIR[h % HAIR.length], outfit: OUTFITS[(h >>> 3) % OUTFITS.length].color }
 }
 
-const KNOWN = [...PARTNER_CANDIDATES.map((p) => p.name), CIRCLE_PARTNER.name, ...INITIAL_SENIORS.map((s) => s.name), '講師']
+const KNOWN = [...PARTNER_CANDIDATES.map((p) => p.name), CIRCLE_PARTNER.name, ...INITIAL_SENIORS.map((s) => s.name), '講師', '辻堂', '三宅', '店長', '支配人']
 
-// 本文に出てくる人物を、出てきた順に最大2人まで並べる
-function castOf(state: GameState, text: string): string[] {
-  const names = new Set<string>(KNOWN)
+function namesOf(state: GameState): string[] {
+  const names = new Set<string>([state.player.callName, ...KNOWN])
   if (state.partner) names.add(state.partner.name)
   for (const s of state.seniors) names.add(s.name)
-  const found = [...names].filter((n) => text.includes(n)).sort((a, b) => text.indexOf(a) - text.indexOf(b))
-  if (!found.length && state.partner) found.push(state.partner.name)
-  return found.slice(0, 2)
+  return [...names]
 }
-
-// その行で前に出る人。カギ括弧より前に名前が出ていればその人、セリフだけの行は直前の人を引き継ぐ
-function focusOf(names: string[], lines: string[], index: number): string | undefined {
-  let focus: string | undefined
-  for (let i = 0; i <= index && i < lines.length; i++) {
-    const line = lines[i]
-    const q = line.indexOf('「')
-    const head = q < 0 ? line : line.slice(0, q)
-    const hits = names.filter((n) => head.includes(n)).sort((a, b) => head.lastIndexOf(b) - head.lastIndexOf(a))
-    if (hits.length) focus = hits[0]
-    else if (q !== 0) focus = undefined
-  }
-  return focus
-}
-
 function Chara({ state, name, expr, focus, me }: { state: GameState; name: string; expr: Expr; focus: boolean; me?: boolean }) {
   const src = portrait(charaKey(state, name), expr)
   return (
@@ -60,7 +43,7 @@ export function AdvScreen({ state, title, lines, onEnd, after }: { state: GameSt
   const line = lines[index] ?? ''
   const typing = shown < line.length
   const last = index >= lines.length - 1
-  const cast = castOf(state, title + lines.join(''))
+  const shot = shotsOf(lines, namesOf(state), state.partner ? { 相方: state.partner.name } : {})[index] ?? { cast: [] }
   const p = state.player
 
   useEffect(() => {
@@ -79,9 +62,9 @@ export function AdvScreen({ state, title, lines, onEnd, after }: { state: GameSt
 
   const done = last && !typing
   const talking = line.trimStart().startsWith('「')
-  const focus = focusOf([p.callName, ...cast], lines, index)
+  const focus = shot.speaker ?? (shot.cast.length === 1 ? shot.cast[0] : undefined)
   const exprFor = (n: string): Expr => (n === focus ? exprOf(line) : 'normal')
-  const bg = background(title)
+  const bg = backgrounds(title, lines)[index]
 
   return (
     <div className="screen adv">
@@ -96,10 +79,9 @@ export function AdvScreen({ state, title, lines, onEnd, after }: { state: GameSt
           <span className="studio-title">{title}</span>
           <span className="adv-date">{weekLabel(Math.min(state.turn, 41))}</span>
         </div>
-        <div className={`adv-cast ${focus ? 'has-focus' : ''}`}>
-          <Chara state={state} name={p.callName} expr={exprFor(p.callName)} focus={focus === p.callName} me />
-          {cast.map((n) => (
-            <Chara key={n} state={state} name={n} expr={exprFor(n)} focus={focus === n} />
+        <div className={`adv-cast ${focus && shot.cast.length > 1 ? 'has-focus' : ''}`}>
+          {shot.cast.map((n) => (
+            <Chara key={n} state={state} name={n} expr={exprFor(n)} focus={focus === n} me={n === p.callName} />
           ))}
         </div>
       </div>

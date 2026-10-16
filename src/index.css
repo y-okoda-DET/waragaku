@@ -1190,8 +1190,8 @@ p {
   white-space: nowrap;
 }
 .adv-cast.has-focus .adv-chara:not(.focus) img {
-  transform: scale(0.86);
-  filter: brightness(0.82) saturate(0.85);
+  transform: scale(0.95);
+  filter: brightness(0.8);
 }
 .adv-cast.has-focus .adv-chara.focus {
   z-index: 1;

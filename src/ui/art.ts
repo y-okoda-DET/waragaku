@@ -71,9 +71,31 @@ const PLACE_BY_TITLE: Record<string, string> = {
   '3月 卒業': 'koudou',
 }
 
-export function background(title: string): string | undefined {
-  const place = PLACE_BY_TITLE[title] ?? (title.includes('授業') || title.includes('ネタ見せ') ? 'kyoushitsu' : undefined)
-  return place ? ART[`bg_${place}`] : undefined
+// 「今週のできごと」のように場所が決まっていない画面は、その行の言葉から場所を選ぶ。上から順に先に当たったもの
+const PLACE_BY_WORD: [RegExp, string][] = [
+  [/バイト|まかない|店長/, 'baito'],
+  [/飲み|ごちそう|ご馳走|居酒屋/, 'izakaya'],
+  [/ファミレス/, 'famires'],
+  [/カラオケ/, 'karaoke'],
+  [/公園/, 'kouen'],
+  [/楽屋/, 'gakuya'],
+  [/ライブ/, 'livehouse'],
+  [/寄席|劇場|舞台|大会/, 'butai'],
+  [/事務所|社員/, 'jimusho'],
+  [/授業|ネタ見せ|講師|教室|発声|練習/, 'kyoushitsu'],
+  [/同期|掲示|選抜|クラス/, 'rouka'],
+  [/駅|終電/, 'ekimae'],
+  [/部屋|家賃|寝|ネタ帳|ネタの種|ネタを書|休/, 'heya'],
+]
+
+// その行の背景。イベントごとに決まった場所があればそれ、なければ行の言葉、それもなければ前の行の場所を引き継ぐ
+export function backgrounds(title: string, lines: string[]): (string | undefined)[] {
+  const fixed = PLACE_BY_TITLE[title]
+  let place = fixed ?? (title.includes('授業') || title.includes('ネタ見せ') ? 'kyoushitsu' : undefined)
+  return lines.map((line) => {
+    if (!fixed) place = PLACE_BY_WORD.find(([re]) => re.test(line))?.[1] ?? place ?? 'rouka'
+    return place ? ART[`bg_${place}`] : undefined
+  })
 }
 
 // セリフの言葉から表情をざっくり決める。上から順に先に当たったもの
