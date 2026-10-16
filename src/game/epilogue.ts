@@ -15,14 +15,15 @@ export interface ResultSummary {
   review: Review
 }
 
+// ふつうに遊ぶとCに落ち着くように置く（scripts/balance.ts の「ふつう」の真ん中がCの中ほど）
 const RANKS: [number, string][] = [
-  [430, 'S'],
-  [370, 'A'],
-  [320, 'B'],
-  [275, 'C'],
-  [235, 'D'],
-  [200, 'E'],
-  [170, 'F'],
+  [470, 'S'],
+  [445, 'A'],
+  [425, 'B'],
+  [395, 'C'],
+  [365, 'D'],
+  [335, 'E'],
+  [300, 'F'],
   [0, 'G'],
 ]
 

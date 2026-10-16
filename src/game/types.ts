@@ -97,7 +97,7 @@ export type PendingEvent =
   | { type: 'stage'; kind: StageKind }
 
 export interface GameState {
-  version: 1
+  version: 2
   rng: number
   player: PlayerProfile
   stats: Stats

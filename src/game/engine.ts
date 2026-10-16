@@ -58,7 +58,7 @@ export function createGame(raw: NewGameInput): GameState {
   const bg = BACKGROUND_BY_ID[input.background]
   const base: Stats = { idea: 15, word: 15, expr: 15, guts: 15, adlib: 15, stamina: 15, ...bg.stats }
   const s: GameState = {
-    version: 1,
+    version: 2,
     rng: (input.seed ?? Math.floor(Math.random() * 2 ** 31)) >>> 0,
     player: { name: input.name, callName: input.callName, gender, background: input.background, origin: input.origin, role: input.role, style: input.style, hairColor: input.hairColor, outfit: input.outfit },
     stats: base,
@@ -637,7 +637,7 @@ export function moneyText(s: GameState): string {
 }
 
 // ---- セーブ ----
-const SAVE_KEY = 'lough-academy-save-v1'
+const SAVE_KEY = 'lough-academy-save-v2'
 
 export function save(s: GameState): void {
   try {
@@ -652,7 +652,7 @@ export function load(): GameState | null {
     const raw = localStorage.getItem(SAVE_KEY)
     if (!raw) return null
     const s = JSON.parse(raw) as GameState
-    return s.version === 1 ? s : null
+    return s.version === 2 ? s : null
   } catch {
     return null
   }
