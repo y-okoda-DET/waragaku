@@ -278,7 +278,9 @@ export function performStage(state: GameState, kind: StageKind, rng: Rng, showca
   const scored = scoreStage(state, spec, rng, lines)
   const b = scored.b
   const score = scored.score + showcaseBonus(showcase)
-  const margin = score - spec.difficulty
+  // 毎月ある授業と寄席は、1年のうちに客の目も肥えていく（年度末で+20）
+  const ramp = kind === 'netamise' || kind === 'live' ? Math.round(state.turn / 2) : 0
+  const margin = score - spec.difficulty - ramp
   let level: 0 | 1 | 2 | 3 = margin < 0 ? 0 : margin < 12 ? 1 : margin < 26 ? 2 : 3
 
   // 見せ場で何が起きたか。結果はここで大きく動く

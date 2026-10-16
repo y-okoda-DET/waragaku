@@ -6,7 +6,7 @@ import { buildEpilogue } from '../src/game/epilogue'
 import { STORIES } from '../src/game/events'
 import { showcaseCount } from '../src/game/showcase'
 import { TUNING } from '../src/game/core'
-import { STAT_KEYS, type GameState } from '../src/game/types'
+import { STAT_KEYS, STAT_LABEL, type GameState } from '../src/game/types'
 
 type Grade = 'great' | 'good' | 'miss'
 type Policy = (s: GameState, week: number, r: () => number) => [DayAction, NightAction]
@@ -36,43 +36,78 @@ const night = (s: GameState, r: () => number): NightAction => {
   return { type: 'sleep' }
 }
 
-const POLICIES: Record<string, Policy> = {
-  // 体調が落ちたら休み、お金が減ったらバイト。あとは満遍なく
-  ふつう: (s, _w, r) => {
-    let d: DayAction
-    if (s.condition < 30) d = { type: 'rest' }
-    else if (s.money < 15000) d = { type: 'baito' }
-    else {
-      const x = r()
-      d = x < 0.22 ? { type: 'neta' } : x < 0.44 ? { type: 'awase' } : x < 0.62 ? { type: 'jishuren' } : x < 0.72 ? { type: 'baito' } : x < 0.82 ? { type: 'jishulive' } : x < 0.9 ? { type: 'kangeki' } : { type: 'tetsudai' }
-    }
-    return [d, night(s, r)]
-  },
-  // 練習ばかり。お金と体調はぎりぎりまで見ない
-  がんばり: (s, w, r) => {
-    const d: DayAction = s.condition < 20 ? { type: 'rest' } : s.money < 8000 ? { type: 'baito' } : [{ type: 'neta' }, { type: 'awase' }, { type: 'jishuren' }, { type: 'jishulive' }][w % 4] as DayAction
-    return [d, s.condition < 40 ? { type: 'sleep' } : night(s, r)]
-  },
-  // 体調を保ちながら、ネタと合わせを中心に、先輩とも飲む人
-  うまい: (s, w, r) => {
-    let d: DayAction
-    if (s.condition < 40) d = { type: 'rest' }
-    else if (s.money < 12000) d = { type: 'baito' }
-    else d = [{ type: 'neta' }, { type: 'awase' }, { type: 'jishuren' }, { type: 'awase' }, { type: 'jishulive' }, { type: 'kangeki' }][w % 6] as DayAction
-    const sr = contact(s)
-    const n: NightAction = s.condition < 60 ? { type: 'sleep' } : sr && w % 2 ? { type: 'nomi', senior: sr } : s.motivation < 60 ? { type: 'jikka' } : { type: 'netacho' }
-    void r
-    return [d, n]
-  },
-  // なんとなく選ぶ人
-  きまぐれ: (s, _w, r) => {
-    const all: DayAction['type'][] = ['neta', 'awase', 'jishuren', 'baito', 'jishulive', 'kangeki', 'tetsudai', 'rest']
-    const t = s.money < 3000 ? 'baito' : all[Math.floor(r() * all.length)]
-    return [{ type: t } as DayAction, night(s, r)]
-  },
+// 行事の選択肢の選び方。うまい人は、いちばん低い能力が上がる選択肢を選ぶ
+type Chooser = (s: GameState, labels: string[], r: () => number) => number
+const anyChoice: Chooser = (_s, labels, r) => Math.floor(r() * labels.length)
+const lowFirst: Chooser = (s, labels, r) => {
+  const order = [...STAT_KEYS].sort((a, b) => s.stats[a] - s.stats[b]).map((k) => STAT_LABEL[k])
+  for (const name of order) {
+    const i = labels.findIndex((h) => h.includes(name))
+    if (i >= 0) return i
+  }
+  return anyChoice(s, labels, r)
 }
 
-function play(seed: number, policy: Policy, hit: number) {
+// 低い能力を伸ばす昼の行動
+const TRAIN: Record<string, DayAction['type']> = { idea: 'neta', word: 'kangeki', expr: 'jishuren', guts: 'jishulive', adlib: 'jishulive', stamina: 'jishuren' }
+
+const smartDay = (s: GameState): DayAction => {
+  if (s.condition < 35 && (s.counters.rest ?? 0) < 6) return { type: 'rest' }
+  if (s.money < 15000 || (s.turn >= 8 && s.turn < 20 && s.money < 42000)) return { type: 'baito' }
+  if (s.neta.polish < 55) return { type: 'awase' }
+  const low = [...STAT_KEYS].sort((a, b) => s.stats[a] - s.stats[b])[0]
+  return { type: TRAIN[low] } as DayAction
+}
+const smartNight = (s: GameState, w: number): NightAction => {
+  if (s.condition < 65) return { type: 'sleep' }
+  if (s.motivation < 65) return { type: 'jikka' }
+  const sr = contact(s)
+  if (sr && w % 2) return { type: 'nomi', senior: sr }
+  return { type: 'netacho' }
+}
+
+interface Player {
+  plan: Policy
+  choose: Chooser
+  hit: number // 見せ場で「すごい」を出す割合
+}
+
+const POLICIES: Record<string, Player> = {
+  // なんとなく選ぶ人
+  きまぐれ: {
+    plan: (s, _w, r) => {
+      const all: DayAction['type'][] = ['neta', 'awase', 'jishuren', 'baito', 'jishulive', 'kangeki', 'tetsudai', 'rest']
+      const t = s.money < 3000 ? 'baito' : all[Math.floor(r() * all.length)]
+      const nights: NightAction[] = [{ type: 'sleep' }, { type: 'douki' }, { type: 'netacho' }, { type: 'egosa' }, { type: 'jikka' }]
+      return [{ type: t } as DayAction, nights[Math.floor(r() * nights.length)]]
+    },
+    choose: anyChoice,
+    hit: 0.2,
+  },
+  // 体調が落ちたら休み、お金が減ったらバイト。あとは満遍なく
+  ふつう: {
+    plan: (s, _w, r) => {
+      let d: DayAction
+      if (s.condition < 30) d = { type: 'rest' }
+      else if (s.money < 15000) d = { type: 'baito' }
+      else {
+        const x = r()
+        d = x < 0.22 ? { type: 'neta' } : x < 0.44 ? { type: 'awase' } : x < 0.62 ? { type: 'jishuren' } : x < 0.72 ? { type: 'baito' } : x < 0.82 ? { type: 'jishulive' } : x < 0.9 ? { type: 'kangeki' } : { type: 'tetsudai' }
+      }
+      return [d, night(s, r)]
+    },
+    choose: anyChoice,
+    hit: 0.3,
+  },
+  // 体調とやる気を保ち、低い能力を狙って伸ばす。合宿費も早めに貯める
+  うまい: { plan: (s, w) => [smartDay(s), smartNight(s, w)], choose: lowFirst, hit: 0.45 },
+  // うまい人が、見せ場もよく決める
+  すごくうまい: { plan: (s, w) => [smartDay(s), smartNight(s, w)], choose: lowFirst, hit: 0.65 },
+}
+
+function play(seed: number, p: Player) {
+  const policy = p.plan
+  const hit = p.hit
   let x = seed * 9301 + 49297
   const r = () => ((x = (x * 9301 + 49297) % 233280) / 233280)
   const drain = (s: GameState) => {
@@ -81,7 +116,7 @@ function play(seed: number, policy: Policy, hit: number) {
       if (ev.type === 'stage') s = doStage(s, grades(showcaseCount(ev.kind), r, hit))
       else {
         const v = STORIES[ev.key].view(s, ev.params ?? {})
-        s = resolveStory(s, v.choices.length ? Math.floor(r() * v.choices.length) : 0, v.input ? 'テスト' : undefined)
+        s = resolveStory(s, v.choices.length ? p.choose(s, v.choices.map((c) => `${c.label}${c.hint ?? ''}`), r) : 0, v.input ? 'テスト' : undefined)
       }
     }
     return s
@@ -96,24 +131,34 @@ function play(seed: number, policy: Policy, hit: number) {
 
 const pct = (a: number[], q: number) => [...a].sort((x, y) => x - y)[Math.floor((a.length - 1) * q)]
 const N = Number(process.argv[2] ?? 40)
-if (process.env.GROWTH) TUNING.growth = Number(process.env.GROWTH)
-for (const [name, policy] of Object.entries(POLICIES)) {
-  for (const hit of [0.3]) {
+for (const k of ['action', 'event', 'bond', 'stage'] as const) if (process.env[k.toUpperCase()]) TUNING[k] = Number(process.env[k.toUpperCase()])
+for (const [name, player] of Object.entries(POLICIES)) {
+  {
     const ranks: Record<string, number> = {}
     let total = 0
     const stat: Record<string, number> = {}
     let broke = 0
+    let sk = 0
     let fail = 0
     const totals: number[] = []
     const grads: number[] = []
+    const sc: Record<string, number[]> = {}
+    const lv = [0, 0, 0, 0]
+    const pass = [0, 0]
     for (let i = 1; i <= N; i++) {
-      const s = play(i, policy, hit)
+      const s = play(i, player)
       const ep = buildEpilogue(s)
       ranks[ep.rank] = (ranks[ep.rank] ?? 0) + 1
       total += ep.total
       totals.push(ep.total)
       grads.push(s.gradRank ?? 99)
+      for (const h of s.stageHistory) {
+        ;(sc[h.kind] ??= []).push(h.score)
+        lv[h.level]++
+        if (h.passed !== undefined) (pass[h.passed ? 1 : 0] += 1)
+      }
       for (const k of STAT_KEYS) stat[k] = (stat[k] ?? 0) + s.stats[k] / N
+      sk += s.skills.length / N
       if (s.money < 0) broke++
       if (s.flags.kyusai || (s.counters.rest ?? 0) >= 8) fail++
     }
@@ -121,8 +166,10 @@ for (const [name, policy] of Object.entries(POLICIES)) {
     console.log(
       `${name}: 平均${Math.round(total / N)}点 ｜ ${order.map((k) => `${k}${ranks[k] ?? 0}`).join(' ')} ｜ ` +
         STAT_KEYS.map((k) => `${k}${Math.round(stat[k])}`).join(' ') +
-        ` ｜ 借金${broke} 出席不足${fail}`,
+        ` ｜ 特殊能力${sk.toFixed(1)}個 ｜ 借金${broke} 出席不足${fail}`,
       `\n   点の幅 ${pct(totals, 0.1)}〜${pct(totals, 0.5)}〜${pct(totals, 0.9)} ｜ 卒業大会の順位 ${pct(grads, 0.1)}〜${pct(grads, 0.5)}〜${pct(grads, 0.9)}位`,
+      `\n   舞台の出来 スベり${lv[0]} まばら${lv[1]} ウケ${lv[2]} 爆笑${lv[3]} ｜ 賞レース1回戦通過 ${pass[1]}/${pass[0] + pass[1]}`,
+      `\n   舞台の点（真ん中） ` + Object.entries(sc).map(([k, v]) => `${k}${pct(v, 0.5)}`).join(' '),
     )
   }
 }
@@ -131,7 +178,7 @@ for (const [name, policy] of Object.entries(POLICIES)) {
 if (process.argv[3] === 'detail') {
   const parts = { stats: 0, skills: 0, grad: 0, fans: 0, staff: 0, nskills: 0 }
   for (let i = 1; i <= N; i++) {
-    const s = play(i, POLICIES['ふつう'], 0.3)
+    const s = play(i, POLICIES['ふつう'])
     parts.stats += STAT_KEYS.reduce((a, k) => a + s.stats[k], 0) / N
     const ep = buildEpilogue(s)
     parts.grad += (s.gradRank === 1 ? 40 : s.gradRank && s.gradRank <= 8 ? 20 : s.gradRank && s.gradRank <= 20 ? 8 : 0) / N

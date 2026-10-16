@@ -15,26 +15,38 @@ export interface ResultSummary {
   review: Review
 }
 
-// ふつうに遊ぶとCに落ち着くように置く（scripts/balance.ts の「ふつう」の真ん中がCの中ほど）
+// 遊び方で評価が分かれるように置く（scripts/balance.ts）。
+// なんとなく遊ぶとD〜E、ふつうに遊ぶとC、考えて遊ぶとA、見せ場もよく決めるとS
 const RANKS: [number, string][] = [
-  [470, 'S'],
-  [445, 'A'],
-  [425, 'B'],
-  [395, 'C'],
-  [365, 'D'],
-  [335, 'E'],
-  [300, 'F'],
+  [680, 'S'],
+  [615, 'A'],
+  [562, 'B'],
+  [515, 'C'],
+  [470, 'D'],
+  [430, 'E'],
+  [390, 'F'],
   [0, 'G'],
 ]
 
-export function totalScore(s: GameState): number {
+// 総合評価の内訳。通信簿に出す
+export function scoreParts(s: GameState): { label: string; value: number }[] {
   const stats = STAT_KEYS.reduce((sum, k) => sum + s.stats[k], 0)
   const skills = s.skills.reduce((sum, id) => {
     const k = SKILL_BY_ID[id]?.kind
-    return sum + (k === 'kiwami' ? 25 : k === 'gift' ? 10 : k === 'buki' ? 8 : -6)
+    return sum + (k === 'kiwami' ? 40 : k === 'gift' ? 15 : k === 'buki' ? 12 : -8)
   }, 0)
   const grad = s.gradRank === 1 ? 40 : s.gradRank && s.gradRank <= 8 ? 20 : s.gradRank && s.gradRank <= 20 ? 8 : 0
-  return Math.round(stats + skills + grad + s.fans / 3 + s.staffEval / 4)
+  return [
+    { label: '能力', value: Math.round(stats) },
+    { label: '特殊能力', value: skills },
+    { label: '卒業大会', value: grad },
+    { label: 'ファン', value: Math.round(s.fans / 3) },
+    { label: '業界の評価', value: Math.round(s.staffEval / 4) },
+  ]
+}
+
+export function totalScore(s: GameState): number {
+  return scoreParts(s).reduce((sum, p) => sum + p.value, 0)
 }
 
 export function rankOf(total: number): string {

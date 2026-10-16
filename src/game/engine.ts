@@ -2,9 +2,9 @@ import { BACKGROUND_BY_ID, PLAYER_LOOK } from './data/backgrounds'
 import { CARDS, STARTER_CARDS } from './data/cards'
 import { TOTAL_TURNS, expectedClassmates, turnOf, weekInfo } from './data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from './data/people'
-import { affinity, classmatesOf, scheduleBondEvent, tie } from './bonds'
+import { DEV_STORIES, affinity, classmatesOf, scheduleBondEvent, tie } from './bonds'
 import { applyKodawari } from './kodawari'
-import { addSkill, clamp, count, gain, has, push, removeSkill, story, yen } from './core'
+import { TUNING, addSkill, clamp, count, gain, has, push, removeSkill, story, withGainScale, yen } from './core'
 import { STORIES } from './events'
 import { flavor } from './data/flavor'
 import { LUCKY, LUCKY_CHANCE } from './data/lucky'
@@ -401,11 +401,13 @@ export function runWeek(prev: GameState, day: DayAction, night: NightAction): Ga
   s.weekLog = []
   s.queueChoice = null
   withRng(s, (rng) => {
-    applyDay(s, day, rng)
-    lucky(s, day.type, rng)
-    s.dayLines = s.weekLog.length
-    applyNight(s, night, rng)
-    lucky(s, night.type, rng)
+    withGainScale(TUNING.action, () => {
+      applyDay(s, day, rng)
+      lucky(s, day.type, rng)
+      s.dayLines = s.weekLog.length
+      applyNight(s, night, rng)
+      lucky(s, night.type, rng)
+    })
     weeklyUpkeep(s)
     scheduleEvents(s, rng)
   })
@@ -421,7 +423,8 @@ export function resolveStory(prev: GameState, choice: number, text?: string): Ga
   if (!ev || ev.type !== 'story') return prev
   s.weekLog = []
   applyKodawari(s, ev.key, choice)
-  withRng(s, (rng) => STORIES[ev.key].resolve?.(s, choice, rng, ev.params ?? {}, text))
+  const k = ev.key in DEV_STORIES ? TUNING.bond : TUNING.event
+  withRng(s, (rng) => withGainScale(k, () => STORIES[ev.key].resolve?.(s, choice, rng, ev.params ?? {}, text)))
   return s
 }
 
@@ -432,7 +435,7 @@ export function doStage(prev: GameState, showcase: ('great' | 'good' | 'miss')[]
   s.weekLog = []
   withRng(s, (rng) => {
     const r = performStage(s, ev.kind, rng, showcase)
-    applyStageEffects(s, r, rng)
+    withGainScale(TUNING.stage, () => applyStageEffects(s, r, rng))
     s.lastStage = r
     s.stageHistory.push(r)
   })
@@ -525,7 +528,7 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       break
     case 'grad_prelim': {
       const groups = Math.round(s.classmates / 2)
-      const p = 1 / (1 + Math.exp(-(r.score - 72) / 9))
+      const p = 1 / (1 + Math.exp(-(r.score - 100) / 9))
       const rank = Math.max(1, Math.min(groups, Math.round((1 - p) * groups) + rng.int(0, 2)))
       r.rank = rank
       r.lines.push(`予選の順位は${groups}組中${rank}位。`)
@@ -540,7 +543,7 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       break
     }
     case 'grad_final': {
-      const p = 1 / (1 + Math.exp(-(r.score - 88) / 7))
+      const p = 1 / (1 + Math.exp(-(r.score - 125) / 10))
       const rank = Math.max(1, Math.min(8, Math.round((1 - p) * 8) + 1))
       r.rank = rank
       s.gradRank = rank

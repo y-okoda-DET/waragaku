@@ -1314,6 +1314,39 @@ p {
   display: flex;
   flex-direction: column;
 }
+/* 総合評価の内訳：能力・特殊能力・卒業大会・ファン・業界の評価と合計 */
+.score-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+.score-parts div {
+  flex: 1 1 auto;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  padding: 4px 8px;
+  text-align: center;
+}
+.score-parts dt {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted, #6b6255);
+}
+.score-parts dd {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.score-parts .sum {
+  background: var(--ink);
+  color: #fff;
+}
+.score-parts .sum dt {
+  color: #fff;
+}
 .result-title strong {
   font-family: 'Tsukuhou Shogo Mincho', var(--display);
   font-weight: 400;

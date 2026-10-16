@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from 'react'
-import { buildEpilogue } from '../game/epilogue'
+import { buildEpilogue, scoreParts } from '../game/epilogue'
 import type { GameState } from '../game/types'
 import { portrait } from './art'
 import { PlayerAvatar, SkillBadge } from './parts'
@@ -10,6 +10,7 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
   const [copied, setCopied] = useState(false)
   const allShown = shown >= ep.months.length
   const rv = ep.review
+  const parts = useMemo(() => scoreParts(state), [state])
   const tsujido = portrait('tsujido', 'think')
 
   const copy = async () => {
@@ -38,6 +39,18 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
           <span className="small">称号</span>
           <strong>{rv.title}</strong>
         </div>
+        <dl className="score-parts" aria-label="総合評価の内訳">
+          {parts.map((p) => (
+            <div key={p.label}>
+              <dt>{p.label}</dt>
+              <dd>{p.value > 0 && p.label !== '能力' ? `+${p.value}` : p.value}</dd>
+            </div>
+          ))}
+          <div className="sum">
+            <dt>合計</dt>
+            <dd>{ep.total}点</dd>
+          </div>
+        </dl>
         <div className="grades">
           {rv.grades.map((g) => (
             <div key={g.key} className="grade-tile">
