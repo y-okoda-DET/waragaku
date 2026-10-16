@@ -217,8 +217,17 @@ p {
   color: var(--coral);
   -webkit-text-stroke: 3px var(--ink);
   paint-order: stroke fill;
-  transform: rotate(-4deg);
+  text-shadow: 4px 4px 0 var(--ink);
   margin: 10px 0 14px;
+}
+/* 全角の「！」は左側があいて見えるので、前の字に寄せる */
+.title-logo .bang {
+  margin-left: -0.18em;
+}
+/* タイトルを明朝にしたので、ボタンは本文と同じ丸ゴシックにして、タイトルだけを目立たせる */
+.title .big {
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-weight: 900;
 }
 .title-logo small {
   display: block;

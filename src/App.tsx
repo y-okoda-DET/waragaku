@@ -75,7 +75,7 @@ export default function App() {
         <span className="blob" style={{ left: -70, bottom: 80, width: 200, height: 200, background: 'var(--coral-light)' }} />
         <div className="title-mark">大笑芸能学院</div>
         <h1 className="title-logo">
-          ワラガク！
+          ワラガク<span className="bang">！</span>
           <small>とあるお笑い養成所の一年</small>
         </h1>
         <p className="title-lead">入学から卒業までの1年。同期は300人。卒業するころには、両隣はいなくなっている。</p>
