@@ -3,13 +3,15 @@ import { SKILL_BY_ID } from '../game/data/skills'
 
 export function Avatar({ hair, outfit, size = 48 }: { hair: string; outfit: string; size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" className="avatar">
-      <rect x="6" y="34" width="36" height="14" rx="7" fill={outfit} />
-      <circle cx="24" cy="22" r="12" fill="var(--skin)" />
-      <path d="M12 21c0-9 6-13 12-13s12 4 12 13c-3-4-7-6-12-6s-9 2-12 6z" fill={hair} />
-      <circle cx="19.5" cy="23" r="1.4" fill="var(--ink)" />
-      <circle cx="28.5" cy="23" r="1.4" fill="var(--ink)" />
-      <path d="M20 28c2 1.6 6 1.6 8 0" stroke="var(--ink)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+    <svg width={size} height={(size * 140) / 120} viewBox="0 0 120 140" aria-hidden="true" className="avatar">
+      <path d="M8 140 C12 108 34 98 60 98 C86 98 108 108 112 140 Z" fill={outfit} stroke="var(--ink)" strokeWidth="3" />
+      <ellipse cx="60" cy="60" rx="28" ry="32" fill="var(--skin)" stroke="var(--ink)" strokeWidth="3" />
+      <path d="M30 64 C24 30 42 16 62 16 C86 16 100 34 92 68 C90 54 86 46 78 42 C72 52 56 54 44 48 C40 54 34 58 30 64 Z" fill={hair} stroke="var(--ink)" strokeWidth="2.5" strokeLinejoin="round" />
+      <ellipse cx="50" cy="66" rx="3.6" ry="5" fill="var(--ink)" />
+      <ellipse cx="70" cy="66" rx="3.6" ry="5" fill="var(--ink)" />
+      <ellipse cx="44" cy="76" rx="5" ry="2.6" fill="var(--coral)" opacity=".5" />
+      <ellipse cx="76" cy="76" rx="5" ry="2.6" fill="var(--coral)" opacity=".5" />
+      <path d="M53 80 Q60 87 67 80" fill="none" stroke="var(--ink)" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   )
 }

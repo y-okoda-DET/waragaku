@@ -58,9 +58,11 @@ export default function App() {
       )
     return (
       <div className="screen title">
+        <span className="blob" style={{ right: -80, top: 40, width: 260, height: 260, background: 'var(--sun)' }} />
+        <span className="blob" style={{ left: -70, bottom: 80, width: 200, height: 200, background: 'var(--coral-light)' }} />
         <div className="title-mark">大笑芸能学院</div>
         <h1 className="title-logo">
-          ダイガク！
+          ワラガク！
           <small>お笑い養成所の1年</small>
         </h1>
         <p className="title-lead">入学から卒業までの1年。同期は300人。卒業するころには、両隣はいなくなっている。</p>
@@ -88,10 +90,7 @@ export default function App() {
   else if (stageShown && game.lastStage)
     body = (
       <div className="screen event">
-        <article className="card story">
-          <h1>{game.lastStage.title}</h1>
-          <StageResultView result={game.lastStage} />
-        </article>
+        <StageResultView result={game.lastStage} />
         <button
           className="primary big"
           onClick={() => {

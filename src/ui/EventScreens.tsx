@@ -79,20 +79,39 @@ export function StageIntro({ state, kind, onPerform, onNeta }: { state: GameStat
 }
 
 const LEVEL_LABEL = ['スベった', 'まばら', 'ウケた', '爆笑']
+const LEVEL_SOUND = ['シーン…', 'クスッ', 'ドッ', 'ドッカン']
+const LEVEL_CELLS = [2, 4, 7, 10]
 
 export function StageResultView({ result }: { result: StageResult }) {
+  const cells = LEVEL_CELLS[result.level]
   return (
     <div className={`stage-result level-${result.level}`}>
-      <div className="laugh-meter" aria-label={LEVEL_LABEL[result.level]}>
-        {[0, 1, 2, 3].map((i) => (
-          <span key={i} className={i <= result.level ? 'on' : ''} />
+      <div className="studio">
+        <span className="blob" style={{ left: -60, top: 30, width: 220, height: 220, background: 'var(--sun-light)' }} />
+        <span className="blob" style={{ right: -70, top: -50, width: 240, height: 240, background: '#ffb52e' }} />
+        <span className="studio-title">{result.title}</span>
+        <span className="dokkan" aria-hidden="true">
+          {LEVEL_SOUND[result.level]}
+        </span>
+        <div className="telop">
+          <span className="telop-tag">講師・客席</span>
+          <span className="telop-text">{result.comment}</span>
+        </div>
+      </div>
+      <div className="card" style={{ marginTop: 12 }}>
+        <div className="meter-head">
+          <span>客席の笑い</span>
+          <b>{LEVEL_LABEL[result.level]}</b>
+        </div>
+        <div className="laugh-meter" aria-label={LEVEL_LABEL[result.level]}>
+          {Array.from({ length: 10 }, (_, i) => (
+            <span key={i} className={i < cells - 1 ? 'on' : i === cells - 1 ? 'on edge' : ''} />
+          ))}
+        </div>
+        {result.lines.map((l, i) => (
+          <p key={i}>{l}</p>
         ))}
       </div>
-      <div className="level-label">{LEVEL_LABEL[result.level]}</div>
-      {result.lines.map((l, i) => (
-        <p key={i}>{l}</p>
-      ))}
-      <p className="comment">{result.comment}</p>
     </div>
   )
 }

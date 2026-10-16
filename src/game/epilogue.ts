@@ -133,7 +133,7 @@ export function buildEpilogue(s: GameState): ResultSummary {
     `総合ランク${rank}｜卒業大会 ${gradText}`,
     `芸人1年目：${route}`,
     kiwami.length ? `極み：${kiwami.join('、')}` : `芸風：${s.skills.slice(0, 3).map((id) => SKILL_BY_ID[id]?.name).join('、')}`,
-    '#ダイガク',
+    '#ワラガク',
   ].join('\n')
 
   return { rank, total, gradText, route, months, shareText }
