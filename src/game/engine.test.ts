@@ -4,7 +4,7 @@ import { TOTAL_TURNS, turnOf, weekInfo } from './data/calendar'
 import { createGame, doStage, endEvents, resolveStory, runWeek, type DayAction, type NightAction } from './engine'
 import { buildEpilogue } from './epilogue'
 import { STORIES } from './events'
-import { gradeTsukkomi, pickScenes, tsukkomiWindow } from './showcase'
+import { gradeTsukkomi, pickScenes, tsukkomiZones } from './showcase'
 import type { GameState } from './types'
 
 // 簡単なボット。ネタ作り・ネタ合わせ・バイトを状況に応じて回す
@@ -137,8 +137,11 @@ describe('ネタ見せの見せ場', () => {
 
   it('ツッコミの間の判定', () => {
     const s = base()
-    const w = tsukkomiWindow(s)
-    expect(gradeTsukkomi(s, (w.from + w.to) / 2).grade).toBe('great')
+    const z = tsukkomiZones(s)
+    expect(z.great.to - z.great.from).toBeLessThan(z.good.to - z.good.from)
+    expect(gradeTsukkomi(s, (z.great.from + z.great.to) / 2).grade).toBe('great')
+    expect(gradeTsukkomi(s, (z.good.from + z.great.from) / 2).grade).toBe('good')
+    expect(gradeTsukkomi(s, (z.good.to + z.great.to) / 2).grade).toBe('good')
     expect(gradeTsukkomi(s, 0).grade).toBe('miss')
     expect(gradeTsukkomi(s, null).label).toBe('ツッコミ忘れ')
   })

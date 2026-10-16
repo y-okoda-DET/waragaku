@@ -36,7 +36,7 @@ export function PracticeScreen({ onBack }: { onBack: () => void }) {
               卒業前
             </button>
           </div>
-          <p className="small">{level === 'low' ? 'ツッコミの「間」が狭く、ボケのヒントは出ません。' : 'ツッコミの「間」が広がり、ボケは一番いい答えに「ピンときた」が出ます。'}</p>
+          <p className="small">{level === 'low' ? 'ツッコミのドッ帯・クスッ帯が狭く、ボケのヒントは出ません。' : 'ツッコミのドッ帯・クスッ帯が広がり、ボケは一番いい答えに「ピンときた」が出ます。'}</p>
         </div>
         <button className="primary big" onClick={() => setRole('boke')}>
           ボケで遊ぶ（ワード選び）

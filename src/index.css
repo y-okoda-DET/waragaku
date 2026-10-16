@@ -910,12 +910,42 @@ p {
   position: absolute;
   top: 0;
   bottom: 0;
-  background: var(--sun);
   border-left: 2px solid var(--line);
   border-right: 2px solid var(--line);
 }
+.sc-zone.good {
+  background: var(--sun);
+}
+.sc-zone.great {
+  background: var(--coral);
+}
+.sc-legend {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  font-size: 12px;
+  font-weight: 900;
+  margin-top: -6px;
+}
+.sc-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  border: 2px solid var(--line);
+  border-radius: 3px;
+}
+.sc-legend .good::before {
+  background: var(--sun);
+}
+.sc-legend .great::before {
+  background: var(--coral);
+}
 .sc-needle {
   position: absolute;
+  z-index: 1;
   top: -2px;
   bottom: -2px;
   width: 4px;

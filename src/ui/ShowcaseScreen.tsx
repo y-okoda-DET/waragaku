@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { gradeTsukkomi, tsukkomiWindow, wordHint, type Scene, type ShowcaseGrade, type TsukkomiScene, type WordScene } from '../game/showcase'
+import { gradeTsukkomi, tsukkomiZones, wordHint, type Scene, type ShowcaseGrade, type TsukkomiScene, type WordScene } from '../game/showcase'
 import { STAGES } from '../game/stage'
 import type { GameState, StageKind } from '../game/types'
 
@@ -117,7 +117,7 @@ function TsukkomiGame({ state, scene, partner, nextLabel, onDone }: { state: Gam
   const [ma, setMa] = useState(0)
   const [result, setResult] = useState<{ grade: ShowcaseGrade; label: string } | null>(null)
   const start = useRef<number | null>(null)
-  const win = tsukkomiWindow(state)
+  const zones = tsukkomiZones(state)
   const typing = shown < scene.boke.length
 
   // ボケを1文字ずつ出す
@@ -161,10 +161,15 @@ function TsukkomiGame({ state, scene, partner, nextLabel, onDone }: { state: Gam
       {!result ? (
         <>
           <div className="sc-ma" aria-hidden="true">
-            <span className="sc-zone" style={{ left: `${win.from * 100}%`, width: `${(win.to - win.from) * 100}%` }} />
+            <span className="sc-zone good" style={{ left: `${zones.good.from * 100}%`, width: `${(zones.good.to - zones.good.from) * 100}%` }} />
+            <span className="sc-zone great" style={{ left: `${zones.great.from * 100}%`, width: `${(zones.great.to - zones.great.from) * 100}%` }} />
             <span className="sc-needle" style={{ left: `${ma * 100}%` }} />
           </div>
-          <p className="sc-help">{typing ? 'ボケを最後まで聞いて……' : '黄色い「間」でツッコむ！'}</p>
+          <div className="sc-legend" aria-hidden="true">
+            <span className="good">クスッ</span>
+            <span className="great">ドッ</span>
+          </div>
+          <p className="sc-help">{typing ? 'ボケを最後まで聞いて……' : '赤い「ドッ」の間を狙ってツッコむ！'}</p>
           <button className="primary big sc-tap" onClick={tap}>
             ツッコむ！
           </button>

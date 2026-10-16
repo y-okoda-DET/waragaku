@@ -105,12 +105,22 @@ export function pickScenes(state: GameState, kind: StageKind): Scene[] {
   return Array.from({ length: n }, (_, i) => pool[(start + i * 2) % pool.length])
 }
 
-// ツッコミの「ちょうどいい間」の幅（0〜1）。表現力とワード力で広がる
-export function tsukkomiWindow(state: GameState): { from: number; to: number } {
+// ツッコミの「間」のゲージ（0〜1）。狭いドッ帯の両側に、広めのクスッ帯がある
+// 表現力とワード力で、どちらの帯も広がる
+export interface TsukkomiZones {
+  great: { from: number; to: number }
+  good: { from: number; to: number }
+}
+
+export function tsukkomiZones(state: GameState): TsukkomiZones {
   const skill = (state.stats.expr + state.stats.word) / 2
-  const width = Math.min(0.34, 0.12 + skill * 0.003)
   const center = 0.62
-  return { from: center - width / 2, to: center + width / 2 }
+  const great = Math.min(0.16, 0.05 + skill * 0.0016)
+  const good = Math.min(0.42, 0.2 + skill * 0.003)
+  return {
+    great: { from: center - great / 2, to: center + great / 2 },
+    good: { from: center - good / 2, to: center + good / 2 },
+  }
 }
 
 // 発想力が高いと、一番いいボケが「ピンとくる」
@@ -120,10 +130,8 @@ export function wordHint(state: GameState): boolean {
 
 export function gradeTsukkomi(state: GameState, at: number | null): { grade: ShowcaseGrade; label: string } {
   if (at === null) return { grade: 'miss', label: 'ツッコミ忘れ' }
-  const w = tsukkomiWindow(state)
-  if (at >= w.from && at <= w.to) return { grade: 'great', label: 'ドンピシャ' }
-  if (at < w.from) return at >= w.from - 0.12 ? { grade: 'good', label: '少し食い気味' } : { grade: 'miss', label: '食い気味' }
-  return at <= w.to + 0.14 ? { grade: 'good', label: '少し間延び' } : { grade: 'miss', label: '間延び' }
+  const z = tsukkomiZones(state)
+  if (at >= z.great.from && at <= z.great.to) return { grade: 'great', label: 'ドンピシャ' }
+  if (at < z.great.from) return at >= z.good.from ? { grade: 'good', label: '少し食い気味' } : { grade: 'miss', label: '食い気味' }
+  return at <= z.good.to ? { grade: 'good', label: '少し間延び' } : { grade: 'miss', label: '間延び' }
 }
-
-
