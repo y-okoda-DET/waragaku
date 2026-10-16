@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { weekLabel } from '../game/data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from '../game/data/people'
 import type { GameState } from '../game/types'
+import { background, charaKey, exprOf, portrait, type Expr } from './art'
 import { HAIR, OUTFITS } from './looks'
 import { Avatar, PlayerAvatar } from './parts'
 
@@ -29,6 +30,30 @@ function castOf(state: GameState, text: string): string[] {
   return found.slice(0, 2)
 }
 
+// その行で前に出る人。カギ括弧より前に名前が出ていればその人、セリフだけの行は直前の人を引き継ぐ
+function focusOf(names: string[], lines: string[], index: number): string | undefined {
+  let focus: string | undefined
+  for (let i = 0; i <= index && i < lines.length; i++) {
+    const line = lines[i]
+    const q = line.indexOf('「')
+    const head = q < 0 ? line : line.slice(0, q)
+    const hits = names.filter((n) => head.includes(n)).sort((a, b) => head.lastIndexOf(b) - head.lastIndexOf(a))
+    if (hits.length) focus = hits[0]
+    else if (q !== 0) focus = undefined
+  }
+  return focus
+}
+
+function Chara({ state, name, expr, focus, me }: { state: GameState; name: string; expr: Expr; focus: boolean; me?: boolean }) {
+  const src = portrait(charaKey(state, name), expr)
+  return (
+    <figure className={`adv-chara ${me ? 'me' : ''} ${focus ? 'focus' : ''} ${src ? 'art' : ''}`}>
+      {src ? <img src={src} alt="" draggable={false} /> : me ? <PlayerAvatar player={state.player} size={118} /> : <Avatar {...lookOf(name)} size={118} />}
+      <figcaption>{name}</figcaption>
+    </figure>
+  )
+}
+
 export function AdvScreen({ state, title, lines, onEnd, after }: { state: GameState; title: string; lines: string[]; onEnd?: () => void; after?: ReactNode }) {
   const [index, setIndex] = useState(0)
   const [shown, setShown] = useState(0)
@@ -54,26 +79,27 @@ export function AdvScreen({ state, title, lines, onEnd, after }: { state: GameSt
 
   const done = last && !typing
   const talking = line.trimStart().startsWith('「')
+  const focus = focusOf([p.callName, ...cast], lines, index)
+  const exprFor = (n: string): Expr => (n === focus ? exprOf(line) : 'normal')
+  const bg = background(title)
 
   return (
     <div className="screen adv">
-      <div className="adv-scene" onClick={advance}>
-        <span className="blob" style={{ right: -70, top: -60, width: 230, height: 230, background: 'var(--sun)' }} />
-        <span className="blob" style={{ left: -50, bottom: -40, width: 160, height: 160, background: 'var(--coral-light)' }} />
+      <div className={`adv-scene ${bg ? 'has-bg' : ''}`} onClick={advance} style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
+        {!bg && (
+          <>
+            <span className="blob" style={{ right: -70, top: -60, width: 230, height: 230, background: 'var(--sun)' }} />
+            <span className="blob" style={{ left: -50, bottom: -40, width: 160, height: 160, background: 'var(--coral-light)' }} />
+          </>
+        )}
         <div className="adv-top">
           <span className="studio-title">{title}</span>
           <span className="adv-date">{weekLabel(Math.min(state.turn, 41))}</span>
         </div>
-        <div className="adv-cast">
-          <figure className="adv-chara me">
-            <PlayerAvatar player={p} size={118} />
-            <figcaption>{p.callName}</figcaption>
-          </figure>
+        <div className={`adv-cast ${focus ? 'has-focus' : ''}`}>
+          <Chara state={state} name={p.callName} expr={exprFor(p.callName)} focus={focus === p.callName} me />
           {cast.map((n) => (
-            <figure key={n} className="adv-chara">
-              <Avatar {...lookOf(n)} size={118} />
-              <figcaption>{n}</figcaption>
-            </figure>
+            <Chara key={n} state={state} name={n} expr={exprFor(n)} focus={focus === n} />
           ))}
         </div>
       </div>

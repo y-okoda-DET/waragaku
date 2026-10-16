@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { SKILL_BY_ID } from '../game/data/skills'
-import type { PlayerProfile } from '../game/types'
+import type { Gender, PlayerProfile } from '../game/types'
+import { heroKey, portrait } from './art'
 import { outfitColor } from './looks'
 
 export function Avatar({ hair, outfit, size = 48, long = false }: { hair: string; outfit: string; size?: number; long?: boolean }) {
@@ -20,7 +21,15 @@ export function Avatar({ hair, outfit, size = 48, long = false }: { hair: string
 }
 
 // 主人公の顔。見た目は性別で決まる
+// 主人公の顔。絵があれば絵、なければ仮の似顔絵
+export function HeroFace({ gender, size = 48 }: { gender: Gender | undefined; size?: number }) {
+  const src = portrait(heroKey(gender), 'normal')
+  if (!src) return null
+  return <img className="avatar hero-face" src={src} alt="" width={size} height={(size * 140) / 120} draggable={false} />
+}
+
 export function PlayerAvatar({ player, size }: { player: PlayerProfile; size?: number }) {
+  if (portrait(heroKey(player.gender), 'normal')) return <HeroFace gender={player.gender} size={size} />
   return <Avatar hair={player.hairColor} outfit={outfitColor(player.outfit)} size={size} long={player.gender === 'female'} />
 }
 

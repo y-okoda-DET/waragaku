@@ -1155,6 +1155,47 @@ p {
   font-weight: 900;
   font-size: 12px;
 }
+.adv-scene.has-bg {
+  background-size: cover;
+  background-position: center;
+  padding-bottom: 0;
+}
+.adv-scene.has-bg .adv-cast {
+  margin: 0 -12px;
+  gap: 0;
+}
+.adv-chara.art {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.adv-chara.art img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  max-height: clamp(150px, 30dvh, 250px);
+  object-fit: contain;
+  object-position: bottom;
+  transform-origin: bottom center;
+  transition: transform 0.2s, filter 0.2s;
+  pointer-events: none;
+  user-select: none;
+}
+.adv-chara.art figcaption {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  margin: 0;
+  white-space: nowrap;
+}
+.adv-cast.has-focus .adv-chara:not(.focus) img {
+  transform: scale(0.86);
+  filter: brightness(0.82) saturate(0.85);
+}
+.adv-cast.has-focus .adv-chara.focus {
+  z-index: 1;
+}
 .adv-chara.me figcaption {
   background: var(--coral);
   color: #fff;
@@ -1232,4 +1273,10 @@ p {
 }
 .gender-pick button.on {
   background: var(--sun);
+}
+
+/* 主人公の顔（絵） */
+.hero-face {
+  object-fit: contain;
+  object-position: bottom;
 }

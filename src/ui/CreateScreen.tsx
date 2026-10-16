@@ -3,7 +3,8 @@ import { BACKGROUND_BY_ID, PLAYER_LOOK } from '../game/data/backgrounds'
 import type { NewGameInput } from '../game/engine'
 import type { Gender, Role, Style } from '../game/types'
 import { outfitColor } from './looks'
-import { Avatar } from './parts'
+import { Avatar, HeroFace } from './parts'
+import { heroKey, portrait } from './art'
 
 // 主人公は「高校卒業・東京生まれで実家から通う」で固定。選ぶのは名前・性別・担当・やりたいネタだけ
 const FRESH = BACKGROUND_BY_ID['fresh']
@@ -57,7 +58,11 @@ export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInpu
         <div className="gender-pick">
           {(['male', 'female'] as Gender[]).map((g) => (
             <button key={g} className={gender === g ? 'on' : ''} onClick={() => setGender(g)} aria-pressed={gender === g}>
-              <Avatar hair={PLAYER_LOOK[g].hairColor} outfit={outfitColor(PLAYER_LOOK[g].outfit)} size={64} long={g === 'female'} />
+              {portrait(heroKey(g), 'normal') ? (
+                <HeroFace gender={g} size={64} />
+              ) : (
+                <Avatar hair={PLAYER_LOOK[g].hairColor} outfit={outfitColor(PLAYER_LOOK[g].outfit)} size={64} long={g === 'female'} />
+              )}
               <span>{g === 'male' ? '男性' : '女性'}</span>
             </button>
           ))}
