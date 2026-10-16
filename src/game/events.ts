@@ -1,4 +1,6 @@
 import { DEV_STORIES, affinity, classmatesOf, tie } from './bonds'
+import { kodawariOf } from './kodawari'
+import { PARTNER_STORIES } from './partnerLines'
 import { YEAR_STORIES } from './yearEvents'
 import { CARDS } from './data/cards'
 import { PARTNER_CANDIDATES } from './data/people'
@@ -475,10 +477,13 @@ export const STORIES: Record<string, StoryDef> = {
   },
 }
 
-Object.assign(STORIES, DEV_STORIES, YEAR_STORIES)
+Object.assign(STORIES, DEV_STORIES, YEAR_STORIES, PARTNER_STORIES)
 
 export function storyView(s: GameState, key: string, params: Record<string, string | number> = {}): StoryView {
-  return STORIES[key].view(s, params)
+  const view = STORIES[key].view(s, params)
+  // 譲れないものに関わる選択肢には印をつける
+  const choices = view.choices.map((c, i) => (kodawariOf(s, key, i) === 'keep' ? { ...c, hint: c.hint ? `譲れない・${c.hint}` : '譲れない' } : c))
+  return { ...view, choices }
 }
 
 export { yen }

@@ -134,6 +134,7 @@ export function buildEpilogue(s: GameState): ResultSummary {
     `【ワラガク！卒業】${s.player.name}${s.comboName ? `（${s.comboName}）` : ''}`,
     `称号：${review.title}`,
     `総合${rank}｜${review.gradeLine}`,
+    ...(review.kodawari ? [`譲れないもの：${review.kodawari}`] : []),
     `卒業式の隣：${review.neighbor}｜同期300人→${s.classmates}人`,
     `講師の寸評「${review.oneLine}」`,
     `芸人1年目：${route}`,

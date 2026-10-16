@@ -55,6 +55,12 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
           </div>
         </div>
         <dl className="result-facts">
+          {rv.kodawari && (
+            <>
+              <dt>譲れないもの</dt>
+              <dd>{rv.kodawari}</dd>
+            </>
+          )}
           <dt>卒業式の隣</dt>
           <dd>{rv.neighbor}</dd>
           <dt>同期</dt>

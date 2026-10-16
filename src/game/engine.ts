@@ -3,6 +3,7 @@ import { CARDS, STARTER_CARDS } from './data/cards'
 import { TOTAL_TURNS, expectedClassmates, turnOf, weekInfo } from './data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from './data/people'
 import { classmatesOf, scheduleBondEvent, tie } from './bonds'
+import { applyKodawari } from './kodawari'
 import { addSkill, clamp, count, gain, has, push, removeSkill, story, yen } from './core'
 import { STORIES } from './events'
 import { Rng } from './rng'
@@ -308,6 +309,10 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   }
   if (week === 4 && [6, 9, 11, 1].includes(month)) push(s, { type: 'stage', kind: 'live' })
   // 1年間の流れ（scenario/1年間の流れ.md）で足した行事
+  // 相方の場面（相方ごとに中身が違う）
+  if (s.partner && month === 6 && week === 1) story(s, 'aikata_scene', { n: 0 })
+  if (s.partner && month === 9 && week === 3) story(s, 'aikata_scene', { n: 1 })
+  if (s.partner && month === 2 && week === 1) story(s, 'aikata_scene', { n: 2 })
   if (month === 5 && week === 1) story(s, 'nazo_jugyo')
   if (month === 5 && week === 3) story(s, 'mendan')
   if (month === 6 && week === 3) story(s, 'ikitteta')
@@ -379,6 +384,7 @@ export function resolveStory(prev: GameState, choice: number, text?: string): Ga
   const ev = s.pending.shift()
   if (!ev || ev.type !== 'story') return prev
   s.weekLog = []
+  applyKodawari(s, ev.key, choice)
   withRng(s, (rng) => STORIES[ev.key].resolve?.(s, choice, rng, ev.params ?? {}, text))
   return s
 }

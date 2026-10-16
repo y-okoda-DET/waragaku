@@ -15,6 +15,8 @@ export type Role = 'boke' | 'tsukkomi'
 export type Style = 'manzai' | 'conte'
 export type Origin = 'local' | 'tokyo'
 export type Gender = 'male' | 'female'
+// 主人公の譲れないもの（5月の面談で決まる）
+export type Kodawari = 'jisaku' | 'aikata' | 'kyaku' | 'nokoru'
 export type ClassRank = 'none' | 'ume' | 'take' | 'matsu'
 export type CardSlot = 'tsukami' | 'tenkai' | 'ochi'
 
@@ -130,6 +132,7 @@ export interface GameState {
   gradRank: number | null
   // 友好度（画面には出さない）。相方候補・ライバル・講師・街の人。相方は bond、先輩は like を使う
   ties?: Record<string, number>
+  kodawari?: Kodawari
   // 発展イベントで受け継いだ特殊能力 → 誰から
   gifts?: Record<string, string>
   phase: 'week' | 'event' | 'ending' | 'result'

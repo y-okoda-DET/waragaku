@@ -1,5 +1,6 @@
 import { SKILL_BY_ID } from './data/skills'
 import { has } from './core'
+import { KODAWARI } from './kodawari'
 import { STAT_KEYS, STAT_LABEL, type GameState, type StatKey } from './types'
 
 // 卒業時の通信簿。能力ごとのS〜G評価、称号、講師の寸評、卒業式で隣にいた人
@@ -59,6 +60,7 @@ export interface Review {
   oneLine: string // シェア用の一言
   neighbor: string // 卒業式で隣にいた人
   gifts: { name: string; from: string }[]
+  kodawari?: string // 譲れないもの（守り通したかどうかつき）
   gradeLine: string
 }
 
@@ -99,7 +101,11 @@ export function buildReview(s: GameState, rank: string): Review {
           : rank === 'D' || rank === 'E'
             ? '正直、まだ何者でもない。でも辞めへんかったら、分からんで。'
             : 'おもんない。……けど、最後まで残ったのはお前や。'
-  const comment = `${PRAISE[top]}${top === low ? '' : STING[low]}${close}`
+  const k = s.kodawari ? KODAWARI[s.kodawari].label : undefined
+  const keep = s.counters.kodawari_keep ?? 0
+  const bend = s.counters.kodawari_bend ?? 0
+  const promise = k ? (keep >= bend ? `面談で「${k}」言うてたな。最後まで曲げへんかった。` : `面談で「${k}」言うてたな。何回か曲げたやろ。それも芸人や。`) : ''
+  const comment = `${PRAISE[top]}${top === low ? '' : STING[low]}${promise}${close}`
 
   const neighbor = s.partner ? `${s.partner.name}${(s.counters.kaisan ?? 0) >= 1 ? '（組み直した相方）' : ''}` : s.flags.pin ? '空席（ピンで卒業）' : '空席'
 
@@ -109,5 +115,5 @@ export function buildReview(s: GameState, rank: string): Review {
 
   const gradeLine = grades.map((g) => `${SHORT[g.key]}${g.grade}`).join(' ')
 
-  return { grades, title, comment, oneLine: close, neighbor, gifts, gradeLine }
+  return { grades, title, comment, oneLine: close, neighbor, gifts, gradeLine, kodawari: k ? `${k}（${keep >= bend ? '守り通した' : '何度か曲げた'}）` : undefined }
 }
