@@ -16,6 +16,7 @@ export const KODAWARI_KEYS: Kodawari[] = ['jisaku', 'aikata', 'kyaku', 'nokoru']
 // どのイベントの何番目の選択肢が、譲れないものを守る／曲げるか
 type Hook = Partial<Record<Kodawari, { keep?: number[]; bend?: number[] }>>
 const HOOKS: Record<string, Hook> = {
+  shiren: { jisaku: { keep: [1], bend: [0] }, aikata: { keep: [1], bend: [0] }, kyaku: { keep: [1], bend: [0] }, nokoru: { keep: [1], bend: [0] } },
   jiko: { kyaku: { keep: [0, 1, 3], bend: [2] }, aikata: { keep: [0], bend: [3] } },
   jiko_yoru: { aikata: { keep: [0], bend: [1] } },
   ketsudan: { aikata: { keep: [0], bend: [1, 2] } },

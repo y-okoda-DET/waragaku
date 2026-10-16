@@ -24,6 +24,7 @@ const CHARA_BY_NAME: Record<string, string> = {
   店長: 'tencho',
   支配人: 'shihainin',
   御堂: 'rival1',
+  社員: 'shain',
   真壁: 'rival2',
 }
 

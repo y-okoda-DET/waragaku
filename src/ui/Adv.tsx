@@ -20,7 +20,7 @@ function lookOf(name: string): { hair: string; outfit: string } {
   return { hair: HAIR[h % HAIR.length], outfit: OUTFITS[(h >>> 3) % OUTFITS.length].color }
 }
 
-const KNOWN = [...PARTNER_CANDIDATES.map((p) => p.name), CIRCLE_PARTNER.name, ...INITIAL_SENIORS.map((s) => s.name), '講師', '辻堂', '三宅', '店長', '支配人', '御堂', '真壁']
+const KNOWN = [...PARTNER_CANDIDATES.map((p) => p.name), CIRCLE_PARTNER.name, ...INITIAL_SENIORS.map((s) => s.name), '講師', '辻堂', '三宅', '店長', '支配人', '御堂', '真壁', '社員']
 
 function namesOf(state: GameState): string[] {
   const names = new Set<string>([state.player.callName, ...KNOWN])

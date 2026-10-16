@@ -1,4 +1,5 @@
 import { SKILL_BY_ID } from './data/skills'
+import { affinity } from './bonds'
 import { has } from './core'
 import { buildReview, type Review } from './review'
 import { Rng } from './rng'
@@ -48,13 +49,14 @@ export function buildEpilogue(s: GameState): ResultSummary {
   const patron = s.seniors.find((x) => s.flags[`patron_${x.id}`])
   const friendOnly = s.seniors.find((x) => x.like >= 60 && x.respect < 40)
   const so = s.gradRank === 1
+  const pin = !!s.flags.pin
   const months: { label: string; text: string }[] = []
 
   months.push({
     label: '4月',
     text: so
-      ? `大笑興業に所属。卒業総代として、4月のスケジュールが全部仕事で埋まった。`
-      : `大笑興業に所属。坂上劇場の「のぼりざかライブ」への挑戦が始まった。バイトは続ける。`,
+      ? `大笑興業に${pin ? 'ピン芸人として' : ''}所属。卒業総代として、4月のスケジュールが全部仕事で埋まった。`
+      : `大笑興業に${pin ? 'ピン芸人として' : ''}所属。坂上劇場の「のぼりざかライブ」への挑戦が始まった。バイトは続ける。`,
   })
 
   // 劇場オーディション（隔月・数百組）
@@ -85,18 +87,25 @@ export function buildEpilogue(s: GameState): ResultSummary {
   }
   const conte = contest(s.player.style === 'conte' ? 5 : -8)
   const manzai = contest(s.player.style === 'manzai' ? 5 : -8)
-  months.push({ label: '7月', text: `コント頂：${conte}。${conte === '1回戦敗退' ? '結果ページに名前はなかった。' : ''}` })
-  months.push({
-    label: '9月',
-    text: `漫才天下一：${manzai}。${manzai.includes('3回戦') || manzai.includes('準') ? '3回戦の動画を見たお笑いファンに「青田買い」された。' : '1回戦の受付で2,000円を払い、胸に番号シールを貼った。'}`,
-  })
+  if (pin) {
+    months.push({ label: '7月', text: 'コント頂も漫才天下一も、ひとりでは出られない。同期の予選を、客席から観た。' })
+    months.push({ label: '11月', text: `ひとり芸王座：${conte}。${conte === '1回戦敗退' ? '受付で「お一人ですか」と聞かれた。' : '袖で、ひとりで小さくガッツポーズをした。'}` })
+  } else {
+    months.push({ label: '7月', text: `コント頂：${conte}。${conte === '1回戦敗退' ? '結果ページに名前はなかった。' : ''}` })
+    months.push({
+      label: '9月',
+      text: `漫才天下一：${manzai}。${manzai.includes('3回戦') || manzai.includes('準') ? '3回戦の動画を見たお笑いファンに「青田買い」された。' : '1回戦の受付で2,000円を払い、胸に番号シールを貼った。'}`,
+    })
+  }
 
   const tv = so || power >= 75 || manzai.includes('決勝') || conte.includes('決勝')
   const buzz = s.fans >= 40 && rng.chance(0.5)
   months.push({
     label: '11月',
     text: tv
-      ? 'テレビの深夜番組に初出演。ギャラは2人で割って、事務所の取り分を引いた。'
+      ? pin
+        ? 'テレビの深夜番組に初出演。ギャラは全部自分のもの。……少なすぎて、割る気にもならない額だった。'
+        : 'テレビの深夜番組に初出演。ギャラは2人で割って、事務所の取り分を引いた。'
       : buzz
         ? 'ライブの切り抜き動画が少しだけバズった。出待ちのファンが2人できた。'
         : '劇場の出番は月1回、60秒。ギャラは1回数百円で、交通費の方が高い。',
@@ -104,8 +113,23 @@ export function buildEpilogue(s: GameState): ResultSummary {
 
   months.push({
     label: '1月',
-    text: tsubomi ? '入れ替え戦を勝ち抜いて、坂上劇場の「つぼみ組」に入った。' : 'のぼりざかライブで、また入れ替え戦の一歩手前で負けた。',
+    text:
+      (tsubomi ? '入れ替え戦を勝ち抜いて、坂上劇場の「つぼみ組」に入った。' : 'のぼりざかライブで、また入れ替え戦の一歩手前で負けた。') +
+      (affinity(s, 'mido') >= 35 ? '同じ入れ替え戦に、御堂のコンビもいた。' : affinity(s, 'makabe') >= 35 ? '真壁のコンビが先につぼみ組に上がった。報告のLINEは「上がった」の4文字だった。' : ''),
   })
+  if (s.kodawari) {
+    const kept = (s.counters.kodawari_keep ?? 0) >= (s.counters.kodawari_bend ?? 0)
+    const p = s.partner?.name
+    months.push({
+      label: '2月',
+      text: {
+        jisaku: kept ? 'ネタ帳は、この1年で3冊増えた。全部、自分の字だ。' : '人にもらったネタで、劇場の出番を1回増やした。ウケた。少しだけ、悔しかった。',
+        aikata: p ? (kept ? `${p}とは、まだ同じファミレスの同じ席でネタを合わせている。` : `${p}とは、劇場の楽屋でしか話さなくなった。ネタ合わせは、LINEの通話になった。`) : '「相方と2人で」と言った面談を、ときどき思い出す。今は、ひとりで舞台に立っている。',
+        kyaku: kept ? '劇場の出待ちが、2人になった。2人とも、名前を覚えてくれていた。' : '審査員ウケのネタで、予選をひとつ上がった。客席の後ろの方は、静かだった。',
+        nokoru: kept ? '同期は、また何人か辞めた。それでも、まだ残っている。' : 'バイトのシフトが週5になった。舞台の日より、厨房の日の方が多い。',
+      }[s.kodawari],
+    })
+  }
   months.push({
     label: '3月',
     text:

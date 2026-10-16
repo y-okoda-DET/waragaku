@@ -2,7 +2,7 @@ import { BACKGROUND_BY_ID, PLAYER_LOOK } from './data/backgrounds'
 import { CARDS, STARTER_CARDS } from './data/cards'
 import { TOTAL_TURNS, expectedClassmates, turnOf, weekInfo } from './data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from './data/people'
-import { classmatesOf, scheduleBondEvent, tie } from './bonds'
+import { affinity, classmatesOf, scheduleBondEvent, tie } from './bonds'
 import { applyKodawari } from './kodawari'
 import { addSkill, clamp, count, gain, has, push, removeSkill, story, yen } from './core'
 import { STORIES } from './events'
@@ -323,6 +323,7 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   if (month === 10 && week === 4) story(s, 'gakuensai')
   if (month === 11 && week === 3) story(s, 'sankou')
   if (month === 11 && week === 4) story(s, 'finalist')
+  if (month === 12 && week === 1 && s.kodawari) story(s, 'shiren')
   if (month === 12 && week === 4 && s.partner) story(s, 'jiko')
   if (month === 1 && week === 1) {
     story(s, 'tozai_home')
@@ -333,8 +334,6 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   if (month === 7 && week === 3) story(s, 'contest_entry', { kind: 'contest_conte' })
   if (month === 8 && week === 3) story(s, 'contest_entry', { kind: 'contest_manzai' })
   if (month === 9 && week === 2) story(s, 'gasshuku')
-  if (month === 10 && week === 1) story(s, 'compliance')
-  if (month === 11 && week === 1) story(s, 'hikari_kage')
   if (month === 12 && week === 1 && s.player.background === 'circle' && !s.flags.naitei_done) {
     s.flags.naitei_done = true
     story(s, 'naitei')
@@ -345,7 +344,7 @@ function scheduleEvents(s: GameState, rng: Rng): void {
 
   // 発展イベントかランダムイベント（週に1つまで）。発展イベントが起きられるなら、そちらを優先しやすい
   const bonded = s.pending.length === 0 && rng.chance(0.7) && scheduleBondEvent(s, rng)
-  if (!bonded && s.pending.length === 0 && rng.chance(0.35)) {
+  if (!bonded && s.pending.length === 0 && rng.chance(0.25)) {
     const pool: [string, Record<string, string | number>?][] = []
     if (s.partner) pool.push(['shinneta'], ['loan'])
     pool.push(['line_kidoku'], ['barashi'])
@@ -495,16 +494,24 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       r.lines.push(`予選の順位は${groups}組中${rank}位。`)
       if (rank <= 8) {
         r.lines.push('決勝進出。2本目をやる。')
+        if (affinity(s, 'mido') >= 25) r.lines.push('決勝の名簿に、御堂のコンビの名前もあった。')
         push(s, { type: 'stage', kind: 'grad_final' })
-      } else s.gradRank = rank
+      } else {
+        s.gradRank = rank
+        r.lines.push(affinity(s, 'makabe') >= 25 ? '決勝は客席から観た。真壁のコンビが、一言もしゃべらないコントで一番笑いを取っていた。' : '決勝は客席から観た。')
+      }
       break
     }
     case 'grad_final': {
-      const p = 1 / (1 + Math.exp(-(r.score - 84) / 7))
+      const p = 1 / (1 + Math.exp(-(r.score - 88) / 7))
       const rank = Math.max(1, Math.min(8, Math.round((1 - p) * 8) + 1))
       r.rank = rank
       s.gradRank = rank
       r.lines.push(rank === 1 ? '優勝。卒業総代に選ばれた。' : `決勝${rank}位。`)
+      // ライバルの結果【物語の回収】
+      if (affinity(s, 'mido') >= 25)
+        r.lines.push(rank === 1 ? '準優勝は御堂のコンビ。袖で、御堂が拍手していた。目は笑っていなかった。' : rank <= 3 ? '優勝は御堂のコンビだった。「天丼、覚えた？」と言われた。' : '御堂のコンビは、自分たちより1つ上だった。')
+      else if (affinity(s, 'makabe') >= 25 && rank !== 1) r.lines.push('優勝は真壁のコンビだった。インタビューで真壁は「……どうも」とだけ言った。会場がいちばん笑った。')
       if (rank === 1) s.fans += 30
       break
     }

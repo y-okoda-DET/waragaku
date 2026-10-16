@@ -321,7 +321,7 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         lines: [
           'ナレーション：ネクスト笑劇スクール、東都演芸塾との三校対抗戦。出られるのは、各校から選ばれた数組だけ。',
           'ナレーション：選ばれた中に、会社を辞めて親友と入ってきた2人組「ワイシャツ同盟」がいた。',
-          'ナレーション：願書に切手を貼り忘れて、一度送り返されてきた2人だ。それでも「俺らほんまにおもろい」と言い続けていた。',
+          'ナレーション：願書の切手を貼り忘れて、一度送り返された2人だ。それでも「俺らほんまにおもろい」と言い続けていた。',
           chosen ? `ナレーション：そして、${s.comboName}も選ばれた。` : `ナレーション：${s.comboName}は、客席から観ることになった。`,
         ],
         choices: chosen
@@ -369,6 +369,110 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
       else {
         gain(s, 'adlib', 3)
         s.weekLog.push('本当にやってくれた。102回目は、ウケた。')
+      }
+    },
+  },
+
+  // 12月：譲れないものが真正面から試される。中身は譲れないものごとに違う
+  // 選択肢は どれも「0＝曲げる／1＝守る」の並び（kodawari.ts の HOOKS.shiren）
+  shiren: {
+    view: (s) => {
+      const k = s.kodawari ?? 'nokoru'
+      const m = me(s)
+      const v = {
+        jisaku: {
+          title: '譲られたネタ',
+          place: 'gakuya',
+          lines: [
+            'ナレーション：楽屋。大河内が、黄ばんだ台本を差し出した。',
+            '大河内（ふつう）「これ、お前らにやる。俺がやったら18年前から一回もスベってへん鉄板や。もう俺はやらん」',
+            `${m}（驚き）「……ええんですか」`,
+            '大河内（笑い）「東西でも門出でも使え。ただ、ガラケーのくだりだけは直せよ」',
+            ...recall(s),
+          ],
+          choices: [
+            { label: 'ありがたく使わせてもらう', hint: 'ネタの完成度＋＋' },
+            { label: '「自分で書いたやつで、勝ちたいです」', hint: '発想力＋' },
+          ],
+        },
+        aikata: {
+          title: 'ピンの枠',
+          place: 'jimusho',
+          lines: [
+            'ナレーション：事務所の小さな会議室。社員がスマホを見ながら言った。',
+            '社員（笑い）「来月の事務所ライブ、ピンの枠が1つ空いてるんです。あなたひとりで、どうです？」',
+            '社員（ふつう）「相方さんには、言わなくてもいいと思いますよ。1回だけですし」',
+            `${m}（考え中）「……」`,
+            ...recall(s),
+          ],
+          choices: [
+            { label: '「1回だけなら」と受ける', hint: '社員の評価＋・ファン＋' },
+            { label: '「2人で出られる枠、待ちます」', hint: '関係値＋' },
+          ],
+        },
+        kyaku: {
+          title: '審査員の好み',
+          place: 'kyoushitsu',
+          lines: [
+            'ナレーション：東西寄席合戦の前。審査員をやる構成作家が、ネタを見て言った。',
+            'ナレーション：「お客さんは笑うよ。でも、審査員は点を入れない。こっちの細かいボケに変えたら、点は取れる」',
+            'ナレーション：細かいボケに変えた台本では、客席の後ろの方は、たぶん笑わない。',
+            `${m}（考え中）「……」`,
+            ...recall(s),
+          ],
+          choices: [
+            { label: '審査員向けに作り変える', hint: '講師の評価＋・社員の評価＋' },
+            { label: '客席の一番後ろが笑う方を取る', hint: 'ファン＋・表現力＋' },
+          ],
+        },
+        nokoru: {
+          title: '正社員の話',
+          place: 'baito',
+          lines: [
+            'ナレーション：バイトの閉店後。店長が、珍しくまじめな顔で座った。',
+            '店長（ふつう）「4月から、正社員にならへんか。給料も上がる。まかないは食べ放題や」',
+            '店長（笑い）「ライブの日は……まあ、月1回くらいなら休んでええ」',
+            'ナレーション：同じ週、実家から「もう帰ってきたら」と電話があった。',
+            ...recall(s),
+          ],
+          choices: [
+            { label: '「考えさせてください」', hint: 'お金＋' },
+            { label: '「まかない食べ放題は、売れてからにします」', hint: 'やる気＋' },
+          ],
+        },
+      }[k]
+      return { ...v, choices: v.choices }
+    },
+    resolve: (s, c) => {
+      const k = s.kodawari ?? 'nokoru'
+      if (k === 'jisaku') {
+        if (c === 0) s.neta.polish = clamp(s.neta.polish + 12)
+        else gain(s, 'idea', 4)
+      } else if (k === 'aikata') {
+        if (c === 0) {
+          s.staffEval = clamp(s.staffEval + 10)
+          s.fans += 5
+          if (s.partner) s.partner.bond = clamp(s.partner.bond - 8)
+          s.weekLog.push('ピンの5分は、そこそこウケた。帰りの電車で、相方からのLINEに既読をつけられなかった。')
+        } else {
+          if (s.partner) s.partner.bond = clamp(s.partner.bond + 10)
+          s.weekLog.push('翌月、コンビの枠が空いた。社員は「お待たせしました」と笑ったが、目は笑っていなかった。')
+        }
+      } else if (k === 'kyaku') {
+        if (c === 0) {
+          s.teacherEval = clamp(s.teacherEval + 6)
+          s.staffEval = clamp(s.staffEval + 6)
+        } else {
+          s.fans += 6
+          gain(s, 'expr', 3)
+        }
+      } else if (c === 0) {
+        s.money += 20000
+        s.weekLog.push('返事は保留にした。店長は「急がんでええ」と言って、まかないを大盛りにした。')
+      } else {
+        s.motivation = clamp(s.motivation + 10)
+        tie(s, 'tencho', 4)
+        s.weekLog.push('店長は笑って言った。「ほな、売れたら食べ放題な。売れへんかったら、皿洗いからや」')
       }
     },
   },
@@ -472,7 +576,7 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
       place: 'butai',
       lines: s.flags.tozai_chosen
         ? ['ナレーション：東西寄席合戦、今度はホーム。客席には同期の顔が見える。', `ナレーション：アウェイで負けた分を、ここで返す。${s.comboName}の出番は3番目。`]
-        : ['ナレーション：東西寄席合戦、ホーム戦。出場組の楽屋に、差し入れを届ける係になった。', 'ナレーション：袖から観た舞台は、客席から観るより、ずっと明るかった。'],
+        : ['ナレーション：東西寄席合戦、ホーム戦。差し入れ係として袖から観た舞台は、客席から観るより、ずっと明るかった。'],
       choices: [],
     }),
     resolve: (s) => {
@@ -647,6 +751,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
           ...(p ? [scriptOf(s)?.grad ?? `${p.name}（笑い）「なんや、じろじろ見て」`] : []),
           left ? `ナレーション：左隣には${left}。最後まで、ここに残った。` : 'ナレーション：左隣も、空いていた。',
           s.flags.audition_3 ? 'ナレーション：卒業公演「巣立ち」では、その他大勢として舞台の端で踊った。' : 'ナレーション：卒業公演「巣立ち」。バトルではない。思い出という感じだった。',
+          ...(affinity(s, 'mido') >= 35 ? ['御堂（笑い）「卒業おめでとう。……4月からは、ただの同業者だね」'] : []),
+          ...(affinity(s, 'makabe') >= 35 ? ['真壁（笑い）「……メモ帳。あなたのページ、まだ続く」'] : []),
           ...(s.kodawari ? [`ナレーション：「${KODAWARI[s.kodawari].label}」。面談でそう言ってから、11か月がたった。`] : []),
           'ナレーション：所属説明会。4月から、大笑興業の芸人になる。',
         ],
