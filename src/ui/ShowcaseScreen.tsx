@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { gradeTsukkomi, tsukkomiWindow, wordHint, type Scene, type ShowcaseGrade, type TsukkomiScene, type WordScene } from '../game/showcase'
 import { STAGES } from '../game/stage'
 import type { GameState, StageKind } from '../game/types'
@@ -6,7 +6,7 @@ import type { GameState, StageKind } from '../game/types'
 const GRADE_SOUND: Record<ShowcaseGrade, string> = { great: 'ドッ', good: 'クスッ', miss: 'シーン…' }
 
 // 見せ場を順番に遊ばせ、全部終わったら出来をまとめて返す
-export function ShowcaseScreen({ state, kind, scenes, onDone }: { state: GameState; kind: StageKind; scenes: Scene[]; onDone: (grades: ShowcaseGrade[]) => void }) {
+export function ShowcaseScreen({ state, kind, scenes, onDone, nextLabel = '続きは結果で', footer }: { state: GameState; kind: StageKind; scenes: Scene[]; onDone: (grades: ShowcaseGrade[]) => void; nextLabel?: string; footer?: ReactNode }) {
   const [index, setIndex] = useState(0)
   const [grades, setGrades] = useState<ShowcaseGrade[]>([])
   const scene = scenes[index]
@@ -29,15 +29,16 @@ export function ShowcaseScreen({ state, kind, scenes, onDone }: { state: GameSta
         </span>
       </div>
       {scene.kind === 'word' ? (
-        <WordGame key={index} state={state} scene={scene} partner={partner} onDone={finish} />
+        <WordGame key={index} state={state} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
       ) : (
-        <TsukkomiGame key={index} state={state} scene={scene} partner={partner} onDone={finish} />
+        <TsukkomiGame key={index} state={state} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
       )}
+      {footer}
     </div>
   )
 }
 
-function Outcome({ grade, label, onNext }: { grade: ShowcaseGrade; label: string; onNext: () => void }) {
+function Outcome({ grade, label, nextLabel, onNext }: { grade: ShowcaseGrade; label: string; nextLabel: string; onNext: () => void }) {
   return (
     <>
       <div className={`sc-outcome grade-${grade}`}>
@@ -47,7 +48,7 @@ function Outcome({ grade, label, onNext }: { grade: ShowcaseGrade; label: string
         <span className="sc-label">{label}</span>
       </div>
       <button className="primary big" onClick={onNext}>
-        続きは結果で
+        {nextLabel}
       </button>
     </>
   )
@@ -55,7 +56,7 @@ function Outcome({ grade, label, onNext }: { grade: ShowcaseGrade; label: string
 
 const WORD_SECONDS = 8
 
-function WordGame({ state, scene, partner, onDone }: { state: GameState; scene: WordScene; partner: string; onDone: (g: ShowcaseGrade) => void }) {
+function WordGame({ state, scene, partner, nextLabel, onDone }: { state: GameState; scene: WordScene; partner: string; nextLabel: string; onDone: (g: ShowcaseGrade) => void }) {
   const [picked, setPicked] = useState<number | null>(null)
   const [timedOut, setTimedOut] = useState(false)
   const [left, setLeft] = useState(WORD_SECONDS)
@@ -102,7 +103,7 @@ function WordGame({ state, scene, partner, onDone }: { state: GameState; scene: 
           </div>
         </>
       ) : (
-        <Outcome grade={grade} label={grade === 'great' ? '会心のボケ' : grade === 'good' ? 'そこそこ' : timedOut ? '時間切れ' : '外した'} onNext={() => onDone(grade)} />
+        <Outcome nextLabel={nextLabel} grade={grade} label={grade === 'great' ? '会心のボケ' : grade === 'good' ? 'そこそこ' : timedOut ? '時間切れ' : '外した'} onNext={() => onDone(grade)} />
       )}
     </>
   )
@@ -111,7 +112,7 @@ function WordGame({ state, scene, partner, onDone }: { state: GameState; scene: 
 const MA_MS = 1800
 const TYPE_MS = 45
 
-function TsukkomiGame({ state, scene, partner, onDone }: { state: GameState; scene: TsukkomiScene; partner: string; onDone: (g: ShowcaseGrade) => void }) {
+function TsukkomiGame({ state, scene, partner, nextLabel, onDone }: { state: GameState; scene: TsukkomiScene; partner: string; nextLabel: string; onDone: (g: ShowcaseGrade) => void }) {
   const [shown, setShown] = useState(0)
   const [ma, setMa] = useState(0)
   const [result, setResult] = useState<{ grade: ShowcaseGrade; label: string } | null>(null)
@@ -169,7 +170,7 @@ function TsukkomiGame({ state, scene, partner, onDone }: { state: GameState; sce
           </button>
         </>
       ) : (
-        <Outcome grade={result.grade} label={result.label} onNext={() => onDone(result.grade)} />
+        <Outcome nextLabel={nextLabel} grade={result.grade} label={result.label} onNext={() => onDone(result.grade)} />
       )}
     </>
   )

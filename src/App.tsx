@@ -5,6 +5,7 @@ import { CreateScreen } from './ui/CreateScreen'
 import { StageIntro, StageResultView, StoryScreen } from './ui/EventScreens'
 import { Modal } from './ui/parts'
 import { ResultScreen } from './ui/ResultScreen'
+import { PracticeScreen } from './ui/PracticeScreen'
 import { ShowcaseScreen } from './ui/ShowcaseScreen'
 import { pickScenes, type Scene } from './game/showcase'
 import { WeekScreen } from './ui/WeekScreen'
@@ -14,6 +15,7 @@ type Popup = { title: string; lines: string[] } | null
 export default function App() {
   const [game, setGame] = useState<GameState | null>(null)
   const [creating, setCreating] = useState(false)
+  const [practice, setPractice] = useState(false)
   const [popup, setPopup] = useState<Popup>(null)
   const [stageShown, setStageShown] = useState(false)
   const [scenes, setScenes] = useState<Scene[] | null>(null)
@@ -49,6 +51,7 @@ export default function App() {
   }
 
   if (!game) {
+    if (practice) return <PracticeScreen onBack={() => setPractice(false)} />
     if (creating)
       return (
         <CreateScreen
@@ -77,6 +80,9 @@ export default function App() {
             続きから（{saved.player.callName}）
           </button>
         )}
+        <button className="big" onClick={() => setPractice(true)}>
+          ミニゲームだけ遊ぶ
+        </button>
         <p className="small center">登場する養成所・事務所・劇場・大会・人物はすべて架空です。</p>
       </div>
     )
