@@ -168,6 +168,9 @@ export function scoreStage(state: GameState, spec: StageSpec, rng: Rng, lines: s
     } else if (spec.audience === 'uchiwa') b.mods += 2
   }
   if (spec.big && has(state, 'bakushou')) b.mods += 8
+  if (spec.big && has(state, 'gekidan')) b.mods += 3
+  if ((spec.audience === 'judge' || spec.audience === 'teacher') && has(state, 'makezu')) b.mods += 3
+  if (spec.audience === 'general' && has(state, 'kaonajimi')) b.mods += 3
 
   if (spec.kind === 'netamise') {
     const q = state.queueChoice

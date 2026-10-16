@@ -1,3 +1,4 @@
+import { DEV_STORIES, classmatesOf, tie } from './bonds'
 import { CARDS } from './data/cards'
 import { PARTNER_CANDIDATES } from './data/people'
 import { clamp, count, gain, has, push, story, yen } from './core'
@@ -13,6 +14,7 @@ export interface StoryView {
   title: string
   lines: string[]
   choices: Choice[] // 空なら「次へ」だけ
+  place?: string // 背景（bg_◯◯）。なければ題名と行の言葉から選ぶ
   input?: { placeholder: string; suggestions: string[] }
 }
 
@@ -184,6 +186,7 @@ export const STORIES: Record<string, StoryDef> = {
       }
       s.money -= 40000
       s.dokiBond = clamp(s.dokiBond + 10)
+      for (const id of classmatesOf(s)) tie(s, id, 6)
       for (const k of ['idea', 'expr', 'adlib'] as const) gain(s, k, 3)
       s.weekLog.push(
         s.teacherEval >= 55
@@ -486,6 +489,8 @@ function splitUp(s: GameState, rng: Rng): void {
   s.weekLog.push(`${next.name}と新しくコンビを組んだ。名義が変わったので梅組からやり直し。`)
   story(s, 'combo_name')
 }
+
+Object.assign(STORIES, DEV_STORIES)
 
 export function storyView(s: GameState, key: string, params: Record<string, string | number> = {}): StoryView {
   return STORIES[key].view(s, params)

@@ -128,5 +128,9 @@ export interface GameState {
   stageHistory: StageResult[]
   contestResults: { name: string; result: string }[]
   gradRank: number | null
+  // 友好度（画面には出さない）。相方候補・ライバル・講師・街の人。相方は bond、先輩は like を使う
+  ties?: Record<string, number>
+  // 発展イベントで受け継いだ特殊能力 → 誰から
+  gifts?: Record<string, string>
   phase: 'week' | 'event' | 'ending' | 'result'
 }

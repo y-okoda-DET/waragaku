@@ -49,7 +49,7 @@ export function Bar({ label, value, max = 100, tone }: { label: string; value: n
 export function SkillBadge({ id }: { id: string }) {
   const def = SKILL_BY_ID[id]
   if (!def) return null
-  const shape = def.kind === 'buki' ? '●' : def.kind === 'kuse' ? '▲' : '★'
+  const shape = def.kind === 'buki' ? '●' : def.kind === 'kuse' ? '▲' : def.kind === 'gift' ? '◆' : '★'
   return (
     <span className={`skill skill-${def.kind}`} title={def.desc}>
       <span className="skill-shape" aria-hidden="true">

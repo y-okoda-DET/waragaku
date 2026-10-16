@@ -23,6 +23,8 @@ const CHARA_BY_NAME: Record<string, string> = {
   三宅: 'miyake',
   店長: 'tencho',
   支配人: 'shihainin',
+  御堂: 'rival1',
+  真壁: 'rival2',
 }
 
 export function heroKey(gender: Gender | undefined): string {
@@ -88,9 +90,9 @@ const PLACE_BY_WORD: [RegExp, string][] = [
   [/部屋|家賃|寝|ネタ帳|ネタの種|ネタを書|休/, 'heya'],
 ]
 
-// その行の背景。イベントごとに決まった場所があればそれ、なければ行の言葉、それもなければ前の行の場所を引き継ぐ
-export function backgrounds(title: string, lines: string[]): (string | undefined)[] {
-  const fixed = PLACE_BY_TITLE[title]
+// その行の背景。イベントが場所を指定していればそれ、イベントごとに決まった場所があればそれ、なければ行の言葉、それもなければ前の行の場所を引き継ぐ
+export function backgrounds(title: string, lines: string[], at?: string): (string | undefined)[] {
+  const fixed = at ?? PLACE_BY_TITLE[title]
   let place = fixed ?? (title.includes('授業') || title.includes('ネタ見せ') ? 'kyoushitsu' : undefined)
   return lines.map((line) => {
     if (!fixed) place = PLACE_BY_WORD.find(([re]) => re.test(line))?.[1] ?? place ?? 'rouka'

@@ -64,7 +64,7 @@ describe('通しプレイ', () => {
     expect(s.classmates).toBeLessThan(140)
     const ep = buildEpilogue(s)
     expect(ep.months.length).toBeGreaterThanOrEqual(7)
-    expect(ep.shareText).toContain('総合ランク')
+    expect(ep.shareText).toContain('称号：')
   })
 
   it('同じシードなら同じ結果になる', () => {

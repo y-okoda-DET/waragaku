@@ -2,6 +2,7 @@ import { BACKGROUND_BY_ID, PLAYER_LOOK } from './data/backgrounds'
 import { CARDS, STARTER_CARDS } from './data/cards'
 import { TOTAL_TURNS, expectedClassmates, turnOf, weekInfo } from './data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from './data/people'
+import { classmatesOf, scheduleBondEvent, tie } from './bonds'
 import { addSkill, clamp, count, gain, has, push, removeSkill, story, yen } from './core'
 import { STORIES } from './events'
 import { Rng } from './rng'
@@ -106,7 +107,7 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
       s.condition = clamp(s.condition - 8)
       count(s, 'neta')
       log.push(rng.pick(['深夜のファミレスでネタを書いた。ドリンクバーで5時間。', 'バイトの休憩中にネタ帳を広げた。', '「お笑い向いてないのかな…」と思いながら、それでも書いた。']))
-      if (rng.chance(0.4)) {
+      if (rng.chance(has(s, 'netacho_oni') ? 0.7 : 0.4)) {
         const fresh = CARDS.filter((c) => !s.cards.includes(c.id))
         if (fresh.length) {
           // 発想力が高いほど強いカードを引きやすい
@@ -124,10 +125,10 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
         gain(s, 'expr', 1)
         break
       }
-      s.neta.polish = clamp(s.neta.polish + 10)
+      s.neta.polish = clamp(s.neta.polish + (has(s, 'awasema') ? 15 : 10))
       s.partner.bond = clamp(s.partner.bond + 4)
       gain(s, 'expr', 1.5)
-      s.condition = clamp(s.condition - 6)
+      s.condition = clamp(s.condition - (has(s, 'awasema') ? 3 : 6))
       count(s, 'awase')
       if (a.place === 'park') {
         log.push('夜の公園でネタ合わせ。タダだけど、人目が気になる。')
@@ -151,6 +152,8 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
         gain(s, 'expr', 2)
         gain(s, 'guts', 1)
         count(s, 'hassei')
+        tie(s, 'miyake', 3)
+        tie(s, 'kishibe', 2)
         log.push('腹式呼吸と滑舌の練習。外郎売りを3周した。')
       } else if (a.kind === 'kintore') {
         gain(s, 'stamina', 3)
@@ -168,8 +171,10 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
       s.money += Math.round(pay * bonus)
       count(s, 'baito')
       if (a.kind === 'izakaya') {
-        s.condition = clamp(s.condition - 10)
-        s.money += 2500 // まかないで食費が浮く
+        s.condition = clamp(s.condition - (has(s, 'makanai') ? 4 : 10))
+        s.money += has(s, 'makanai') ? 5000 : 2500 // まかないで食費が浮く
+        tie(s, 'tencho', 6)
+        tie(s, 'nakaji', 3)
         log.push('居酒屋バイト。まかないで食費が浮いた。')
       } else if (a.kind === 'karaoke') {
         s.condition = clamp(s.condition - 8)
@@ -194,12 +199,14 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
       s.condition = clamp(s.condition - 6)
       gain(s, 'guts', 1.5)
       gain(s, 'adlib', 2)
-      s.outsideRep = clamp(s.outsideRep + 3)
+      s.outsideRep = clamp(s.outsideRep + (has(s, 'chika') ? 6 : 3))
       count(s, 'jishulive')
+      tie(s, 'nakaji', 3)
+      tie(s, 'shihainin', 2)
       const audience = rng.int(3, 18)
       const good = s.stats.adlib + s.stats.guts + s.neta.polish / 2 + rng.int(-20, 20) > 75
       if (good) {
-        s.fans += rng.int(1, 3)
+        s.fans += rng.int(1, 3) * (has(s, 'chika') ? 2 : 1)
         log.push(`自主ライブに出た。エントリー料2,000円、客席${audience}人。ランク戦で1位を取った。`)
       } else log.push(`自主ライブに出た。エントリー料2,000円、客席${audience}人。ウケた記憶がない。`)
       if (rng.chance(0.1)) log.push('受付で初めて、今日はエントリー料が5,000円だと知った。')
@@ -210,6 +217,7 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
       gain(s, 'idea', 2)
       gain(s, 'word', 1.5)
       s.motivation = clamp(s.motivation + 6)
+      tie(s, 'shihainin', 6)
       log.push('劇場で先輩のライブを観た。勉強のつもりが、普通に笑ってしまった。')
       break
     }
@@ -227,7 +235,7 @@ function applyNight(s: GameState, a: NightAction, rng: Rng): void {
     case 'nomi': {
       const senior = s.seniors.find((x) => x.id === a.senior)
       if (!senior) break
-      senior.like = clamp(senior.like + (has(s, 'kawaigarare') ? 11 : 7))
+      senior.like = clamp(senior.like + (has(s, 'kawaigarare') ? 11 : 7) + (has(s, 'hitorashi') ? 3 : 0))
       s.condition = clamp(s.condition - 10)
       s.money += 2500 // ごちそうになった分、食費が浮く
       s.safePlay += 1
@@ -246,6 +254,7 @@ function applyNight(s: GameState, a: NightAction, rng: Rng): void {
     case 'douki':
       s.money -= 3000
       s.dokiBond = clamp(s.dokiBond + 6)
+      for (const id of classmatesOf(s)) tie(s, id, 4)
       s.motivation = clamp(s.motivation + 6)
       s.condition = clamp(s.condition - 5)
       log.push('同期と安いチェーン店で飲んだ。売れたら何をするかの話で朝になった。')
@@ -279,7 +288,7 @@ function weeklyUpkeep(s: GameState): void {
   s.money -= rent + food + extra
   s.condition = clamp(s.condition - 3 + s.stats.stamina / 40)
   // やる気は少しずつ50に戻る
-  s.motivation = clamp(s.motivation + (50 - s.motivation) * 0.08)
+  s.motivation = clamp(s.motivation + ((has(s, 'homerare') ? 62 : 50) - s.motivation) * 0.08)
 }
 
 // その週の行事
@@ -310,8 +319,9 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   if (month === 1 && week === 2) story(s, 'audition')
   if (month === 2 && week === 2) story(s, 'grad_intro')
 
-  // ランダムイベント（週に1つまで）
-  if (s.pending.length === 0 && rng.chance(0.35)) {
+  // 発展イベントかランダムイベント（週に1つまで）。発展イベントが起きられるなら、そちらを優先しやすい
+  const bonded = s.pending.length === 0 && rng.chance(0.7) && scheduleBondEvent(s, rng)
+  if (!bonded && s.pending.length === 0 && rng.chance(0.35)) {
     const pool: [string, Record<string, string | number>?][] = []
     if (s.partner) pool.push(['shinneta'], ['loan'])
     pool.push(['line_kidoku'], ['barashi'])
@@ -400,19 +410,30 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
   if (r.level >= 2 && s.neta.cards.tsukami) count(s, 'tsukamiUke')
 
   // やる気
-  if (r.level === 0) s.motivation = clamp(s.motivation - (has(s, 'hagane') ? 3 : 8))
+  if (r.level === 0) s.motivation = clamp(s.motivation - (has(s, 'hagane') || has(s, 'homerare') ? 3 : 8))
   if (r.level >= 2) s.motivation = clamp(s.motivation + 5)
   gain(s, 'guts', 0.5 + r.level * 0.3)
   applyShowcaseGains(s, r)
 
   // 見ていた人の評価（認められ度は、ウケたときだけ上がる）
-  if (r.level >= 2) for (const sr of s.seniors) sr.respect = clamp(sr.respect + (r.level === 3 ? 5 : 3))
+  if (r.level >= 2) for (const sr of s.seniors) sr.respect = clamp(sr.respect + Math.round((r.level === 3 ? 5 : 3) * (has(s, 'mitomesase') ? 1.6 : 1)))
 
   switch (r.kind) {
     case 'netamise': {
       let d = r.level * 4 - 2
       if (has(s, 'shiagari')) d = Math.round(d / 2)
+      if (has(s, 'yomi') && d > 0) d += 2
       s.teacherEval = clamp(s.teacherEval + d)
+      // 授業で顔を合わせる人たち
+      tie(s, 'tsujido', r.level >= 2 ? 3 : 1)
+      tie(s, 'miyake', 3)
+      tie(s, 'haibara', s.queueChoice === 'early2' ? 5 : 2)
+      tie(s, 'mido', 3)
+      tie(s, 'makabe', 3)
+      if (r.level <= 1 && has(s, 'kyuushuu')) {
+        gain(s, 'idea', 2)
+        gain(s, 'word', 1.5)
+      }
       if (r.level === 0) count(s, 'dame')
       if (r.level === 3 && has(s, 'shiagari')) removeSkill(s, 'shiagari', '結果を出したら、講師が細かく見てくれるようになった。「仕上がってる扱い」が解けた。')
       break

@@ -1,5 +1,6 @@
 import { SKILL_BY_ID } from './data/skills'
 import { has } from './core'
+import { buildReview, type Review } from './review'
 import { Rng } from './rng'
 import { STAT_KEYS, type GameState } from './types'
 
@@ -10,6 +11,7 @@ export interface ResultSummary {
   route: string
   months: { label: string; text: string }[]
   shareText: string
+  review: Review
 }
 
 const RANKS: [number, string][] = [
@@ -27,7 +29,7 @@ export function totalScore(s: GameState): number {
   const stats = STAT_KEYS.reduce((sum, k) => sum + s.stats[k], 0)
   const skills = s.skills.reduce((sum, id) => {
     const k = SKILL_BY_ID[id]?.kind
-    return sum + (k === 'kiwami' ? 25 : k === 'buki' ? 8 : -6)
+    return sum + (k === 'kiwami' ? 25 : k === 'gift' ? 10 : k === 'buki' ? 8 : -6)
   }, 0)
   const grad = s.gradRank === 1 ? 40 : s.gradRank && s.gradRank <= 8 ? 20 : s.gradRank && s.gradRank <= 20 ? 8 : 0
   return Math.round(stats + skills + grad + s.fans / 3 + s.staffEval / 4)
@@ -46,7 +48,6 @@ export function buildEpilogue(s: GameState): ResultSummary {
   const patron = s.seniors.find((x) => s.flags[`patron_${x.id}`])
   const friendOnly = s.seniors.find((x) => x.like >= 60 && x.respect < 40)
   const so = s.gradRank === 1
-  const name = s.comboName || s.player.name
   const months: { label: string; text: string }[] = []
 
   months.push({
@@ -60,6 +61,7 @@ export function buildEpilogue(s: GameState): ResultSummary {
   let passes = so ? 1 : 0
   for (let i = 0; i < 6; i++) if (rng.next() < Math.max(0.03, (power - 40) / 90)) passes++
   if (patron) passes++
+  if (has(s, 'kaonajimi')) passes++
   const tsubomi = passes >= 2
 
   months.push({
@@ -127,16 +129,18 @@ export function buildEpilogue(s: GameState): ResultSummary {
               : '地道ルート'
 
   const gradText = s.gradRank ? (s.gradRank === 1 ? '優勝（卒業総代）' : `${s.gradRank}位`) : '-'
-  const kiwami = s.skills.filter((id) => SKILL_BY_ID[id]?.kind === 'kiwami').map((id) => SKILL_BY_ID[id].name)
+  const review = buildReview(s, rank)
   const shareText = [
-    `【お笑い養成所の1年】${name}（${s.player.callName}）`,
-    `総合ランク${rank}｜卒業大会 ${gradText}`,
+    `【ワラガク！卒業】${s.player.name}${s.comboName ? `（${s.comboName}）` : ''}`,
+    `称号：${review.title}`,
+    `総合${rank}｜${review.gradeLine}`,
+    `卒業式の隣：${review.neighbor}｜同期300人→${s.classmates}人`,
+    `講師の寸評「${review.oneLine}」`,
     `芸人1年目：${route}`,
-    kiwami.length ? `極み：${kiwami.join('、')}` : `芸風：${s.skills.slice(0, 3).map((id) => SKILL_BY_ID[id]?.name).join('、')}`,
     '#ワラガク',
   ].join('\n')
 
-  return { rank, total, gradText, route, months, shareText }
+  return { rank, total, gradText, route, months, shareText, review }
 }
 
 export function hasKiwami(s: GameState): boolean {

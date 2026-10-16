@@ -30,6 +30,8 @@ export function growthMultiplier(state: GameState): number {
 export function gain(state: GameState, key: StatKey, base: number): number {
   const before = state.stats[key]
   let amount = base * growthMultiplier(state)
+  if (key === 'expr' && has(state, 'gekidan')) amount *= 1.3
+  if (key === 'idea' && has(state, 'kansatsu')) amount *= 1.3
   if (before >= 70) amount *= 0.5
   const growth = BACKGROUND_BY_ID[state.player.background]?.growth ?? 0
   amount += growth * 0.3

@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { buildEpilogue } from '../game/epilogue'
-import { STAT_KEYS, STAT_LABEL, type GameState } from '../game/types'
-import { Bar, PlayerAvatar, SkillBadge } from './parts'
+import type { GameState } from '../game/types'
+import { portrait } from './art'
+import { PlayerAvatar, SkillBadge } from './parts'
 
 export function ResultScreen({ state, onRestart }: { state: GameState; onRestart: () => void }) {
   const ep = useMemo(() => buildEpilogue(state), [state])
   const [shown, setShown] = useState(0)
   const [copied, setCopied] = useState(false)
   const allShown = shown >= ep.months.length
+  const rv = ep.review
+  const tsujido = portrait('tsujido', 'think')
 
   const copy = async () => {
     try {
@@ -22,35 +25,69 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
   return (
     <div className="screen">
       <section className="card result-head">
-        <div className="small">卒業</div>
+        <div className="small">卒業 ／ 通信簿</div>
         <div className="result-row">
           <PlayerAvatar player={state.player} size={64} />
           <div>
             <div className="me-name">{state.player.name}</div>
-            <div className="combo">「{state.comboName}」</div>
+            {state.comboName && <div className="combo">「{state.comboName}」</div>}
           </div>
           <div className="rank">{ep.rank}</div>
         </div>
-        <p className="small">
-          卒業大会：{ep.gradText} ／ 同期 300人 → {state.classmates}人 ／ ファン {state.fans}人
-        </p>
-        {state.contestResults.map((c) => (
-          <p key={c.name} className="small">
-            {c.name}（在学中）：{c.result}
-          </p>
-        ))}
+        <div className="result-title">
+          <span className="small">称号</span>
+          <strong>{rv.title}</strong>
+        </div>
+        <div className="grades">
+          {rv.grades.map((g) => (
+            <div key={g.key} className="grade-tile">
+              <span className={`grade grade-${g.grade}`}>{g.grade}</span>
+              <span className="grade-label">{g.label}</span>
+              <span className="grade-value">{g.value}</span>
+            </div>
+          ))}
+        </div>
+        <div className="review">
+          {tsujido && <img src={tsujido} alt="" className="review-face" draggable={false} />}
+          <div>
+            <div className="small">講師・辻堂の寸評</div>
+            <p>{rv.comment}</p>
+          </div>
+        </div>
+        <dl className="result-facts">
+          <dt>卒業式の隣</dt>
+          <dd>{rv.neighbor}</dd>
+          <dt>同期</dt>
+          <dd>300人 → {state.classmates}人</dd>
+          <dt>卒業大会</dt>
+          <dd>{ep.gradText}</dd>
+          <dt>ファン</dt>
+          <dd>{state.fans}人</dd>
+          {state.contestResults.map((c) => (
+            <Fragment key={c.name}>
+              <dt>{c.name}</dt>
+              <dd>{c.result}</dd>
+            </Fragment>
+          ))}
+        </dl>
       </section>
 
       <section className="card">
-        <h2>能力</h2>
-        {STAT_KEYS.map((k) => (
-          <Bar key={k} label={STAT_LABEL[k]} value={state.stats[k]} />
-        ))}
+        <h2>芸風と特殊能力</h2>
         <div className="skills">
           {state.skills.map((id) => (
             <SkillBadge key={id} id={id} />
           ))}
         </div>
+        {rv.gifts.length > 0 && (
+          <ul className="gifts">
+            {rv.gifts.map((g) => (
+              <li key={g.name}>
+                「{g.name}」は{g.from}から受け継いだ
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="card">

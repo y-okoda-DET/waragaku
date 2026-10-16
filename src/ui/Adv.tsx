@@ -4,6 +4,7 @@ import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from '../game/dat
 import type { GameState } from '../game/types'
 import { backgrounds, charaKey, exprOf, portrait, type Expr } from './art'
 import { shotsOf } from './scene'
+import { parseLine } from './script'
 import { HAIR, OUTFITS } from './looks'
 import { Avatar, PlayerAvatar } from './parts'
 
@@ -19,7 +20,7 @@ function lookOf(name: string): { hair: string; outfit: string } {
   return { hair: HAIR[h % HAIR.length], outfit: OUTFITS[(h >>> 3) % OUTFITS.length].color }
 }
 
-const KNOWN = [...PARTNER_CANDIDATES.map((p) => p.name), CIRCLE_PARTNER.name, ...INITIAL_SENIORS.map((s) => s.name), '講師', '辻堂', '三宅', '店長', '支配人']
+const KNOWN = [...PARTNER_CANDIDATES.map((p) => p.name), CIRCLE_PARTNER.name, ...INITIAL_SENIORS.map((s) => s.name), '講師', '辻堂', '三宅', '店長', '支配人', '御堂', '真壁']
 
 function namesOf(state: GameState): string[] {
   const names = new Set<string>([state.player.callName, ...KNOWN])
@@ -37,13 +38,18 @@ function Chara({ state, name, expr, focus, me }: { state: GameState; name: strin
   )
 }
 
-export function AdvScreen({ state, title, lines, onEnd, after }: { state: GameState; title: string; lines: string[]; onEnd?: () => void; after?: ReactNode }) {
+export function AdvScreen({ state, title, lines: script, place, onEnd, after }: { state: GameState; title: string; lines: string[]; place?: string; onEnd?: () => void; after?: ReactNode }) {
   const [index, setIndex] = useState(0)
   const [shown, setShown] = useState(0)
+  const parsed = script.map(parseLine)
+  const lines = parsed.map((l) => l.text)
+  const cur = parsed[index]
   const line = lines[index] ?? ''
   const typing = shown < line.length
   const last = index >= lines.length - 1
-  const shot = shotsOf(lines, namesOf(state), state.partner ? { 相方: state.partner.name } : {})[index] ?? { cast: [] }
+  // 台本形式で書かれたイベントは名前をはっきり書くので、「相方」を相方の名前に読み替えない（「私の元相方」などがあるため）
+  const scripted = script.some((l) => l.startsWith('ナレーション：')) || parsed.some((l) => l.speaker)
+  const shot = shotsOf(parsed.map((l) => l.stage), namesOf(state), state.partner && !scripted ? { 相方: state.partner.name } : {})[index] ?? { cast: [] }
   const p = state.player
 
   useEffect(() => {
@@ -63,8 +69,8 @@ export function AdvScreen({ state, title, lines, onEnd, after }: { state: GameSt
   const done = last && !typing
   const talking = line.trimStart().startsWith('「')
   const focus = shot.speaker ?? (shot.cast.length === 1 ? shot.cast[0] : undefined)
-  const exprFor = (n: string): Expr => (n === focus ? exprOf(line) : 'normal')
-  const bg = backgrounds(title, lines)[index]
+  const exprFor = (n: string): Expr => (n !== focus ? 'normal' : n === cur?.speaker && cur.expr ? cur.expr : exprOf(line))
+  const bg = backgrounds(title, lines, place)[index]
 
   return (
     <div className="screen adv">
@@ -86,6 +92,7 @@ export function AdvScreen({ state, title, lines, onEnd, after }: { state: GameSt
         </div>
       </div>
       <button className={`adv-box ${talking ? 'talk' : ''}`} onClick={advance} aria-label="次へ進む">
+        {cur?.speaker && <span className="adv-name">{cur.speaker}</span>}
         <span className="adv-text">{line.slice(0, shown)}</span>
         {!typing && !(last && after) && <span className="adv-next" aria-hidden="true">▼</span>}
         <span className="adv-count">

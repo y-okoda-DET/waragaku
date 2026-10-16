@@ -33,7 +33,7 @@ export function StoryScreen({ state, eventKey, params, onChoose }: { state: Game
       ))}
     </div>
   ) : undefined
-  return <AdvScreen state={state} title={view.title} lines={view.lines} after={after} onEnd={() => onChoose(0)} />
+  return <AdvScreen state={state} title={view.title} lines={view.lines} place={view.place} after={after} onEnd={() => onChoose(0)} />
 }
 
 export function StageIntro({ state, kind, onPerform, onNeta }: { state: GameState; kind: StageKind; onPerform: () => void; onNeta: (s: GameState) => void }) {
