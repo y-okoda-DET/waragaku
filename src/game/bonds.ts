@@ -95,7 +95,7 @@ export function scheduleBondEvent(s: GameState, rng: Rng): boolean {
     const step = stepOf(s, c.id)
     const chain = CHAINS[c.id]
     if (step >= chain.length) return false
-    if (c.group === 'douki' && !s.partner) return false // 相方見つけ会のあとから
+    if (c.group === 'douki' && s.turn < 2) return false // 相方見つけ会のあとから
     if (s.turn < STEP_FROM[step]) return false
     if (s.turn - (s.counters[`devAt_${c.id}`] ?? -99) < GAP) return false
     return affinity(s, c.id) >= STEP_NEED[step]
@@ -323,8 +323,8 @@ const CHAINS: Record<string, DevEvent[]> = {
       lines: (_s, me) => [
         'ナレーション：終電。同じ駅で降りたのは、早瀬だった。',
         '早瀬（驚き）「え、ここ？ 家どこ？」',
-        `${me}（ふつう）「駅から歩いて5分」`,
-        '早瀬（笑い）「俺3分！ ほぼお隣さんやん。ネタ合わせし放題やな」',
+        `${me}（ふつう）「駅から5分の、風呂なしのアパート」`,
+        '早瀬（爆笑）「……それ、俺の隣の部屋や！ 夜中に壁の向こうでネタ言うてんの、お前か！」',
       ],
       choices: [
         { label: '「今から30分だけやる？」', hint: '対応力＋・体調−', apply: (s) => (tie(s, 'hayase', 8), gain(s, 'adlib', 2), (s.condition = clamp(s.condition - 5))) },

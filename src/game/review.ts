@@ -74,7 +74,9 @@ export function buildReview(s: GameState, rank: string): Review {
       ? '秘蔵っ子'
       : s.gradRank === 1
         ? '卒業総代'
-        : Object.keys(s.gifts ?? {}).length >= 3
+        : s.flags.pin
+          ? 'ピン芸人'
+          : Object.keys(s.gifts ?? {}).length >= 3
           ? '人に恵まれた芸人'
           : (s.counters.kaisan ?? 0) >= 1
             ? '組み直した芸人'
@@ -99,7 +101,7 @@ export function buildReview(s: GameState, rank: string): Review {
             : 'おもんない。……けど、最後まで残ったのはお前や。'
   const comment = `${PRAISE[top]}${top === low ? '' : STING[low]}${close}`
 
-  const neighbor = s.partner ? `${s.partner.name}${(s.counters.kaisan ?? 0) >= 1 ? '（組み直した相方）' : ''}` : '空席'
+  const neighbor = s.partner ? `${s.partner.name}${(s.counters.kaisan ?? 0) >= 1 ? '（組み直した相方）' : ''}` : s.flags.pin ? '空席（ピンで卒業）' : '空席'
 
   const gifts = Object.entries(s.gifts ?? {})
     .filter(([id]) => has(s, id))

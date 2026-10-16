@@ -222,6 +222,7 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
       break
     }
     case 'rest':
+      count(s, 'rest')
       s.condition = clamp(s.condition + 30)
       s.motivation = clamp(s.motivation + 5)
       log.push('一日寝ていた。1000円カットに行った。')
@@ -306,6 +307,24 @@ function scheduleEvents(s: GameState, rng: Rng): void {
     push(s, { type: 'stage', kind: 'netamise' })
   }
   if (week === 4 && [6, 9, 11, 1].includes(month)) push(s, { type: 'stage', kind: 'live' })
+  // 1年間の流れ（scenario/1年間の流れ.md）で足した行事
+  if (month === 5 && week === 1) story(s, 'nazo_jugyo')
+  if (month === 5 && week === 3) story(s, 'mendan')
+  if (month === 6 && week === 3) story(s, 'ikitteta')
+  if (month === 7 && week === 1) story(s, 'taisaku')
+  if (month === 8 && week === 1) story(s, 'natsu_jugyo')
+  if (month === 10 && week === 1) story(s, 'kiteinai')
+  if (month === 10 && week === 3) story(s, 'tokushin')
+  if (month === 10 && week === 4) story(s, 'gakuensai')
+  if (month === 11 && week === 3) story(s, 'sankou')
+  if (month === 11 && week === 4) story(s, 'finalist')
+  if (month === 12 && week === 4 && s.partner) story(s, 'jiko')
+  if (month === 1 && week === 1) {
+    story(s, 'tozai_home')
+    story(s, 'gaisen')
+  }
+  if (month === 1 && week === 3) story(s, 'kougyou')
+  if (month === 2 && week === 4) story(s, 'ketsudan')
   if (month === 7 && week === 3) story(s, 'contest_entry', { kind: 'contest_conte' })
   if (month === 8 && week === 3) story(s, 'contest_entry', { kind: 'contest_manzai' })
   if (month === 9 && week === 2) story(s, 'gasshuku')
@@ -516,6 +535,7 @@ export function finishWeek(prev: GameState): GameState {
     s.classmates = Math.max(90, expectedClassmates(s.turn) + rng.int(-3, 3))
     if (s.turn >= TOTAL_TURNS) {
       s.turn = TOTAL_TURNS
+      if ((s.counters.rest ?? 0) >= 8 || has(s, 'chikoku')) story(s, 'kyusai')
       story(s, 'sotsugyo')
     }
   })

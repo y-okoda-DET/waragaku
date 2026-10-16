@@ -1,9 +1,11 @@
-import { DEV_STORIES, classmatesOf, tie } from './bonds'
+import { DEV_STORIES, affinity, classmatesOf, tie } from './bonds'
+import { YEAR_STORIES } from './yearEvents'
 import { CARDS } from './data/cards'
 import { PARTNER_CANDIDATES } from './data/people'
 import { clamp, count, gain, has, push, story, yen } from './core'
+import { makePartner, splitUp } from './partner'
 import type { Rng } from './rng'
-import type { GameState, Partner } from './types'
+import type { GameState } from './types'
 
 export interface Choice {
   label: string
@@ -22,10 +24,6 @@ export interface StoryDef {
   view: (s: GameState, p: Record<string, string | number>) => StoryView
   // choice は選んだ番号。input があるイベントでは text に入力値が入る
   resolve?: (s: GameState, choice: number, rng: Rng, p: Record<string, string | number>, text?: string) => void
-}
-
-function makePartner(base: Omit<Partner, 'bond' | 'role'>, s: GameState, bond: number): Partner {
-  return { ...base, stats: { ...base.stats }, skills: [...base.skills], bond, role: s.player.role === 'boke' ? 'tsukkomi' : 'boke' }
 }
 
 function seniorName(s: GameState, id: string | number | undefined): string {
@@ -85,16 +83,13 @@ export const STORIES: Record<string, StoryDef> = {
     },
     resolve: (s, c, rng, p) => {
       const ids = [Number(p.c0), Number(p.c1), Number(p.c2)]
-      const chosen = PARTNER_CANDIDATES[ids[c]]
-      const accepted = rng.chance(0.55 + s.stats.guts / 200)
-      if (accepted) {
-        s.partner = makePartner(chosen, s, 40)
-        s.weekLog.push(`${chosen.name}も手を挙げてくれた。コンビ結成。`)
-      } else {
-        const other = PARTNER_CANDIDATES[ids[(c + 1) % 3]]
-        s.partner = makePartner(other, s, 30)
-        s.weekLog.push(`${chosen.name}は別の人と組んだ。4時間後、余っていた${other.name}から「組まない？」と声がかかった。`)
-      }
+      const a = ids[c]
+      const b = ids[(c + 1) % 3]
+      // 手を挙げ返してもらえるか。挙げ返してもらえても、その日のうちに解散することがある【research/02・06 4時間で解散】
+      const o = rng.chance(0.55 + s.stats.guts / 200) ? (rng.chance(0.2) ? 'yon' : 'soku') : 'dare'
+      s.partner = makePartner(PARTNER_CANDIDATES[o === 'soku' ? a : b], s, o === 'soku' ? 40 : 30)
+      if (o === 'yon') count(s, 'yonjikan')
+      story(s, 'aikata_kekka', { o, a, b })
       story(s, 'combo_name')
     },
   },
@@ -244,7 +239,10 @@ export const STORIES: Record<string, StoryDef> = {
       choices: [],
     }),
     resolve: (s) => {
-      if (s.classRank === 'matsu') push(s, { type: 'stage', kind: 'tozai' })
+      if (s.classRank === 'matsu') {
+        s.flags.tozai_chosen = true
+        push(s, { type: 'stage', kind: 'tozai' })
+      }
       else gain(s, 'idea', 2)
     },
   },
@@ -363,9 +361,13 @@ export const STORIES: Record<string, StoryDef> = {
     },
   },
   coin_shower: {
-    view: () => ({
+    view: (s) => ({
       title: '風呂なしアパート',
-      lines: ['給湯器が壊れた。近所のコインシャワーは3分200円。', 'キッチンで髪と体を洗ってから、流すためだけに行くことにした。'],
+      lines: [
+        '給湯器が壊れた。近所のコインシャワーは3分200円。',
+        'キッチンで髪と体を洗ってから、流すためだけに行くことにした。',
+        ...(affinity(s, 'hayase') >= 25 ? ['コインシャワーの前に、隣の部屋の早瀬が並んでいた。「お前んとこも？」'] : []),
+      ],
       choices: [],
     }),
     resolve: (s) => {
@@ -421,7 +423,7 @@ export const STORIES: Record<string, StoryDef> = {
         s.weekLog.push(`${s.partner.name}は内定を断った。「お前とやる方がおもろいわ」`)
       } else {
         s.weekLog.push(`${s.partner.name}は就職を選んだ。`)
-        splitUp(s, rng)
+        splitUp(s)
       }
     },
   },
@@ -431,26 +433,36 @@ export const STORIES: Record<string, StoryDef> = {
       lines: [`寄席の合間に、${s.partner?.name}が言った。「続ける自信がない」`],
       choices: [{ label: '朝まで話し合う', hint: '関係値＋・やる気−' }, { label: '解散する', hint: '梅組からやり直し' }],
     }),
-    resolve: (s, c, rng) => {
+    resolve: (s, c) => {
       if (c === 0 && s.partner) {
         s.partner.bond = clamp(s.partner.bond + 20)
         s.motivation = clamp(s.motivation - 10)
-      } else splitUp(s, rng)
+      } else splitUp(s)
     },
   },
   debt: {
     view: (s) => {
       const savior = s.seniors.find((x) => x.like >= 50)
+      // バイト先の店長がお金を貸してくれる【research/02 店長が病院代を貸してくれた】
+      const tencho = !savior && affinity(s, 'tencho') >= 40 && !s.flags.tencho_loan
       return {
         title: 'お金が尽きた',
         lines: savior
           ? [`家賃が払えない。それを聞いた${savior.name}さんが「しばらくうちに住めや」と言ってくれた。`]
-          : ['家賃が払えない。実家に電話した。母は何も聞かずに5万円を振り込んでくれた。'],
+          : tencho
+            ? ['ナレーション：家賃が払えない。バイトの休憩中、通帳を見てため息をついたのを、店長に見られた。', '店長（ふつう）「なんぼ足りへんねん。……ええから、売れたら返せ」']
+            : ['家賃が払えない。実家に電話した。母は何も聞かずに5万円を振り込んでくれた。'],
         choices: [],
       }
     },
     resolve: (s) => {
       const savior = s.seniors.find((x) => x.like >= 50)
+      if (!savior && affinity(s, 'tencho') >= 40 && !s.flags.tencho_loan) {
+        s.flags.tencho_loan = true
+        s.money += 40000
+        tie(s, 'tencho', 8)
+        return
+      }
       if (savior) {
         s.money += 30000
         savior.like = clamp(savior.like + 5)
@@ -461,36 +473,9 @@ export const STORIES: Record<string, StoryDef> = {
       }
     },
   },
-  // 3月の卒業
-  sotsugyo: {
-    view: (s) => ({
-      title: '3月 卒業',
-      lines: [
-        `卒業認定。入学時に300人いた同期は、${s.classmates}人になった。`,
-        s.flags.audition_3 ? '卒業公演「巣立ち」。その他大勢として舞台の端で踊った。' : '卒業公演「巣立ち」。バトルではない。思い出という感じだった。',
-        '所属説明会。4月から、大笑興業の芸人になる。',
-        `卒業式のスーツのまま${s.comboName}で写真を撮った。ネクタイの結び目がやけに大きい。`,
-      ],
-      choices: [],
-    }),
-    resolve: (s) => {
-      s.phase = 'result'
-    },
-  },
 }
 
-function splitUp(s: GameState, rng: Rng): void {
-  const pool = PARTNER_CANDIDATES.filter((c) => c.name !== s.partner?.name)
-  const next = rng.pick(pool)
-  s.partner = makePartner(next, s, 25)
-  s.classRank = s.classRank === 'none' ? 'none' : 'ume'
-  s.neta.polish = 10
-  count(s, 'kaisan')
-  s.weekLog.push(`${next.name}と新しくコンビを組んだ。名義が変わったので梅組からやり直し。`)
-  story(s, 'combo_name')
-}
-
-Object.assign(STORIES, DEV_STORIES)
+Object.assign(STORIES, DEV_STORIES, YEAR_STORIES)
 
 export function storyView(s: GameState, key: string, params: Record<string, string | number> = {}): StoryView {
   return STORIES[key].view(s, params)
