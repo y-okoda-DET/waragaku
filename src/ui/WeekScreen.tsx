@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { TOTAL_TURNS, weekLabel } from '../game/data/calendar'
 import type { DayAction, NightAction } from '../game/engine'
 import { STAT_KEYS, STAT_LABEL, type GameState } from '../game/types'
-import { outfitColor } from './looks'
 import { NetaPanel } from './NetaPanel'
-import { Avatar, Bar, Modal, SkillBadge } from './parts'
+import { Bar, Modal, PlayerAvatar, SkillBadge } from './parts'
 
 const CLASS_LABEL = { none: '-', ume: '梅組', take: '竹組', matsu: '松組' }
 
@@ -86,7 +85,7 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
 
       <section className="card me">
         <div className="me-face">
-          <Avatar hair={p.hairColor} outfit={outfitColor(p.outfit)} size={78} />
+          <PlayerAvatar player={p} size={78} />
         </div>
         <div className="me-body">
           <div className="me-name">

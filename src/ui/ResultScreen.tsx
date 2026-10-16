@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { buildEpilogue } from '../game/epilogue'
 import { STAT_KEYS, STAT_LABEL, type GameState } from '../game/types'
-import { outfitColor } from './looks'
-import { Avatar, Bar, SkillBadge } from './parts'
+import { Bar, PlayerAvatar, SkillBadge } from './parts'
 
 export function ResultScreen({ state, onRestart }: { state: GameState; onRestart: () => void }) {
   const ep = useMemo(() => buildEpilogue(state), [state])
@@ -25,7 +24,7 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
       <section className="card result-head">
         <div className="small">卒業</div>
         <div className="result-row">
-          <Avatar hair={state.player.hairColor} outfit={outfitColor(state.player.outfit)} size={64} />
+          <PlayerAvatar player={state.player} size={64} />
           <div>
             <div className="me-name">{state.player.name}</div>
             <div className="combo">「{state.comboName}」</div>

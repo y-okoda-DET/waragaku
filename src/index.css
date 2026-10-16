@@ -1214,3 +1214,22 @@ p {
   flex-direction: column;
   gap: 8px;
 }
+
+/* 願書：性別 */
+.gender-pick {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.gender-pick button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0 8px;
+  font-weight: 900;
+}
+.gender-pick button.on {
+  background: var(--sun);
+}

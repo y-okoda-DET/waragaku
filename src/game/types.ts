@@ -14,6 +14,7 @@ export const STAT_KEYS: StatKey[] = ['idea', 'word', 'expr', 'guts', 'adlib', 's
 export type Role = 'boke' | 'tsukkomi'
 export type Style = 'manzai' | 'conte'
 export type Origin = 'local' | 'tokyo'
+export type Gender = 'male' | 'female'
 export type ClassRank = 'none' | 'ume' | 'take' | 'matsu'
 export type CardSlot = 'tsukami' | 'tenkai' | 'ochi'
 
@@ -54,6 +55,7 @@ export interface PlayerProfile {
   callName: string
   background: string
   origin: Origin
+  gender?: Gender // 古いセーブにはない（男性扱い）
   role: Role
   style: Style
   hairColor: string

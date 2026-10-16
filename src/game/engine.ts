@@ -1,4 +1,4 @@
-import { BACKGROUND_BY_ID } from './data/backgrounds'
+import { BACKGROUND_BY_ID, PLAYER_LOOK } from './data/backgrounds'
 import { CARDS, STARTER_CARDS } from './data/cards'
 import { TOTAL_TURNS, expectedClassmates, turnOf, weekInfo } from './data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from './data/people'
@@ -7,18 +7,20 @@ import { STORIES } from './events'
 import { Rng } from './rng'
 import { STAGES, performStage } from './stage'
 import type { ShowcaseGrade } from './showcase'
-import { STAT_LABEL, type CardSlot, type GameState, type Origin, type Role, type StageResult, type StatKey, type Stats, type Style } from './types'
+import { STAT_LABEL, type CardSlot, type Gender, type GameState, type Origin, type Role, type StageResult, type StatKey, type Stats, type Style } from './types'
 
 export interface NewGameInput {
   name: string
   callName: string
-  background: string
-  origin: Origin
+  gender?: Gender
   role: Role
   style: Style
-  hairColor: string
-  outfit: string
   seed?: number
+  // ここから下は固定（高校卒業・東京の実家住まい・性別ごとの見た目）。テストと練習モードだけが変える
+  background?: string
+  origin?: Origin
+  hairColor?: string
+  outfit?: string
 }
 
 export type DayAction =
@@ -40,13 +42,16 @@ function withRng(s: GameState, fn: (rng: Rng) => void): void {
   s.rng = rng.seed
 }
 
-export function createGame(input: NewGameInput): GameState {
+export function createGame(raw: NewGameInput): GameState {
+  const gender = raw.gender ?? 'male'
+  const look = PLAYER_LOOK[gender]
+  const input = { ...raw, gender, background: raw.background ?? 'fresh', origin: raw.origin ?? 'local', hairColor: raw.hairColor ?? look.hairColor, outfit: raw.outfit ?? look.outfit }
   const bg = BACKGROUND_BY_ID[input.background]
   const base: Stats = { idea: 15, word: 15, expr: 15, guts: 15, adlib: 15, stamina: 15, ...bg.stats }
   const s: GameState = {
     version: 1,
     rng: (input.seed ?? Math.floor(Math.random() * 2 ** 31)) >>> 0,
-    player: { ...input },
+    player: { name: input.name, callName: input.callName, gender, background: input.background, origin: input.origin, role: input.role, style: input.style, hairColor: input.hairColor, outfit: input.outfit },
     stats: base,
     condition: 80,
     motivation: 60,

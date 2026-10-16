@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react'
 import { SKILL_BY_ID } from '../game/data/skills'
+import type { PlayerProfile } from '../game/types'
+import { outfitColor } from './looks'
 
-export function Avatar({ hair, outfit, size = 48 }: { hair: string; outfit: string; size?: number }) {
+export function Avatar({ hair, outfit, size = 48, long = false }: { hair: string; outfit: string; size?: number; long?: boolean }) {
   return (
     <svg width={size} height={(size * 140) / 120} viewBox="0 0 120 140" aria-hidden="true" className="avatar">
+      {long && <path d="M28 58 C22 82 26 100 36 108 L44 70 Z M92 58 C98 82 94 100 84 108 L76 70 Z" fill={hair} stroke="var(--ink)" strokeWidth="2.5" strokeLinejoin="round" />}
       <path d="M8 140 C12 108 34 98 60 98 C86 98 108 108 112 140 Z" fill={outfit} stroke="var(--ink)" strokeWidth="3" />
       <ellipse cx="60" cy="60" rx="28" ry="32" fill="var(--skin)" stroke="var(--ink)" strokeWidth="3" />
       <path d="M30 64 C24 30 42 16 62 16 C86 16 100 34 92 68 C90 54 86 46 78 42 C72 52 56 54 44 48 C40 54 34 58 30 64 Z" fill={hair} stroke="var(--ink)" strokeWidth="2.5" strokeLinejoin="round" />
@@ -14,6 +17,11 @@ export function Avatar({ hair, outfit, size = 48 }: { hair: string; outfit: stri
       <path d="M53 80 Q60 87 67 80" fill="none" stroke="var(--ink)" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   )
+}
+
+// 主人公の顔。見た目は性別で決まる
+export function PlayerAvatar({ player, size }: { player: PlayerProfile; size?: number }) {
+  return <Avatar hair={player.hairColor} outfit={outfitColor(player.outfit)} size={size} long={player.gender === 'female'} />
 }
 
 export function Bar({ label, value, max = 100, tone }: { label: string; value: number; max?: number; tone?: 'warn' | 'good' }) {

@@ -1,4 +1,10 @@
-import type { Stats } from '../types'
+import type { Gender, Stats } from '../types'
+
+// 主人公の見た目は性別ごとに固定（上画面の絵を性別ごとに1人ぶん用意するため）
+export const PLAYER_LOOK: Record<Gender, { hairColor: string; outfit: string }> = {
+  male: { hairColor: '#2b2b2b', outfit: 'parka' },
+  female: { hairColor: '#6b4a2e', outfit: 'shirt' },
+}
 
 export interface Background {
   id: string
@@ -55,8 +61,8 @@ export const BACKGROUNDS: Background[] = [
   },
   {
     id: 'fresh',
-    name: '高校出たて',
-    blurb: '18歳。何も知らないけど、伸びしろだけはある。',
+    name: '高校卒業',
+    blurb: '18歳。東京生まれ東京育ちで、実家から通う。高校を出てそのまま入学した。何も知らないけど、伸びしろだけはある。',
     stats: { idea: 14, word: 12, expr: 14, guts: 18, adlib: 14, stamina: 30 },
     money: 40000,
     skills: [],

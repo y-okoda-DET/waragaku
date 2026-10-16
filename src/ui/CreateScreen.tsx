@@ -1,32 +1,29 @@
 import { useState } from 'react'
-import { BACKGROUNDS } from '../game/data/backgrounds'
-import { SKILL_BY_ID } from '../game/data/skills'
+import { BACKGROUND_BY_ID, PLAYER_LOOK } from '../game/data/backgrounds'
 import type { NewGameInput } from '../game/engine'
-import type { Origin, Role, Style } from '../game/types'
+import type { Gender, Role, Style } from '../game/types'
+import { outfitColor } from './looks'
 import { Avatar } from './parts'
-import { HAIR, OUTFITS, outfitColor } from './looks'
+
+// 主人公は「高校卒業・東京生まれで実家から通う」で固定。選ぶのは名前・性別・担当・やりたいネタだけ
+const FRESH = BACKGROUND_BY_ID['fresh']
 
 export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInput) => void; onBack: () => void }) {
   const [name, setName] = useState('')
   const [callName, setCallName] = useState('')
-  const [hairColor, setHair] = useState(HAIR[0])
-  const [outfit, setOutfit] = useState('parka')
-  const [background, setBg] = useState('fresh')
-  const [origin, setOrigin] = useState<Origin>('tokyo')
+  const [gender, setGender] = useState<Gender>('male')
   const [role, setRole] = useState<Role>('boke')
   const [style, setStyle] = useState<Style>('manzai')
 
-  const bg = BACKGROUNDS.find((b) => b.id === background)!
   const ready = name.trim().length > 0
 
   const randomize = () => {
     const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)]
-    setName(pick(['山田 一平', '佐々木 まこと', '小野寺 陽', '黒川 しずく', '戸田 健太']))
-    setCallName(pick(['ヤマちゃん', 'ササキ', 'てらっち', 'しずく', 'トダケン']))
-    setHair(pick(HAIR))
-    setOutfit(pick(OUTFITS).id)
-    setBg(pick(BACKGROUNDS).id)
-    setOrigin(pick(['local', 'tokyo'] as Origin[]))
+    const g = pick(['male', 'female'] as Gender[])
+    const [n, c] = pick(g === 'male' ? [['山田 一平', 'ヤマちゃん'], ['戸田 健太', 'トダケン'], ['小野寺 陽', 'てらっち']] : [['黒川 しずく', 'しずく'], ['佐々木 まこと', 'ササキ'], ['森 あかり', 'モリ']])
+    setGender(g)
+    setName(n)
+    setCallName(c)
     setRole(pick(['boke', 'tsukkomi'] as Role[]))
     setStyle(pick(['manzai', 'conte'] as Style[]))
   }
@@ -56,56 +53,20 @@ export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInpu
       </section>
 
       <section className="card">
-        <h2>2. 見た目</h2>
-        <div className="look">
-          <Avatar hair={hairColor} outfit={outfitColor(outfit)} size={72} />
-          <div className="look-opts">
-            <div className="swatches" role="radiogroup" aria-label="髪の色">
-              {HAIR.map((c) => (
-                <button key={c} className={`swatch ${c === hairColor ? 'on' : ''}`} style={{ background: c }} onClick={() => setHair(c)} aria-label="髪の色" />
-              ))}
-            </div>
-            <div className="chips">
-              {OUTFITS.map((o) => (
-                <button key={o.id} className={`chip ${o.id === outfit ? 'on' : ''}`} onClick={() => setOutfit(o.id)}>
-                  {o.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="card">
-        <h2>3. 経歴</h2>
-        <div className="bg-list">
-          {BACKGROUNDS.map((b) => (
-            <button key={b.id} className={`bg-item ${b.id === background ? 'on' : ''}`} onClick={() => setBg(b.id)}>
-              {b.name}
+        <h2>2. 性別</h2>
+        <div className="gender-pick">
+          {(['male', 'female'] as Gender[]).map((g) => (
+            <button key={g} className={gender === g ? 'on' : ''} onClick={() => setGender(g)} aria-pressed={gender === g}>
+              <Avatar hair={PLAYER_LOOK[g].hairColor} outfit={outfitColor(PLAYER_LOOK[g].outfit)} size={64} long={g === 'female'} />
+              <span>{g === 'male' ? '男性' : '女性'}</span>
             </button>
           ))}
         </div>
-        <p className="note">{bg.blurb}</p>
-        <p className="small">
-          所持金 {bg.money.toLocaleString()}円
-          {bg.skills.length > 0 && ` ／ 芸風：${bg.skills.map((id) => SKILL_BY_ID[id].name).join('、')}`}
-        </p>
+        <p className="note">{FRESH.blurb}</p>
       </section>
 
       <section className="card">
-        <h2>4. 出身</h2>
-        <div className="seg">
-          <button className={origin === 'local' ? 'on' : ''} onClick={() => setOrigin('local')}>
-            地元組（実家から通う）
-          </button>
-          <button className={origin === 'tokyo' ? 'on' : ''} onClick={() => setOrigin('tokyo')}>
-            上京組（家賃がかかる）
-          </button>
-        </div>
-      </section>
-
-      <section className="card">
-        <h2>5. 担当</h2>
+        <h2>3. 担当</h2>
         <div className="seg">
           <button className={role === 'boke' ? 'on' : ''} onClick={() => setRole('boke')}>
             ボケ
@@ -124,11 +85,7 @@ export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInpu
         </div>
       </section>
 
-      <button
-        className="primary big"
-        disabled={!ready}
-        onClick={() => onStart({ name: name.trim(), callName: callName.trim() || name.trim(), hairColor, outfit, background, origin, role, style })}
-      >
+      <button className="primary big" disabled={!ready} onClick={() => onStart({ name: name.trim(), callName: callName.trim() || name.trim(), gender, role, style })}>
         {ready ? '願書を出す' : '名前を入れてください'}
       </button>
     </div>

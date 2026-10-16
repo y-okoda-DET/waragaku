@@ -169,3 +169,16 @@ describe('ネタ見せの見せ場', () => {
     expect(gradeTsukkomi(s, a, 'netamise', null).label).toBe('ツッコミ忘れ')
   })
 })
+
+describe('主人公の設定', () => {
+  it('経歴は高校卒業、東京の実家住まい、見た目は性別で決まる', () => {
+    const s = createGame({ name: 'a', callName: 'a', gender: 'female', role: 'tsukkomi', style: 'conte', seed: 1 })
+    expect(s.player.background).toBe('fresh')
+    expect(s.player.origin).toBe('local')
+    expect(s.player.gender).toBe('female')
+    expect(s.partner).toBeNull()
+    const m = createGame({ name: 'b', callName: 'b', role: 'boke', style: 'manzai', seed: 1 })
+    expect(m.player.gender).toBe('male')
+    expect(m.player.hairColor).not.toBe(s.player.hairColor)
+  })
+})

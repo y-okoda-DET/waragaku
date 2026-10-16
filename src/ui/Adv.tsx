@@ -2,8 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { weekLabel } from '../game/data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from '../game/data/people'
 import type { GameState } from '../game/types'
-import { HAIR, OUTFITS, outfitColor } from './looks'
-import { Avatar } from './parts'
+import { HAIR, OUTFITS } from './looks'
+import { Avatar, PlayerAvatar } from './parts'
 
 // パワプロ式の会話画面。上に登場人物、下のメッセージ枠をタップすると1行ずつ進む
 // 最後の行まで読むと、選択肢（または入力欄）が出る。選択肢がなければタップで終わる
@@ -66,7 +66,7 @@ export function AdvScreen({ state, title, lines, onEnd, after }: { state: GameSt
         </div>
         <div className="adv-cast">
           <figure className="adv-chara me">
-            <Avatar hair={p.hairColor} outfit={outfitColor(p.outfit)} size={118} />
+            <PlayerAvatar player={p} size={118} />
             <figcaption>{p.callName}</figcaption>
           </figure>
           {cast.map((n) => (
