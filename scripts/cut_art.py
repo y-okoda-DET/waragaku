@@ -100,6 +100,28 @@ def clean(c, ink=(34, 30, 30)):
     un = np.clip((rgb - 255 * (1 - kk)) / kk, 0, 255)
     rgb = np.where(fr[..., None], un, rgb)
     al = newa
+    # 輪郭のすぐ内側に残った明るい画素（髪のハイライトや服の白線が縁まで届いているところ）は墨色にする。
+    # 透けたまま残すと、背景が抜けて髪や肩が欠けて見えるため。下端（胸元の切れ目）は除く
+    solid = al > 0
+    band = ndimage.binary_dilation(~solid, iterations=2) & solid
+    band[-4:, :] = False
+    lum = rgb[..., 0] * 0.3 + rgb[..., 1] * 0.59 + rgb[..., 2] * 0.11
+    light = band & (lum > 120)
+    # 白いハイライトは縁から少し奥まで届いていることがあるので、無彩色の白だけはもう少し内側まで見る
+    band4 = ndimage.binary_dilation(~solid, iterations=5) & solid
+    band4[-4:, :] = False
+    mn, mx = rgb.min(axis=2), rgb.max(axis=2)
+    # 黒い髪の中の細い白だけを対象にする（はちまきやシャツのような広い白は残す）
+    dark_around = ndimage.uniform_filter(lum, size=9) < 105
+    light |= dark_around & band4 & (mn > 160) & (mx - mn < 40)
+    rgb[light] = ink
+    # 髪の白いハイライトが輪郭の近くにあると、明るい背景の上で髪が欠けて見える。上の方だけ灰色に落とす
+    band10 = ndimage.binary_dilation(~(al > 0), iterations=10) & (al > 0) & ~light
+    band10[int(al.shape[0] * 0.75):, :] = False
+    mn, mx = rgb.min(axis=2), rgb.max(axis=2)
+    hl = band10 & dark_around & (mn > 150) & (mx - mn < 20)
+    rgb[hl] = (118, 118, 124)
+    al = np.where(light, np.maximum(al, 200), al)
     h, w = al.shape
     for side in (0, w - 1):
         col = al[:, side] > 128

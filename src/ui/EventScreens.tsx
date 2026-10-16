@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { weekLabel } from '../game/data/calendar'
 import { storyView } from '../game/events'
-import { STAGES } from '../game/stage'
+import { conditionWarning, STAGES } from '../game/stage'
 import type { GameState, StageKind, StageResult } from '../game/types'
 import { AdvScreen } from './Adv'
 import { pushLog } from './log'
@@ -28,6 +28,7 @@ export function StoryScreen({ state, eventKey, params, onChoose }: { state: Game
   }
   const after = view.input ? (
     <div className="card">
+      <p className="input-label">自分で考える（候補から選んでもいい）</p>
       <input value={text} onChange={(e) => setText(e.target.value)} placeholder={view.input.placeholder} maxLength={14} />
       <div className="chips">
         {view.input.suggestions.map((sg) => (
@@ -43,9 +44,9 @@ export function StoryScreen({ state, eventKey, params, onChoose }: { state: Game
   ) : view.choices.length ? (
     <div className="options">
       {view.choices.map((c, i) => (
-        <button key={i} className="option" onClick={() => choose(i)}>
+        <button key={i} className="option" onClick={() => choose(i)} disabled={!!c.locked}>
           <span>{c.label}</span>
-          {c.hint && <span className="small">{c.hint}</span>}
+          {(c.locked || c.hint) && <span className="small">{c.locked ? `${c.locked}（${c.hint}）` : c.hint}</span>}
         </button>
       ))}
     </div>
@@ -75,6 +76,7 @@ export function StageIntro({ state, kind, onPerform, onNeta }: { state: GameStat
         </div>
         <NetaPanel state={state} editable={edit} onChange={onNeta} />
       </section>
+      {conditionWarning(state) && <p className="warn-note">{conditionWarning(state)}</p>}
       <button className="primary big" onClick={onPerform}>
         出囃子が鳴る（本番）
       </button>

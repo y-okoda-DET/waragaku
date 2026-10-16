@@ -4,7 +4,7 @@ import { turnOf } from './data/calendar'
 import { SKILL_BY_ID } from './data/skills'
 import { createGame, resolveStory } from './engine'
 import { STORIES } from './events'
-import { buildReview, gradeOf } from './review'
+import { buildReview, gradeOf, PRAISE, STING } from './review'
 import { Rng } from './rng'
 
 const fresh = () => createGame({ name: '山田', callName: 'ヤマダ', role: 'boke', style: 'manzai', seed: 7 })
@@ -54,8 +54,8 @@ describe('通信簿', () => {
     s.stats = { idea: 88, word: 20, expr: 50, guts: 40, adlib: 40, stamina: 40 }
     const r = buildReview(s, 'B')
     expect(r.title.startsWith('奇想天外な')).toBe(true)
-    expect(r.comment).toContain('発想は同期で一番')
-    expect(r.comment).toContain('言葉が雑')
+    expect(PRAISE.idea.some((l) => r.comment.includes(l))).toBe(true)
+    expect(STING.word.some((l) => r.comment.includes(l))).toBe(true)
     expect(r.gradeLine).toBe('発想S ワードG 表現D 度胸E 対応E 体力E')
     expect(r.neighbor).toBe('空席')
   })

@@ -18,7 +18,6 @@ const CHARA_BY_NAME: Record<string, string> = {
   灰原: 'haibara',
   大河内: 'ookouchi',
   ナカジ: 'nakaji',
-  講師: 'tsujido',
   辻堂: 'tsujido',
   三宅: 'miyake',
   店長: 'tencho',
@@ -92,12 +91,15 @@ const PLACE_BY_WORD: [RegExp, string][] = [
 ]
 
 // その行の背景。イベントが場所を指定していればそれ、イベントごとに決まった場所があればそれ、なければ行の言葉、それもなければ前の行の場所を引き継ぐ
-export function backgrounds(title: string, lines: string[], at?: string): (string | undefined)[] {
+// dayLines: 先頭から何行が昼のできごとか。昼の行では、窓の外が夜の絵を昼の絵（bg_◯◯_day）に差し替える
+export function backgrounds(title: string, lines: string[], at?: string, dayLines = 0): (string | undefined)[] {
   const fixed = at ?? PLACE_BY_TITLE[title]
   let place = fixed ?? (title.includes('授業') || title.includes('ネタ見せ') ? 'kyoushitsu' : undefined)
-  return lines.map((line) => {
+  return lines.map((line, i) => {
     if (!fixed) place = PLACE_BY_WORD.find(([re]) => re.test(line))?.[1] ?? place ?? 'rouka'
-    return place ? ART[`bg_${place}`] : undefined
+    if (!place) return undefined
+    // 文に「夜」「終電」とあれば、昼の予定でも夜の絵のまま
+    return (i < dayLines && !/夜|終電/.test(line) && ART[`bg_${place}_day`]) || ART[`bg_${place}`]
   })
 }
 

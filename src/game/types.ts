@@ -135,5 +135,6 @@ export interface GameState {
   kodawari?: Kodawari
   // 発展イベントで受け継いだ特殊能力 → 誰から
   gifts?: Record<string, string>
+  dayLines?: number // 今週のできごとのうち、昼の予定の行数（背景を昼の絵にするため）
   phase: 'week' | 'event' | 'ending' | 'result'
 }

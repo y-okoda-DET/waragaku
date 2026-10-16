@@ -10,7 +10,7 @@ import { ShowcaseScreen } from './ui/ShowcaseScreen'
 import { pickScenes, type Scene } from './game/showcase'
 import { WeekScreen } from './ui/WeekScreen'
 
-type Popup = { title: string; lines: string[] } | null
+type Popup = { title: string; lines: string[]; dayLines?: number } | null
 
 export default function App() {
   const [game, setGame] = useState<GameState | null>(null)
@@ -31,7 +31,7 @@ export default function App() {
 
   // エンジンの処理結果を反映し、ログがあればポップアップで見せる
   const apply = (next: GameState, title: string) => {
-    if (next.weekLog.length) setPopup({ title, lines: next.weekLog })
+    if (next.weekLog.length) setPopup({ title, lines: next.weekLog, dayLines: title === '今週のできごと' ? next.dayLines : undefined })
     if (!next.pending.length && next.phase === 'event' && !next.weekLog.length) {
       const after = endEvents(next)
       setGame(after)
@@ -139,6 +139,6 @@ export default function App() {
   }
 
   // 結果は会話画面で読み切ってから、次のイベントに進む
-  if (popup) return <AdvScreen key={`${game.turn}-${popup.title}-${popup.lines.join('').length}-${game.pending.length}`} state={game} title={popup.title} lines={popup.lines} onEnd={closePopup} />
+  if (popup) return <AdvScreen key={`${game.turn}-${popup.title}-${popup.lines.join('').length}-${game.pending.length}`} state={game} title={popup.title} lines={popup.lines} dayLines={popup.dayLines} onEnd={closePopup} />
   return body
 }

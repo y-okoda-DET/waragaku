@@ -35,6 +35,12 @@ describe('1年間の流れ', () => {
       expect(seen).toContain(key)
   })
 
+  it('ライバル（御堂・真壁）の場面が1年のうちに起きる', () => {
+    const { seen } = play(5, () => 0)
+    for (const key of ['rival_kouen', 'rival_sode', 'rival_onaji_kumi', 'rival_kekka_page', 'rival_bus', 'rival_waku', 'rival_jiko_ato', 'rival_kadode_ato'])
+      expect(seen).toContain(key)
+  })
+
   it('面談で譲れないものが決まり、山場で守ると寸評とシェア文に出る', () => {
     // 面談で「相方と2人で売れる」（2番目）を選ぶ。ほかは最初の選択肢
     const { s, seen } = play(5, (key) => (key === 'mendan' ? 1 : 0))

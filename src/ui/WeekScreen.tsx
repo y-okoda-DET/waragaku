@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { TOTAL_TURNS, weekLabel } from '../game/data/calendar'
 import type { DayAction, NightAction } from '../game/engine'
 import { STAT_KEYS, STAT_LABEL, type GameState } from '../game/types'
+import { SKILL_BY_ID } from '../game/data/skills'
 import { NetaPanel } from './NetaPanel'
 import { Bar, Modal, PlayerAvatar, SkillBadge } from './parts'
 
@@ -19,10 +20,18 @@ const DAY_OPTIONS: { key: DayKey; label: string; hint: string }[] = [
 ]
 
 const AWASE = [
-  { v: 'park', label: '夜の公園（タダ）' },
-  { v: 'karaoke', label: 'カラオケ（2,000円）' },
-  { v: 'family', label: 'ファミレス（800円）' },
+  { v: 'park', label: '公園（タダ）', cost: 0 },
+  { v: 'karaoke', label: 'カラオケ（2,000円）', cost: 2000 },
+  { v: 'family', label: 'ファミレス（800円）', cost: 800 },
 ] as const
+// お金がかかる予定
+const DAY_COST: Partial<Record<DayKey, number>> = { jishulive: 2000, kangeki: 1500 }
+const NIGHT_COST: Record<string, number> = { douki: 3000 }
+
+// 来週の家賃と食費。これが払えないと、昼はバイトしか選べない
+function weeklyNeed(s: GameState): number {
+  return 5000 + (s.player.origin === 'tokyo' && !s.flags.isourou ? 10000 : 0) + (s.skills.includes('rouhi') ? 3000 : 0)
+}
 const JISHUREN = [
   { v: 'hassei', label: '発声・滑舌' },
   { v: 'kintore', label: '筋トレ' },
@@ -35,10 +44,13 @@ const BAITO = [
   { v: 'call', label: 'コールセンター' },
 ] as const
 
-type Sheet = 'neta' | 'people' | null
+type Sheet = 'neta' | 'people' | 'skills' | null
 
 export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: (d: DayAction, n: NightAction) => void; onNeta: (s: GameState) => void }) {
-  const [day, setDay] = useState<DayKey>('neta')
+  const need = weeklyNeed(state)
+  const mustWork = state.money < need
+  const [day, setDay] = useState<DayKey>(mustWork ? 'baito' : 'neta')
+  const [skill, setSkill] = useState<string | null>(null)
   const [awase, setAwase] = useState<(typeof AWASE)[number]['v']>('park')
   const [jishuren, setJishuren] = useState<(typeof JISHUREN)[number]['v']>('hassei')
   const [baito, setBaito] = useState<(typeof BAITO)[number]['v']>('izakaya')
@@ -47,13 +59,20 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
   const [sheet, setSheet] = useState<Sheet>(null)
 
   const p = state.player
+  const dayLocked = (k: DayKey) => (mustWork && k !== 'baito' ? '生活費が足りない' : (DAY_COST[k] ?? 0) > state.money ? 'お金が足りない' : '')
+  const awaseLocked = (v: string) => ((AWASE.find((a) => a.v === v)?.cost ?? 0) > state.money ? 'お金が足りない' : '')
+  const nightLocked = (k: string) => ((NIGHT_COST[k] ?? 0) > state.money ? 'お金が足りない' : '')
+  // 選んでいた予定がお金で選べなくなったら、バイトにする
+  const curDay: DayKey = dayLocked(day) ? 'baito' : day
+  const curNight = nightLocked(night) ? 'sleep' : night
   const buildDay = (): DayAction => {
-    if (day === 'awase') return { type: 'awase', place: awase }
+    const day = curDay
+    if (day === 'awase') return { type: 'awase', place: awaseLocked(awase) ? 'park' : awase }
     if (day === 'jishuren') return { type: 'jishuren', kind: jishuren }
     if (day === 'baito') return { type: 'baito', kind: baito }
     return { type: day } as DayAction
   }
-  const buildNight = (): NightAction => (night.startsWith('nomi:') ? { type: 'nomi', senior: night.slice(5) } : ({ type: night } as NightAction))
+  const buildNight = (): NightAction => (curNight.startsWith('nomi:') ? { type: 'nomi', senior: curNight.slice(5) } : ({ type: curNight } as NightAction))
 
   const weakest = STAT_KEYS.reduce((a, b) => (state.stats[b] < state.stats[a] ? b : a))
   const nightOptions = [
@@ -63,8 +82,8 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
     { k: 'egosa', label: 'エゴサする', hint: 'やる気が上下する', tag: '' },
     { k: 'sleep', label: '早く寝る', hint: '体調＋', tag: '' },
   ]
-  const dayLabel = DAY_OPTIONS.find((o) => o.key === day)!.label
-  const nightLabel = nightOptions.find((o) => o.k === night)?.label ?? ''
+  const dayLabel = DAY_OPTIONS.find((o) => o.key === curDay)!.label
+  const nightLabel = nightOptions.find((o) => o.k === curNight)?.label ?? ''
   const dayTag = (k: DayKey) => (k === 'awase' && state.partner ? `${state.partner.name}と！` : '')
 
   return (
@@ -107,8 +126,9 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
       </div>
 
       <div className="stat-row">
-        <button onClick={() => setSheet('neta')}>ネタ帳（完成度 {Math.round(state.neta.polish)}）</button>
-        <button onClick={() => setSheet('people')}>人間関係{state.skills.length > 0 && '・芸風'}</button>
+        <button onClick={() => setSheet('neta')}>ネタ帳（{Math.round(state.neta.polish)}）</button>
+        <button onClick={() => setSheet('people')}>人間関係</button>
+        <button onClick={() => setSheet('skills')}>特殊能力（{state.skills.length}）</button>
       </div>
 
       <div className="row-between">
@@ -124,28 +144,30 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
 
       {tab === 'day' ? (
         <>
+          {mustWork && <p className="warn-note">来週の家賃と食費（¥{need.toLocaleString()}）が払えない。今週はバイトしかない。</p>}
           <div className="tiles">
             {DAY_OPTIONS.map((o) => (
               <button
                 key={o.key}
-                className={`tile ${day === o.key ? 'on' : ''}`}
+                className={`tile ${curDay === o.key ? 'on' : ''}`}
                 onClick={() => setDay(o.key)}
+                disabled={!!dayLocked(o.key)}
               >
-                {dayTag(o.key) && <span className="tile-tag">{dayTag(o.key)}</span>}
+                {dayLocked(o.key) ? <span className="tile-tag lock">{dayLocked(o.key)}</span> : dayTag(o.key) && <span className="tile-tag">{dayTag(o.key)}</span>}
                 <span className="tile-name">{o.label}</span>
                 <span className="tile-hint">{o.hint}</span>
               </button>
             ))}
           </div>
-          {day === 'awase' && <Sub items={AWASE} value={awase} onChange={setAwase} />}
-          {day === 'jishuren' && <Sub items={JISHUREN} value={jishuren} onChange={setJishuren} />}
-          {day === 'baito' && <Sub items={BAITO} value={baito} onChange={setBaito} />}
+          {curDay === 'awase' && <Sub items={AWASE} value={awase} onChange={setAwase} locked={awaseLocked} />}
+          {curDay === 'jishuren' && <Sub items={JISHUREN} value={jishuren} onChange={setJishuren} />}
+          {curDay === 'baito' && <Sub items={BAITO} value={baito} onChange={setBaito} />}
         </>
       ) : (
         <div className="tiles">
           {nightOptions.map((o) => (
-            <button key={o.k} className={`tile ${night === o.k ? 'on' : ''}`} onClick={() => setNight(o.k)}>
-              {o.tag && <span className="tile-tag">{o.tag}</span>}
+            <button key={o.k} className={`tile ${curNight === o.k ? 'on' : ''}`} onClick={() => setNight(o.k)} disabled={!!nightLocked(o.k)}>
+              {nightLocked(o.k) ? <span className="tile-tag lock">{nightLocked(o.k)}</span> : o.tag && <span className="tile-tag">{o.tag}</span>}
               <span className="tile-name">{o.label}</span>
               <span className="tile-hint">{o.hint}</span>
             </button>
@@ -198,14 +220,29 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
             </div>
           ))}
           <p className="small">先輩は、仲が良いだけでは仕事に呼んでくれない。ウケたところを見せると「認め」が上がる。</p>
-          {state.skills.length > 0 && (
+        </Modal>
+      )}
+      {sheet === 'skills' && (
+        <Modal title="特殊能力" onNext={() => setSheet(null)} nextLabel="閉じる">
+          {state.skills.length === 0 ? (
+            <p className="small">まだ何もない。人と仲良くなったり、ネタ見せで結果を出すと身につく。</p>
+          ) : (
             <>
-              <h2>芸風スキル</h2>
+              <p className="small">タップすると効果が見られる。</p>
               <div className="skills">
                 {state.skills.map((id) => (
-                  <SkillBadge key={id} id={id} />
+                  <button key={id} className={`skill-pick ${skill === id ? 'on' : ''}`} onClick={() => setSkill(skill === id ? null : id)}>
+                    <SkillBadge id={id} />
+                  </button>
                 ))}
               </div>
+              {skill && SKILL_BY_ID[skill] && (
+                <div className="skill-desc">
+                  <b>{SKILL_BY_ID[skill].name}</b>
+                  {state.gifts?.[skill] && <span className="small">（{state.gifts[skill]}から受け継いだ）</span>}
+                  <p>{SKILL_BY_ID[skill].desc}</p>
+                </div>
+              )}
             </>
           )}
         </Modal>
@@ -214,11 +251,11 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
   )
 }
 
-function Sub<T extends string>({ items, value, onChange }: { items: readonly { v: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+function Sub<T extends string>({ items, value, onChange, locked }: { items: readonly { v: T; label: string }[]; value: T; onChange: (v: T) => void; locked?: (v: T) => string }) {
   return (
     <div className="chips sub">
       {items.map((i) => (
-        <button key={i.v} className={`chip ${i.v === value ? 'on' : ''}`} onClick={() => onChange(i.v)}>
+        <button key={i.v} className={`chip ${i.v === value ? 'on' : ''}`} onClick={() => onChange(i.v)} disabled={!!locked?.(i.v)}>
           {i.label}
         </button>
       ))}

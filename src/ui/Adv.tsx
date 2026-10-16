@@ -22,7 +22,15 @@ function LogPanel({ onClose }: { onClose: () => void }) {
     ref.current?.scrollTo({ top: ref.current.scrollHeight })
   }, [])
   return (
-    <div className="adv-log" role="dialog" aria-label="会話のログ" onClick={onClose}>
+    <div
+      className="adv-log"
+      role="dialog"
+      aria-label="会話のログ"
+      onClick={(e) => {
+        e.stopPropagation()
+        onClose()
+      }}
+    >
       <div className="adv-log-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="row-between">
           <h2>ログ</h2>
@@ -51,7 +59,7 @@ function lookOf(name: string): { hair: string; outfit: string } {
   return { hair: HAIR[h % HAIR.length], outfit: OUTFITS[(h >>> 3) % OUTFITS.length].color }
 }
 
-const KNOWN = [...PARTNER_CANDIDATES.map((p) => p.name), CIRCLE_PARTNER.name, ...INITIAL_SENIORS.map((s) => s.name), '講師', '辻堂', '三宅', '店長', '支配人', '御堂', '真壁', '社員']
+const KNOWN = [...PARTNER_CANDIDATES.map((p) => p.name), CIRCLE_PARTNER.name, ...INITIAL_SENIORS.map((s) => s.name), '辻堂', '三宅', '店長', '支配人', '御堂', '真壁', '社員']
 
 function namesOf(state: GameState): string[] {
   const names = new Set<string>([state.player.callName, ...KNOWN])
@@ -69,7 +77,7 @@ function Chara({ state, name, expr, focus, me }: { state: GameState; name: strin
   )
 }
 
-export function AdvScreen({ state, title, lines: script, place, onEnd, after }: { state: GameState; title: string; lines: string[]; place?: string; onEnd?: () => void; after?: ReactNode }) {
+export function AdvScreen({ state, title, lines: script, place, onEnd, after, dayLines }: { state: GameState; title: string; lines: string[]; place?: string; onEnd?: () => void; after?: ReactNode; dayLines?: number }) {
   const [index, setIndex] = useState(0)
   const [shown, setShown] = useState(0)
   const parsed = script.map(parseLine)
@@ -108,11 +116,12 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after }: 
   const talking = line.trimStart().startsWith('「')
   const focus = shot.speaker ?? (shot.cast.length === 1 ? shot.cast[0] : undefined)
   const exprFor = (n: string): Expr => (n !== focus ? 'normal' : n === cur?.speaker && cur.expr ? cur.expr : exprOf(line))
-  const bg = backgrounds(title, lines, place)[index]
+  const bg = backgrounds(title, lines, place, dayLines)[index]
 
   return (
-    <div className="screen adv">
-      <div className={`adv-scene ${bg ? 'has-bg' : ''}`} onClick={advance} style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
+    // 画面のどこをタップしても進む（選択肢とログは除く）
+    <div className={`screen adv ${done && after ? 'has-after' : ''}`} onClick={advance}>
+      <div className={`adv-scene ${bg ? 'has-bg' : ''}`} style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
         {!bg && (
           <>
             <span className="blob" style={{ right: -70, top: -60, width: 230, height: 230, background: 'var(--sun)' }} />
@@ -140,7 +149,7 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after }: 
           ))}
         </div>
       </div>
-      <button className={`adv-box ${talking ? 'talk' : ''}`} onClick={advance} aria-label="次へ進む">
+      <button className={`adv-box ${talking ? 'talk' : ''}`} aria-label="次へ進む">
         {cur?.speaker && <span className="adv-name">{cur.speaker}</span>}
         <span className="adv-text">
           {line.slice(0, shown)}
@@ -150,11 +159,12 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after }: 
           </span>
         </span>
         {!typing && !(last && after) && <span className="adv-next" aria-hidden="true">▼</span>}
-        <span className="adv-count">
-          {index + 1}/{lines.length}
-        </span>
       </button>
-      {done && after && <div className="adv-after">{after}</div>}
+      {done && after && (
+        <div className="adv-after" onClick={(e) => e.stopPropagation()}>
+          {after}
+        </div>
+      )}
       {log && <LogPanel onClose={() => setLog(false)} />}
     </div>
   )

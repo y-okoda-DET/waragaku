@@ -1,6 +1,7 @@
 import { CARD_BY_ID } from './data/cards'
 import { has } from './core'
 import type { Rng } from './rng'
+import { showcaseLines } from './showcase'
 import type { CardSlot, GameState, StageKind, StageResult, StatKey, Tally } from './types'
 
 export type Audience = 'teacher' | 'uchiwa' | 'general' | 'judge'
@@ -199,19 +200,50 @@ function pickComment(state: GameState, b: Breakdown, level: number, rng: Rng): s
 }
 
 type Grade = 'great' | 'good' | 'miss'
-const GRADE_BONUS: Record<Grade, number> = { great: 12, good: 4, miss: -8 }
+// 見せ場1つあたりの加点。ドッとシーンで結果が1〜2段階変わるくらいの差をつける
+// 見せ場が2つある大舞台は、合計が大きくなりすぎないよう1つあたりを少し割り引く
+const GRADE_BONUS: Record<Grade, number> = { great: 24, good: 6, miss: -22 }
+const BIG_STAGE_RATE = 0.75
+
+export function showcaseBonus(showcase: Grade[]): number {
+  const rate = showcase.length >= 2 ? BIG_STAGE_RATE : 1
+  return Math.round(showcase.reduce((sum, g) => sum + GRADE_BONUS[g], 0) * rate)
+}
+
+// 本番の事故。セリフ飛び・噛み・段取りミス
+type Accident = 'tobi' | 'kami' | 'dandori'
+const ACCIDENT_TEXT: Record<Accident, string> = {
+  tobi: '途中でセリフが飛んだ。相方がなんとかつないだ。',
+  kami: '一番大事なセリフで噛んだ。客席の空気が一瞬止まった。',
+  dandori: '段取りを間違えて、くだりの順番が入れ替わった。',
+}
+
+// 事故の起きやすさ。体調が悪いほど上がる。噛まないスキルがあれば大きく下がる
+export function accidentRate(state: GameState): number {
+  const p = state.condition < 30 ? 0.28 : state.condition < 45 ? 0.12 : 0.05
+  return has(state, 'kamanai') ? p / 5 : p
+}
+
+// 本番前に出す、体調の注意書き。問題なければ null
+export function conditionWarning(state: GameState): string | null {
+  if (state.condition < 30) return '体調が悪い。セリフが飛びやすい（本番で事故が起きやすい）'
+  if (state.condition < 45) return '体調がいまいち。本番で噛みやすい'
+  return null
+}
 
 // 1本のネタの中で起きたことを数える。見せ場の出来とウケの大きさから決める
-function countTally(state: GameState, level: number, showcase: Grade[], slipped: boolean, rng: Rng): Tally {
+function countTally(state: GameState, level: number, showcase: Grade[], accident: Accident | null, rng: Rng): Tally {
   const base = [rng.int(0, 2), rng.int(3, 5), rng.int(6, 8), rng.int(9, 12)][level]
   const great = showcase.filter((g) => g === 'great').length
   const miss = showcase.filter((g) => g === 'miss').length
-  const kamiRate = has(state, 'kamanai') ? 0.05 : state.neta.polish < 40 ? 0.45 : 0.2
+  // 体調が悪いと、事故にならない程度の噛みも増える
+  const tired = state.condition < 30 ? 0.2 : state.condition < 45 ? 0.1 : 0
+  const kamiRate = has(state, 'kamanai') ? 0.05 : (state.neta.polish < 40 ? 0.45 : 0.2) + tired
   return {
     warai: Math.max(0, base + great * 2 - miss),
-    suberi: Math.max(0, [rng.int(3, 5), rng.int(1, 3), rng.int(0, 1), 0][level] + miss),
-    kami: rng.chance(kamiRate) ? rng.int(1, 2) : 0,
-    tobashi: slipped ? 1 : 0,
+    suberi: Math.max(0, [rng.int(3, 5), rng.int(1, 3), rng.int(0, 1), 0][level] + miss + (accident === 'dandori' ? 1 : 0)),
+    kami: (rng.chance(kamiRate) ? rng.int(1, 2) : 0) + (accident === 'kami' ? 1 : 0),
+    tobashi: accident === 'tobi' ? 1 : 0,
     hakushu: level >= 3 ? 1 + great : level === 2 && great > 0 ? 1 : 0,
     dokudan: level >= 3 && great === showcase.length && showcase.length > 0,
   }
@@ -245,17 +277,19 @@ export function performStage(state: GameState, kind: StageKind, rng: Rng, showca
 
   const scored = scoreStage(state, spec, rng, lines)
   const b = scored.b
-  const score = scored.score + showcase.reduce((sum, g) => sum + GRADE_BONUS[g], 0)
+  const score = scored.score + showcaseBonus(showcase)
   const margin = score - spec.difficulty
   let level: 0 | 1 | 2 | 3 = margin < 0 ? 0 : margin < 12 ? 1 : margin < 26 ? 2 : 3
 
-  // セリフ飛び
-  const slip = has(state, 'kamanai') ? 0.01 : 0.06
-  let slipped = false
-  if (level > 0 && rng.chance(slip)) {
-    slipped = true
-    level = (level - 1) as 0 | 1 | 2
-    lines.push('途中でセリフが飛んだ。相方がなんとかつないだ。')
+  // 見せ場で何が起きたか。結果はここで大きく動く
+  lines.push(...showcaseLines(state, kind, showcase))
+
+  // 本番の事故。体調が悪いほど起きやすい
+  let accident: Accident | null = null
+  if (rng.chance(accidentRate(state))) {
+    accident = rng.pick(['tobi', 'tobi', 'kami', 'dandori'] as const)
+    if (level > 0) level = (level - 1) as 0 | 1 | 2
+    lines.push(state.condition < 45 ? `体調の悪さがたたった。${ACCIDENT_TEXT[accident]}` : ACCIDENT_TEXT[accident])
   }
   if (level === 0 && has(state, 'suberikaeshi') && rng.chance(0.4)) {
     level = 1
@@ -267,7 +301,15 @@ export function performStage(state: GameState, kind: StageKind, rng: Rng, showca
   if (level === 2) lines.push('ちゃんと笑いが返ってきた。')
   if (level === 3) lines.push('笑い声で次のセリフが聞こえない。')
 
-  const tally = countTally(state, level, showcase, slipped, rng)
+  // 見せ場の出来と、全体の結果のつながりを一言で
+  if (showcase.length) {
+    const allGreat = showcase.every((g) => g === 'great')
+    const allMiss = showcase.every((g) => g === 'miss')
+    if (allGreat) lines.push(level >= 2 ? '見せ場で掴んだ流れのまま、最後まで走り切った。' : '見せ場はドッと来た。ただ、ほかが追いつかなかった。')
+    if (allMiss) lines.push(level <= 1 ? '見せ場で冷えた空気を、最後まで取り戻せなかった。' : '見せ場は外したが、ネタの地力で取り返した。')
+  }
+
+  const tally = countTally(state, level, showcase, accident, rng)
   // 授業と寄席は組数と順位を出す。大会の合否はイベント側で書く
   const field = kind === 'netamise' ? 12 : kind === 'live' ? 20 : null
   const rank = field ? Math.max(1, Math.min(field, Math.round(field * (0.55 - margin / 60)))) : null

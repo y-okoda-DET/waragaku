@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { AUDIENCE_TASTE, LEAN_LABEL, gradeTsukkomi, gradeWord, maDuration, needleShake, playerLean, shuffledOptions, tsukkomiZones, wordHint, type Scene, type ShowcaseGrade, type TsukkomiScene, type WordScene } from '../game/showcase'
-import { STAGES } from '../game/stage'
+import { AUDIENCE_TASTE, LEAN_LABEL, gradeTsukkomi, gradeWord, maDuration, needleShake, playerLean, rememberPicks, shuffledOptions, tsukkomiZones, wordHint, type ConteSetting, type Scene, type ShowcaseGrade, type ShowcasePick, type TsukkomiScene, type WordScene } from '../game/showcase'
+import { STAGES, conditionWarning } from '../game/stage'
 import type { GameState, StageKind } from '../game/types'
 
 const GRADE_SOUND: Record<ShowcaseGrade, string> = { great: 'ドッ', good: 'クスッ', miss: 'シーン…' }
@@ -8,16 +8,21 @@ const GRADE_SOUND: Record<ShowcaseGrade, string> = { great: 'ドッ', good: 'ク
 // 見せ場を順番に遊ばせ、全部終わったら出来をまとめて返す
 export function ShowcaseScreen({ state, kind, scenes, onDone, nextLabel = '続きは結果で', footer }: { state: GameState; kind: StageKind; scenes: Scene[]; onDone: (grades: ShowcaseGrade[]) => void; nextLabel?: string; footer?: ReactNode }) {
   const [index, setIndex] = useState(0)
-  const [grades, setGrades] = useState<ShowcaseGrade[]>([])
+  const [picks, setPicks] = useState<ShowcasePick[]>([])
   const scene = scenes[index]
   const partner = state.partner?.name ?? '相方'
+  const warning = conditionWarning(state)
 
-  const finish = (g: ShowcaseGrade) => {
-    const next = [...grades, g]
+  // 何を言ったかも覚えておき、結果文で引用する
+  const finish = (pick: ShowcasePick) => {
+    const next = [...picks, pick]
     if (index + 1 < scenes.length) {
-      setGrades(next)
+      setPicks(next)
       setIndex(index + 1)
-    } else onDone(next)
+    } else {
+      rememberPicks(state, kind, next)
+      onDone(next.map((p) => p.grade))
+    }
   }
 
   return (
@@ -28,6 +33,12 @@ export function ShowcaseScreen({ state, kind, scenes, onDone, nextLabel = '続�
           見せ場 {index + 1} / {scenes.length}
         </span>
       </div>
+      {scene.conte && <ConteLabel conte={scene.conte} />}
+      {warning && (
+        <p className="small center" style={{ color: 'var(--coral)', fontWeight: 900, margin: 0 }}>
+          {warning}
+        </p>
+      )}
       {scene.kind === 'word' ? (
         <WordGame key={index} state={state} kind={kind} seed={state.turn * 31 + state.stageHistory.length * 7 + index} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
       ) : (
@@ -36,6 +47,23 @@ export function ShowcaseScreen({ state, kind, scenes, onDone, nextLabel = '続�
       {footer}
     </div>
   )
+}
+
+// コントの設定。どこで、自分と相方が誰を演じているか
+function ConteLabel({ conte }: { conte: ConteSetting }) {
+  return (
+    <div className="sc-read">
+      <span>
+        <b>設定</b>
+        {conte.place}（自分＝{conte.me}／相方＝{conte.you}）
+      </span>
+    </div>
+  )
+}
+
+// 吹き出しの名札。コントのときは役名を添える
+function speaker(partner: string, conte?: ConteSetting): string {
+  return conte ? `${partner}（${conte.you}）` : partner
 }
 
 function Outcome({ grade, label, nextLabel, onNext }: { grade: ShowcaseGrade; label: string; nextLabel: string; onNext: () => void }) {
@@ -56,7 +84,7 @@ function Outcome({ grade, label, nextLabel, onNext }: { grade: ShowcaseGrade; la
 
 const WORD_SECONDS = 8
 
-function WordGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { state: GameState; kind: StageKind; seed: number; scene: WordScene; partner: string; nextLabel: string; onDone: (g: ShowcaseGrade) => void }) {
+function WordGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { state: GameState; kind: StageKind; seed: number; scene: WordScene; partner: string; nextLabel: string; onDone: (p: ShowcasePick) => void }) {
   const [picked, setPicked] = useState<number | null>(null)
   const [timedOut, setTimedOut] = useState(false)
   const [left, setLeft] = useState(WORD_SECONDS)
@@ -84,11 +112,16 @@ function WordGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { st
       <div className="studio sc-stage">
         <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
         <div className="sc-bubble">
-          <span className="telop-tag">{partner}</span>
+          <span className="telop-tag">{speaker(partner, scene.conte)}</span>
           <span className="sc-line">「{scene.furi}」</span>
         </div>
         {done && <div className={`sc-answer ${grade === 'miss' ? 'off' : ''}`}>{opt ? `「${opt.text}」` : '（……考えすぎて、間が空いた）'}</div>}
-        {done && opt && <div className="sc-react">{partner}{opt.react}</div>}
+        {done && opt && (
+          <div className="sc-react">
+            {speaker(partner, scene.conte)}
+            {opt.react}
+          </div>
+        )}
       </div>
       {!done ? (
         <>
@@ -105,7 +138,7 @@ function WordGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { st
               {LEAN_LABEL[playerLean(state)]}
             </span>
           </div>
-          <p className="sc-help">ボケで返す。今日の客に一番ウケるのはどれ？</p>
+          <p className="sc-help">{scene.conte ? `${scene.conte.me}になりきって、ボケで返す。一番ウケるのはどれ？` : 'ボケで返す。今日の客に一番ウケるのはどれ？'}</p>
           <div className="options">
             {options.map((o, i) => (
               <button key={i} className={`option sc-opt ${hint && grades[i] === 'great' ? 'hint' : ''}`} onClick={() => setPicked(i)}>
@@ -116,7 +149,7 @@ function WordGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { st
           </div>
         </>
       ) : (
-        <Outcome nextLabel={nextLabel} grade={grade} label={grade === 'great' ? '会心のボケ' : grade === 'good' ? (opt?.flavor === playerLean(state) ? '客には少し遠かった' : '自分らしさは薄かった') : timedOut ? '時間切れ' : '外した'} onNext={() => onDone(grade)} />
+        <Outcome nextLabel={nextLabel} grade={grade} label={grade === 'great' ? '会心のボケ' : grade === 'good' ? (opt?.flavor === playerLean(state) ? '客には少し遠かった' : '自分らしさは薄かった') : timedOut ? '時間切れ' : '外した'} onNext={() => onDone({ grade, said: opt?.text })} />
       )}
     </>
   )
@@ -124,7 +157,7 @@ function WordGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { st
 
 const TYPE_MS = 45
 
-function TsukkomiGame({ state, kind, scene, partner, nextLabel, onDone }: { state: GameState; kind: StageKind; scene: TsukkomiScene; partner: string; nextLabel: string; onDone: (g: ShowcaseGrade) => void }) {
+function TsukkomiGame({ state, kind, scene, partner, nextLabel, onDone }: { state: GameState; kind: StageKind; scene: TsukkomiScene; partner: string; nextLabel: string; onDone: (p: ShowcasePick) => void }) {
   const [shown, setShown] = useState(0)
   const [ma, setMa] = useState(0)
   const [result, setResult] = useState<{ grade: ShowcaseGrade; label: string } | null>(null)
@@ -169,7 +202,7 @@ function TsukkomiGame({ state, kind, scene, partner, nextLabel, onDone }: { stat
       <div className="studio sc-stage">
         <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
         <div className="sc-bubble">
-          <span className="telop-tag">{partner}</span>
+          <span className="telop-tag">{speaker(partner, scene.conte)}</span>
           <span className="sc-line">「{scene.boke.slice(0, shown)}」</span>
         </div>
         {result && <div className={`sc-answer ${result.grade === 'miss' ? 'off' : ''}`}>{result.label === 'ツッコミ忘れ' ? '（……ツッコミそびれた）' : `「${scene.tsukkomi}」`}</div>}
@@ -185,14 +218,14 @@ function TsukkomiGame({ state, kind, scene, partner, nextLabel, onDone }: { stat
             <span className="good">クスッ</span>
             <span className="great">ドッ</span>
           </div>
-          <p className="sc-help">{typing ? 'ボケを最後まで聞いて……' : '赤い「ドッ」の間を狙ってツッコむ！'}</p>
+          <p className="sc-help">{typing ? 'ボケを最後まで聞いて……' : scene.conte ? `${scene.conte.me}のまま、赤い「ドッ」の間でツッコむ！` : '赤い「ドッ」の間を狙ってツッコむ！'}</p>
           {shake > 0.01 && <p className="small center">大舞台で手が震えている（度胸が低いと針がブレる）</p>}
           <button className="primary big sc-tap" onClick={tap}>
             ツッコむ！
           </button>
         </>
       ) : (
-        <Outcome nextLabel={nextLabel} grade={result.grade} label={result.label} onNext={() => onDone(result.grade)} />
+        <Outcome nextLabel={nextLabel} grade={result.grade} label={result.label} onNext={() => onDone(result)} />
       )}
     </>
   )

@@ -137,7 +137,7 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         `ナレーション：同期は${s.classmates}人になった。`,
       ],
       choices: [
-        { reply: 'ナレーション：既読はつかなかった。3日後、「ありがとう」とだけ返ってきた。', label: '鮫島にLINEを送る', hint: '同期の結束＋・やる気−' },
+        { reply: 'ナレーション：「元気？」とだけ送った。送信ボタンを押す指が、少し重かった。', label: '鮫島にLINEを送る', hint: '同期の結束＋・やる気−' },
         { reply: 'ナレーション：同期LINEの通知は、その日も200件を超えていた。', label: '送らない', hint: '度胸＋' },
       ],
     }),
@@ -176,7 +176,6 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
       else {
         gain(s, 'adlib', 3)
         s.teacherEval = clamp(s.teacherEval - 2)
-        s.weekLog.push('辻堂「それで10秒使うな」。教室の後ろで、少しだけ笑いが起きた。')
       }
     },
   },
@@ -201,7 +200,6 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
       for (const id of classmatesOf(s)) tie(s, id, 2)
       if (c === 0) {
         gain(s, 'expr', 4)
-        s.weekLog.push('一度も動かずに、いちばん大きい笑いを取った。')
       } else {
         gain(s, 'guts', 2)
         gain(s, 'word', 2)
@@ -368,7 +366,6 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
       else if (c === 1) s.neta.polish = clamp(s.neta.polish + 8)
       else {
         gain(s, 'adlib', 3)
-        s.weekLog.push('本当にやってくれた。102回目は、ウケた。')
       }
     },
   },
@@ -468,11 +465,9 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         }
       } else if (c === 0) {
         s.money += 20000
-        s.weekLog.push('返事は保留にした。店長は「急がんでええ」と言って、まかないを大盛りにした。')
       } else {
         s.motivation = clamp(s.motivation + 10)
         tie(s, 'tencho', 4)
-        s.weekLog.push('店長は笑って言った。「ほな、売れたら食べ放題な。売れへんかったら、皿洗いからや」')
       }
     },
   },
@@ -538,7 +533,7 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
             ],
             choices: [
               { reply: `${pn(s)}（驚き）「……なんで、そっちが謝んねん」`, label: '追いかけて、先に謝る', hint: '関係値＋' },
-              { reply: 'ナレーション：既読はついた。返事は、朝になっても来なかった。', label: '「なんで飛ばすねん」とLINEを送る', hint: '関係値−・尖り＋' },
+              { reply: 'ナレーション：送信してから、言い方を3回後悔した。', label: '「なんで飛ばすねん」とLINEを送る', hint: '関係値−・尖り＋' },
               { reply: 'ナレーション：始発の時間。ベンチの横に、缶コーヒーが1本置いてあった。', label: 'ベンチに座ったまま朝を待つ', hint: 'やる気−' },
             ],
           },
@@ -605,14 +600,12 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
     resolve: (s, c) => {
       if (c === 0) {
         s.motivation = clamp(s.motivation + 10)
-        s.weekLog.push('「辞めるタイミングが、ずっとなかったんです」。会場が笑った。たぶん本当のことだった。')
       } else if (c === 1) {
         gain(s, 'word', 2)
         gain(s, 'idea', 2)
       } else {
         gain(s, 'guts', 3)
         s.edge += 2
-        s.weekLog.push('王者が笑って言った。「8年かけんでええよ。もっと早よ来て」')
       }
     },
   },
@@ -675,7 +668,7 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
             ],
         choices: leaving
           ? [
-              { reply: `${p.name}（落ち込み）「……そこまで言われたら、もうちょっとやるしかないやん」`, label: `${p.name}を引き止める`, hint: '関係値しだい' },
+              { reply: 'ナレーション：ドリンクバーの氷が溶ける音だけが、しばらく続いた。', label: `${p.name}を引き止める`, hint: '関係値しだい' },
               { reply: `${next}（笑い）「よろしく。……ネタ合わせ、明日からでええ？」`, label: `${next}と組み直す` },
               { reply: 'ナレーション：ひとりで帰る道は、思っていたより静かだった。', label: 'ピンでやっていく' },
             ]

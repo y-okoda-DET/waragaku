@@ -1178,6 +1178,8 @@ p {
   object-fit: contain;
   object-position: bottom;
   transform-origin: bottom center;
+  /* 絵の下の方は肩がコマの端で切れているので、場面の枠の下に少し沈めて隠す */
+  transform: translateY(12%);
   transition: transform 0.2s, filter 0.2s;
   pointer-events: none;
   user-select: none;
@@ -1191,7 +1193,7 @@ p {
   white-space: nowrap;
 }
 .adv-cast.has-focus .adv-chara:not(.focus) img {
-  transform: scale(0.95);
+  transform: translateY(12%) scale(0.95);
   filter: brightness(0.8);
 }
 .adv-cast.has-focus .adv-chara.focus {
@@ -1207,12 +1209,12 @@ p {
   position: relative;
   display: block;
   width: 100%;
-  min-height: 132px;
+  min-height: 112px;
   background: var(--card);
   border: var(--stroke) solid var(--line);
   border-radius: 16px;
   box-shadow: 0 5px 0 var(--line);
-  padding: 14px 16px 26px;
+  padding: 16px 16px 18px;
   font-weight: 700;
   font-size: 17px;
   line-height: 1.7;
@@ -1465,4 +1467,71 @@ p {
 .adv-log-list .log-choice {
   color: var(--coral);
   font-weight: 900;
+}
+
+/* お金が足りない予定 */
+.tile:disabled,
+.chip:disabled,
+.option:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.tile-tag.lock {
+  background: var(--line);
+  color: #fff;
+}
+.warn-note {
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--coral-light);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* 特殊能力 */
+.skill-pick {
+  all: unset;
+  cursor: pointer;
+  border-radius: 999px;
+}
+.skill-pick.on .skill {
+  outline: 3px solid var(--coral);
+}
+.skill-desc {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--sun-light);
+}
+.skill-desc p {
+  margin: 4px 0 0;
+}
+
+/* 会話：選択肢が出たら絵を小さくして、一画面に収める */
+.adv {
+  cursor: pointer;
+}
+.adv.has-after {
+  cursor: default;
+}
+.adv.has-after .adv-scene {
+  min-height: 30dvh;
+}
+.adv.has-after .adv-chara.art img {
+  max-height: clamp(120px, 24dvh, 200px);
+}
+.adv.has-after .adv-box {
+  min-height: 0;
+}
+.adv-after .option {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.input-label {
+  font-weight: 900;
+  font-size: 13px;
+  margin: 0 0 4px;
 }

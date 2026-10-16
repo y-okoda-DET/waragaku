@@ -2,6 +2,7 @@ import { DEV_STORIES, affinity, classmatesOf, tie } from './bonds'
 import { kodawariOf } from './kodawari'
 import { PARTNER_STORIES } from './partnerLines'
 import { YEAR_STORIES } from './yearEvents'
+import { RIVAL_STORIES } from './rivalEvents'
 import { CARDS } from './data/cards'
 import { PARTNER_CANDIDATES } from './data/people'
 import { clamp, count, gain, has, push, story, yen } from './core'
@@ -12,6 +13,7 @@ import type { GameState } from './types'
 export interface Choice {
   label: string
   reply?: string | string[] // 選んだあとの相手の反応（台本形式）
+  locked?: string // 選べない理由（お金が足りない、など）
   hint?: string
 }
 
@@ -109,7 +111,7 @@ export const STORIES: Record<string, StoryDef> = {
         'ナレーション：そこから2時間揉めた。ドリンクバーは4周した。',
       ],
       choices: [],
-      input: { placeholder: 'コンビ名', suggestions: ['ニッチモサッチモ', 'ドロップキック', 'かもめ食堂', '2700ミリ', 'ミッドナイト短パン'] },
+      input: { placeholder: 'ここにコンビ名を入力', suggestions: ['ニッチモサッチモ', 'ドロップキック', '夜行バス', '三角定規', 'ミッドナイト短パン'] },
     }),
     resolve: (s, _c, _r, _p, text) => {
       s.comboName = (text ?? '').trim() || 'ニッチモサッチモ'
@@ -170,7 +172,7 @@ export const STORIES: Record<string, StoryDef> = {
     },
   },
   contest_entry: {
-    view: (_s, p) => ({
+    view: (s, p) => ({
       title: p.kind === 'contest_conte' ? 'コント頂のエントリー' : '漫才天下一のエントリー',
       lines: [
         p.kind === 'contest_conte'
@@ -179,26 +181,26 @@ export const STORIES: Record<string, StoryDef> = {
         '辻堂（ふつう）「在学中に1個でも勝ったら、見る目変わるで。……俺のな」',
         'ナレーション：エントリー料はコンビで2,000円。',
       ],
-      choices: [{ reply: '辻堂（ふつう）「2,000円で客になるか、出る側になるか。出る側にしとけ」', label: 'エントリーする', hint: '2,000円' }, { reply: '辻堂（ふつう）「見送るんも判断や。客席から勝ったやつの顔、よう見とけ」', label: '今年は見送る' }],
+      choices: [{ reply: '辻堂（ふつう）「2,000円で客になるか、出る側になるか。出る側にしとけ」', label: 'エントリーする', hint: '2,000円', locked: s.money < 2000 ? 'お金が足りない' : undefined }, { reply: '辻堂（ふつう）「見送るんも判断や。客席から勝ったやつの顔、よう見とけ」', label: '今年は見送る' }],
     }),
     resolve: (s, c, _r, p) => {
-      if (c === 0) {
+      if (c === 0 && s.money >= 2000) {
         s.money -= 2000
         push(s, { type: 'stage', kind: p.kind as 'contest_conte' | 'contest_manzai' })
       }
     },
   },
   gasshuku: {
-    view: () => ({
+    view: (s) => ({
       title: '夏の強化合宿',
       lines: [
         'ナレーション：夏の強化合宿。東西合同、2泊3日。参加費は4万円で自由参加。',
         '灰原（ふつう）「行きのバスの席順な、秋のクラス替えと関係あるって噂。……噂やで。毎年当たってるけど」',
       ],
-      choices: [{ reply: '灰原（笑い）「バスの席、一番前だけはやめとき。講師の隣やで」', label: '行く', hint: '40,000円' }, { reply: '灰原（ふつう）「4万あったら家賃やもんな。合宿のネタ、あとで動画見せたるわ」', label: 'お金がないので行かない' }],
+      choices: [{ reply: '灰原（笑い）「バスの席、一番前だけはやめとき。講師の隣やで」', label: '行く', hint: '40,000円', locked: s.money < 40000 ? 'お金が足りない' : undefined }, { reply: '灰原（ふつう）「4万あったら家賃やもんな。合宿のネタ、あとで動画見せたるわ」', label: 'お金がないので行かない' }],
     }),
     resolve: (s, c, rng) => {
-      if (c === 1) {
+      if (c === 1 || s.money < 40000) {
         s.weekLog.push('合宿に行かなかった。SNSに流れてくる合宿の写真を、バイト先の休憩室で見た。')
         return
       }
@@ -500,7 +502,7 @@ export const STORIES: Record<string, StoryDef> = {
   },
 }
 
-Object.assign(STORIES, DEV_STORIES, YEAR_STORIES, PARTNER_STORIES)
+Object.assign(STORIES, DEV_STORIES, YEAR_STORIES, PARTNER_STORIES, RIVAL_STORIES)
 
 export function storyView(s: GameState, key: string, params: Record<string, string | number> = {}): StoryView {
   const view = STORIES[key].view(s, params)

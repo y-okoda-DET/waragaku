@@ -35,6 +35,8 @@ export const SKILLS: SkillDef[] = [
   { id: 'kurouto', name: '玄人殺し', kind: 'buki', desc: '作家・審査員に強く刺さる（学生お笑い臭が化けた）' },
   { id: 'bakushou', name: '爆笑請負人', kind: 'kiwami', desc: '大舞台で爆発しやすい' },
   { id: 'kumi', name: '秘蔵っ子', kind: 'kiwami', desc: '先輩に引き上げてもらえる' },
+  // 入学時に、たまに最初から持っている
+  { id: 'koukou_sho', name: '高校お笑い賞', kind: 'buki', desc: '高校生の大会で賞をとった。最初から度胸と発想力が高く、先輩にも名前を知られている' },
   // 発展イベントで受け継ぐ特殊能力（data/bonds の人ごとに1つ）
   { id: 'hitorashi', name: '人たらし', kind: 'gift', desc: '同期や先輩と仲良くなりやすい' },
   { id: 'netacho_oni', name: 'ネタ帳の鬼', kind: 'gift', desc: 'ネタ作りでネタの種を思いつきやすい' },

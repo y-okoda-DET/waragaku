@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createGame } from '../game/engine'
-import { TSUKKOMI_SCENES, WORD_SCENES, type Lean, type ShowcaseGrade } from '../game/showcase'
-import type { GameState, Role } from '../game/types'
+import { scenePool, type Lean, type ShowcaseGrade } from '../game/showcase'
+import type { GameState, Role, Style } from '../game/types'
 import { ShowcaseScreen } from './ShowcaseScreen'
 
 type Level = 'low' | 'high'
@@ -16,12 +16,13 @@ const STAGE_CHOICES: [PracticeStage, string][] = [
 ]
 
 // ミニゲームだけを繰り返し遊ぶ練習モード。セーブには残さない
-function practiceState(role: Role, level: Level, lean: Lean, round: number): GameState {
-  const s = createGame({ name: '練習', callName: '練習', background: 'salaryman', origin: 'local', role, style: 'manzai', hairColor: '#333', outfit: 'parka', seed: 1 })
+function practiceState(role: Role, style: Style, level: Level, lean: Lean, round: number): GameState {
+  const s = createGame({ name: '練習', callName: '練習', background: 'salaryman', origin: 'local', role, style, hairColor: '#333', outfit: 'parka', seed: 1 })
   const v = level === 'high' ? 70 : 15
   // シュール寄りは発想が表現より10以上高い
   const idea = lean === 'shuru' ? v + 15 : v
-  return { ...s, turn: round, stats: { ...s.stats, idea, word: v, expr: v, guts: v } }
+  // 練習では体調の注意書きは出さない
+  return { ...s, turn: round, condition: 100, stats: { ...s.stats, idea, word: v, expr: v, guts: v } }
 }
 
 function Choice<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: [T, string][]; onChange: (v: T) => void }) {
@@ -44,6 +45,7 @@ export function PracticeScreen({ onBack }: { onBack: () => void }) {
   const [level, setLevel] = useState<Level>('low')
   const [stage, setStage] = useState<PracticeStage>('netamise')
   const [lean, setLean] = useState<Lean>('oudou')
+  const [style, setStyle] = useState<Style>('manzai')
   const [round, setRound] = useState(0)
   const [log, setLog] = useState<ShowcaseGrade[]>([])
 
@@ -63,6 +65,15 @@ export function PracticeScreen({ onBack }: { onBack: () => void }) {
             ]}
           />
           <Choice label="舞台" value={stage} onChange={setStage} options={STAGE_CHOICES} />
+          <Choice
+            label="ネタ"
+            value={style}
+            onChange={setStyle}
+            options={[
+              ['manzai', '漫才'],
+              ['conte', 'コント'],
+            ]}
+          />
           <Choice
             label="芸風（ボケのとき）"
             value={lean}
@@ -86,8 +97,8 @@ export function PracticeScreen({ onBack }: { onBack: () => void }) {
       </div>
     )
 
-  const state = practiceState(role, level, lean, round)
-  const pool = role === 'boke' ? WORD_SCENES : TSUKKOMI_SCENES
+  const state = practiceState(role, style, level, lean, round)
+  const pool = scenePool(role === 'boke' ? 'word' : 'tsukkomi', style)
   const scene = pool[round % pool.length]
   const count = (g: ShowcaseGrade) => log.filter((x) => x === g).length
 
