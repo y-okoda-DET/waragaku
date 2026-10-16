@@ -1,3 +1,10 @@
+/* タイトル用：築豊初号明朝OFL（SIL OFL、src/assets/fonts/OFL-TsukuhouShogoMin.txt）。タイトルの文字だけを抜き出したもの */
+@font-face {
+  font-family: 'Tsukuhou Shogo Mincho';
+  src: url('./assets/fonts/TsukuhouShogoMin-title.woff2') format('woff2');
+  font-display: block;
+}
+
 /* V案「明るいポップ」: クリーム地・黒の太線・ひまわり色と珊瑚色 */
 :root {
   --bg: #fffaf0;
@@ -203,21 +210,22 @@ p {
   padding: 2px 14px;
 }
 .title-logo {
+  font-family: 'Tsukuhou Shogo Mincho', var(--display);
+  font-weight: 400;
   font-size: 58px;
   line-height: 1.1;
   color: var(--coral);
   -webkit-text-stroke: 3px var(--ink);
   paint-order: stroke fill;
-  text-shadow: 4px 4px 0 var(--ink);
   transform: rotate(-4deg);
   margin: 10px 0 14px;
 }
 .title-logo small {
   display: block;
   margin-top: 10px;
-  font-family: 'M PLUS Rounded 1c', sans-serif;
-  font-weight: 900;
-  font-size: 16px;
+  font-family: 'Tsukuhou Shogo Mincho', 'M PLUS Rounded 1c', sans-serif;
+  font-weight: 400;
+  font-size: 17px;
   color: var(--ink);
   -webkit-text-stroke: 0;
   text-shadow: none;
