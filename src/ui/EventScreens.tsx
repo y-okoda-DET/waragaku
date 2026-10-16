@@ -4,11 +4,28 @@ import { storyView } from '../game/events'
 import { STAGES } from '../game/stage'
 import type { GameState, StageKind, StageResult } from '../game/types'
 import { AdvScreen } from './Adv'
+import { pushLog } from './log'
 import { NetaPanel } from './NetaPanel'
 
 export function StoryScreen({ state, eventKey, params, onChoose }: { state: GameState; eventKey: string; params?: Record<string, string | number>; onChoose: (choice: number, text?: string) => void }) {
   const view = storyView(state, eventKey, params)
   const [text, setText] = useState('')
+  // 選んだあとの相手の反応。選択肢がセリフ（「…」）なら、まず主人公がそれを言う
+  const [picked, setPicked] = useState<number | null>(null)
+  const choose = (i: number) => {
+    const c = view.choices[i]
+    const spoken = c.label.startsWith('「') && c.label.endsWith('」')
+    if (!spoken || !c.reply) pushLog({ text: c.label, choice: true })
+    const reply = c.reply ? (Array.isArray(c.reply) ? c.reply : [c.reply]) : []
+    if (reply.length) setPicked(i)
+    else onChoose(i)
+  }
+  if (picked !== null) {
+    const c = view.choices[picked]
+    const reply = Array.isArray(c.reply) ? c.reply : [c.reply ?? '']
+    const said = c.label.startsWith('「') && c.label.endsWith('」') ? [`${state.player.callName}（ふつう）${c.label}`] : []
+    return <AdvScreen key="reply" state={state} title={view.title} lines={[...said, ...reply]} place={view.place} onEnd={() => onChoose(picked)} />
+  }
   const after = view.input ? (
     <div className="card">
       <input value={text} onChange={(e) => setText(e.target.value)} placeholder={view.input.placeholder} maxLength={14} />
@@ -26,7 +43,7 @@ export function StoryScreen({ state, eventKey, params, onChoose }: { state: Game
   ) : view.choices.length ? (
     <div className="options">
       {view.choices.map((c, i) => (
-        <button key={i} className="option" onClick={() => onChoose(i)}>
+        <button key={i} className="option" onClick={() => choose(i)}>
           <span>{c.label}</span>
           {c.hint && <span className="small">{c.hint}</span>}
         </button>

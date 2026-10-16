@@ -56,7 +56,7 @@ def unwhite(im, tol=30, guard_body=False):
         for x in range(w):
             r,g,b,a = px[x,y]
             if a and r>220 and g>220 and b>220 and any(0<=x+dx<w and 0<=y+dy<h and bg[(y+dy)*w+x+dx] for dx,dy in ((1,0),(-1,0),(0,1),(0,-1))):
-                px[x,y] = (r,g,b,110)
+                px[x,y] = (r,g,b,255)
     return im
 # 白いTシャツの輪郭が切れていて、ふつうに抜くと服まで透ける人
 GUARD_BODY = {'nakaji', 'dojima'}
@@ -69,20 +69,48 @@ def finish(c, guard_body=False):
     c = unwhite(c, guard_body=guard_body)
     bb = c.getbbox(); c = c.crop((bb[0], bb[1], bb[2], c.size[1]))
     c.thumbnail((400, 400))
-    return fade_cut_edges(c)
+    return clean(c)
 
-def fade_cut_edges(c, width=36):
-    # コマの端で体が切れているとき、切れ目が直線に見えないよう、その辺だけ透明へなじませる
-    a = c.getchannel('A'); w, h = c.size; ap = a.load()
-    for side in (0, w-1):
-        if sum(1 for y in range(h) if ap[side,y] > 0) < h*0.12: continue
-        for i in range(min(width, w)):
-            x = side + i if side == 0 else side - i
-            k = i / width
-            for y in range(h):
-                ap[x,y] = int(ap[x,y] * k)
-    c.putalpha(a)
-    return c
+def clean(c, ink=(34, 30, 30)):
+    # 仕上げ。1) コマの境目に残った細い線やゴミを消す 2) 輪郭の白いにじみを透明へなじませる
+    # 3) コマの端で体が切れている辺に、腕の線に見えるよう線を引く（透明へぼかすと体が透けて見えるため）
+    import numpy as np
+    from scipy import ndimage
+    a = np.array(c.convert('RGBA')).astype(np.float32)
+    al = a[..., 3]
+    lab, n = ndimage.label(al > 0, structure=np.ones((3, 3)))
+    if n > 1:
+        sizes = ndimage.sum(np.ones_like(al), lab, range(1, n + 1))
+        main = int(np.argmax(sizes)) + 1
+        for i, sl in enumerate(ndimage.find_objects(lab), start=1):
+            if i == main: continue
+            hh, ww = sl[0].stop - sl[0].start, sl[1].stop - sl[1].start
+            edge = sl[0].start == 0 or sl[1].start == 0 or sl[1].stop == al.shape[1] or sl[0].stop == al.shape[0]
+            if sizes[i - 1] < 12 or (edge and min(hh, ww) <= 4):
+                al[lab == i] = 0
+    # 背景に接する2px幅の白っぽい画素は、白を引いた分だけ透明にする（暗い背景で白い縁が出ないように）
+    solid = al > 0
+    near = ndimage.binary_dilation(~solid, iterations=2) & solid
+    rgb = a[..., :3]
+    lo = rgb.min(axis=2)
+    k = np.clip((255 - lo) / 70.0, 0, 1)
+    fr = near & (lo > 150)
+    newa = np.where(fr, np.minimum(al, k * 255), al)
+    kk = np.maximum(newa / 255.0, 1e-3)[..., None]
+    un = np.clip((rgb - 255 * (1 - kk)) / kk, 0, 255)
+    rgb = np.where(fr[..., None], un, rgb)
+    al = newa
+    h, w = al.shape
+    for side in (0, w - 1):
+        col = al[:, side] > 128
+        if col.sum() < h * 0.12: continue
+        xs = range(0, 3) if side == 0 else range(w - 3, w)
+        for x in xs:
+            m = al[:, x] > 128
+            rgb[m, x] = ink
+            al[m, x] = 255
+    out = np.dstack([rgb, al]).astype(np.uint8)
+    return Image.fromarray(out, 'RGBA')
 
 import glob, os
 # 表情シートがある人は8コマに分ける。立ち絵しかない人は「ふつう」だけ作る（ほかの表情は「ふつう」で代用される）

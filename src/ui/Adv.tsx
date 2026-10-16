@@ -1,9 +1,10 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { weekLabel } from '../game/data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from '../game/data/people'
 import type { GameState } from '../game/types'
 import { backgrounds, charaKey, exprOf, portrait, type Expr } from './art'
 import { shotsOf } from './scene'
+import { LOG, pushLog } from './log'
 import { parseLine } from './script'
 import { HAIR, OUTFITS } from './looks'
 import { Avatar, PlayerAvatar } from './parts'
@@ -11,7 +12,37 @@ import { Avatar, PlayerAvatar } from './parts'
 // パワプロ式の会話画面。上に登場人物、下のメッセージ枠をタップすると1行ずつ進む
 // 最後の行まで読むと、選択肢（または入力欄）が出る。選択肢がなければタップで終わる
 
-const TYPE_MS = 28
+// 1文字ずつ出す速さ。句読点では少し止まる。タップすると一気に全部出る
+const TYPE_MS = 48
+const PAUSE_MS: Record<string, number> = { '、': 140, '。': 260, '！': 220, '？': 220, '…': 120, '」': 120 }
+
+function LogPanel({ onClose }: { onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    ref.current?.scrollTo({ top: ref.current.scrollHeight })
+  }, [])
+  return (
+    <div className="adv-log" role="dialog" aria-label="会話のログ" onClick={onClose}>
+      <div className="adv-log-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="row-between">
+          <h2>ログ</h2>
+          <button className="link" onClick={onClose}>
+            閉じる
+          </button>
+        </div>
+        <div className="adv-log-list" ref={ref}>
+          {LOG.length === 0 && <p className="small">まだ何もありません。</p>}
+          {LOG.map((l, i) => (
+            <p key={i} className={l.choice ? 'log-choice' : ''}>
+              {l.speaker && <b>{l.speaker}</b>}
+              {l.choice ? `▶ ${l.text}` : l.text}
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // 名前から見た目を決める（固定の絵がまだないので仮）
 function lookOf(name: string): { hair: string; outfit: string } {
@@ -31,7 +62,7 @@ function namesOf(state: GameState): string[] {
 function Chara({ state, name, expr, focus, me }: { state: GameState; name: string; expr: Expr; focus: boolean; me?: boolean }) {
   const src = portrait(charaKey(state, name), expr)
   return (
-    <figure className={`adv-chara ${me ? 'me' : ''} ${focus ? 'focus' : ''} ${src ? 'art' : ''}`}>
+    <figure className={`adv-chara ${me ? 'is-me' : ''} ${focus ? 'focus' : ''} ${src ? 'art' : ''}`}>
       {src ? <img src={src} alt="" draggable={false} /> : me ? <PlayerAvatar player={state.player} size={118} /> : <Avatar {...lookOf(name)} size={118} />}
       <figcaption>{name}</figcaption>
     </figure>
@@ -52,11 +83,18 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after }: 
   const shot = shotsOf(parsed.map((l) => l.stage), namesOf(state), state.partner && !scripted ? { 相方: state.partner.name } : {})[index] ?? { cast: [] }
   const p = state.player
 
+  const [log, setLog] = useState(false)
+
   useEffect(() => {
-    if (!typing) return
-    const t = setTimeout(() => setShown((v) => v + 1), TYPE_MS)
+    if (!typing || log) return
+    const t = setTimeout(() => setShown((v) => v + 1), shown === 0 ? 160 : TYPE_MS + (PAUSE_MS[line[shown - 1]] ?? 0))
     return () => clearTimeout(t)
-  }, [shown, typing])
+  }, [shown, typing, line, log])
+
+  // 表示した行をログに残す
+  useEffect(() => {
+    if (line) pushLog({ speaker: cur?.speaker, text: line })
+  }, [index]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const advance = () => {
     if (typing) return setShown(line.length)
@@ -83,7 +121,18 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after }: 
         )}
         <div className="adv-top">
           <span className="studio-title">{title}</span>
-          <span className="adv-date">{weekLabel(Math.min(state.turn, 41))}</span>
+          <span className="adv-top-right">
+            <button
+              className="adv-log-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                setLog(true)
+              }}
+            >
+              ログ
+            </button>
+            <span className="adv-date">{weekLabel(Math.min(state.turn, 41))}</span>
+          </span>
         </div>
         <div className={`adv-cast ${focus && shot.cast.length > 1 ? 'has-focus' : ''}`}>
           {shot.cast.map((n) => (
@@ -93,13 +142,20 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after }: 
       </div>
       <button className={`adv-box ${talking ? 'talk' : ''}`} onClick={advance} aria-label="次へ進む">
         {cur?.speaker && <span className="adv-name">{cur.speaker}</span>}
-        <span className="adv-text">{line.slice(0, shown)}</span>
+        <span className="adv-text">
+          {line.slice(0, shown)}
+          {/* まだ出ていない文字も透明で置いておく（1文字ずつ出るときに改行位置が動かないように） */}
+          <span className="adv-rest" aria-hidden="true">
+            {line.slice(shown)}
+          </span>
+        </span>
         {!typing && !(last && after) && <span className="adv-next" aria-hidden="true">▼</span>}
         <span className="adv-count">
           {index + 1}/{lines.length}
         </span>
       </button>
       {done && after && <div className="adv-after">{after}</div>}
+      {log && <LogPanel onClose={() => setLog(false)} />}
     </div>
   )
 }

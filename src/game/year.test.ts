@@ -54,15 +54,23 @@ describe('1年間の流れ', () => {
     expect(buildReview(s, 'C').neighbor).toBe('空席（ピンで卒業）')
   })
 
-  it('台本の表情は決まった言葉だけを使う', () => {
+  it('台本の表情は決まった言葉だけを使い、選択肢には反応がある', () => {
     const lines: string[] = []
+    const missing: string[] = []
     const s = createGame({ name: '山田', callName: 'ヤマダ', role: 'boke', style: 'manzai', seed: 1 })
     s.partner = { name: '向井', role: 'tsukkomi', blurb: '', stats: s.stats, skills: [], bond: 50 }
     for (const [key, def] of Object.entries(STORIES)) {
       if (key === 'aikata_kai' || key === 'aikata_kekka' || key === 'orei' || key === 'hikkoshi' || key === 'contest_entry') continue
-      lines.push(...def.view(s, {}).lines)
+      const v = def.view(s, {})
+      lines.push(...v.lines)
+      // 選択肢には、選んだあとの相手の反応が必ずある
+      for (const c of v.choices) {
+        if (!c.reply) missing.push(`${key}「${c.label}」`)
+        lines.push(...(Array.isArray(c.reply) ? c.reply : [c.reply ?? '']))
+      }
     }
     const used = lines.flatMap((l) => [...l.matchAll(/^[^「（、。]{1,12}（([^）]+)）「/g)].map((m) => m[1]))
+    expect(missing).toEqual([])
     expect(used.length).toBeGreaterThan(100)
     for (const e of used) expect(['ふつう', '笑い', '爆笑', '驚き', '落ち込み', '怒り', '考え中', '照れ']).toContain(e)
   })

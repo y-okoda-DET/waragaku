@@ -10,7 +10,7 @@ interface Scene {
   title: string
   place: string
   lines: (me: string) => string[]
-  choices: { label: string; hint?: string; apply: (s: GameState) => void }[]
+  choices: { label: string; reply?: string; hint?: string; apply: (s: GameState) => void }[]
 }
 
 interface PartnerScript {
@@ -40,9 +40,9 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           '向井（爆笑）「それや！ 今のそのままツカミにしよ！」',
         ],
         choices: [
-          { label: '「……採用」', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 8)), bond(s, 4)) },
-          { label: '「ほな、こっちは客席側から目合わせに行くわ」', hint: '対応力＋', apply: (s) => (gain(s, 'adlib', 3), bond(s, 6)) },
-          { label: '「普通にやろ」', hint: '度胸＋', apply: (s) => gain(s, 'guts', 2) },
+          { reply: '向井（爆笑）「ほら、もう2秒使ったで！」', label: '「……採用」', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 8)), bond(s, 4)) },
+          { reply: '向井（笑い）「お客さん、どっち見たらええか分からんな。それも採用！」', label: '「ほな、こっちは客席側から目合わせに行くわ」', hint: '対応力＋', apply: (s) => (gain(s, 'adlib', 3), bond(s, 6)) },
+          { reply: '向井（落ち込み）「……普通な。……ほな60人は、また今度にしとくわ」', label: '「普通にやろ」', hint: '度胸＋', apply: (s) => gain(s, 'guts', 2) },
         ],
       },
       {
@@ -55,8 +55,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           `${me}（笑い）「親父さんの顔の方がもうおもろいやん」`,
         ],
         choices: [
-          { label: '「売れたら、絶対行こう」', hint: '関係値＋', apply: (s) => bond(s, 8) },
-          { label: '「親父さんとコンビ組みたいわ」', hint: '対応力＋・関係値＋', apply: (s) => (gain(s, 'adlib', 2), bond(s, 5)) },
+          { reply: '向井（照れ）「……おう。定食、大盛りで頼むわ」', label: '「売れたら、絶対行こう」', hint: '関係値＋', apply: (s) => bond(s, 8) },
+          { reply: '向井（怒り）「俺はどうなんねん！」', label: '「親父さんとコンビ組みたいわ」', hint: '対応力＋・関係値＋', apply: (s) => (gain(s, 'adlib', 2), bond(s, 5)) },
         ],
       },
       {
@@ -69,8 +69,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           '向井（笑い）「おう！ 今日の昼、何食う？」',
         ],
         choices: [
-          { label: '「今の電話、誰？」と聞く', hint: '関係値＋', apply: (s) => bond(s, 6) },
-          { label: '「定食屋以外で」と返す', hint: 'やる気＋', apply: (s) => (s.motivation = clamp(s.motivation + 5)) },
+          { reply: '向井（笑い）「……ただの実家や。なんでもない。昼、カレーにしよ」', label: '「今の電話、誰？」と聞く', hint: '関係値＋', apply: (s) => bond(s, 6) },
+          { reply: '向井（爆笑）「読まれてる！」', label: '「定食屋以外で」と返す', hint: 'やる気＋', apply: (s) => (s.motivation = clamp(s.motivation + 5)) },
         ],
       },
     ],
@@ -94,9 +94,9 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           '堂島（照れ）「ほな、ゴングもボケにしたら、88個や」',
         ],
         choices: [
-          { label: '一緒に5個まで削る', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 10)), bond(s, 4)) },
-          { label: '「88個目のゴング、こっちで鳴らすわ」', hint: '発想力＋・関係値＋', apply: (s) => (gain(s, 'idea', 2), bond(s, 6)) },
-          { label: '87個全部読む', hint: '発想力＋＋・体調−', apply: (s) => (gain(s, 'idea', 4), (s.condition = clamp(s.condition - 8))) },
+          { reply: '堂島（落ち込み）「……5個。82個に、お別れや」', label: '一緒に5個まで削る', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 10)), bond(s, 4)) },
+          { reply: '堂島（爆笑）「それ、89個目や」', label: '「88個目のゴング、こっちで鳴らすわ」', hint: '発想力＋・関係値＋', apply: (s) => (gain(s, 'idea', 2), bond(s, 6)) },
+          { reply: '堂島（照れ）「……読んでくれたん、お前が初めてや」', label: '87個全部読む', hint: '発想力＋＋・体調−', apply: (s) => (gain(s, 'idea', 4), (s.condition = clamp(s.condition - 8))) },
         ],
       },
       {
@@ -110,8 +110,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           '堂島（爆笑）「それ、ネタ帳に書いとく」',
         ],
         choices: [
-          { label: '「次は14回な」と返す', hint: '関係値＋', apply: (s) => bond(s, 8) },
-          { label: 'スクショして寝る', hint: '体調＋', apply: (s) => (s.condition = clamp(s.condition + 6)) },
+          { reply: '堂島（笑い）「0の倍は0やけどな」', label: '「次は14回な」と返す', hint: '関係値＋', apply: (s) => bond(s, 8) },
+          { reply: 'ナレーション：スクショのフォルダに「堂島」というアルバムができた。', label: 'スクショして寝る', hint: '体調＋', apply: (s) => (s.condition = clamp(s.condition + 6)) },
         ],
       },
       {
@@ -123,8 +123,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           '堂島（考え中）「書くのは好きや。でも、自分で言う方がもっと好きやと思ってた」',
         ],
         choices: [
-          { label: '「書いたったらええやん」', hint: '関係値−・度胸＋', apply: (s) => (bond(s, -4), gain(s, 'guts', 2)) },
-          { label: '「うちらの分、先に書いてくれ」', hint: '関係値＋', apply: (s) => bond(s, 8) },
+          { reply: '堂島（考え中）「……そう言われると、書きたなくなるな」', label: '「書いたったらええやん」', hint: '関係値−・度胸＋', apply: (s) => (bond(s, -4), gain(s, 'guts', 2)) },
+          { reply: '堂島（笑い）「……せやな。うちらの分が先や」', label: '「うちらの分、先に書いてくれ」', hint: '関係値＋', apply: (s) => bond(s, 8) },
         ],
       },
     ],
@@ -148,9 +148,9 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           '岸辺（考え中）「……じゃあ2.5秒」',
         ],
         choices: [
-          { label: '「1秒で手を打とう」', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 8)), bond(s, 4)) },
-          { label: '3秒やってみて、客の反応で決める', hint: '表現力＋・関係値＋', apply: (s) => (gain(s, 'expr', 3), bond(s, 6)) },
-          { label: '「ほな、その3秒で客席に手振っとくわ」', hint: '対応力＋', apply: (s) => gain(s, 'adlib', 2) },
+          { reply: '岸辺（怒り）「……1.5秒」', label: '「1秒で手を打とう」', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 8)), bond(s, 4)) },
+          { reply: '岸辺（笑い）「お客さんが決めるなら、文句ない」', label: '3秒やってみて、客の反応で決める', hint: '表現力＋・関係値＋', apply: (s) => (gain(s, 'expr', 3), bond(s, 6)) },
+          { reply: '岸辺（爆笑）「……それ、演出として採用」', label: '「ほな、その3秒で客席に手振っとくわ」', hint: '対応力＋', apply: (s) => gain(s, 'adlib', 2) },
         ],
       },
       {
@@ -164,8 +164,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           '岸辺（笑い）「……それは、それで困る」',
         ],
         choices: [
-          { label: '「今日は後輩のためにやろ」', hint: '関係値＋', apply: (s) => bond(s, 8) },
-          { label: '「後輩、いじってええ？」', hint: '対応力＋・ファン＋', apply: (s) => (gain(s, 'adlib', 2), (s.fans += 2)) },
+          { reply: '岸辺（照れ）「……うん。後輩のために」', label: '「今日は後輩のためにやろ」', hint: '関係値＋', apply: (s) => bond(s, 8) },
+          { reply: '岸辺（怒り）「だめ。……1回だけなら、いい」', label: '「後輩、いじってええ？」', hint: '対応力＋・ファン＋', apply: (s) => (gain(s, 'adlib', 2), (s.fans += 2)) },
         ],
       },
       {
@@ -177,8 +177,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           '岸辺（ふつう）「……読んだだけ。返事は、まだ書いてない」',
         ],
         choices: [
-          { label: '「返事、書かんでええやん」', hint: '関係値＋', apply: (s) => bond(s, 6) },
-          { label: '「主役やったら観に行くで」', hint: '関係値−・やる気＋', apply: (s) => (bond(s, -3), (s.motivation = clamp(s.motivation + 5))) },
+          { reply: '岸辺（考え中）「……書かないのも、返事なのかな」', label: '「返事、書かんでええやん」', hint: '関係値＋', apply: (s) => bond(s, 6) },
+          { reply: '岸辺（笑い）「……一番後ろの席で観て。神様の席」', label: '「主役やったら観に行くで」', hint: '関係値−・やる気＋', apply: (s) => (bond(s, -3), (s.motivation = clamp(s.motivation + 5))) },
         ],
       },
     ],
@@ -200,9 +200,9 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           '早瀬（爆笑）「それや今のそれ入れよ」',
         ],
         choices: [
-          { label: 'ツッコミを0.3秒早める', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 8)), bond(s, 4)) },
-          { label: '「お前の注意を0.3秒早めろ」', hint: 'ワード力＋・関係値＋', apply: (s) => (gain(s, 'word', 2), bond(s, 6)) },
-          { label: '同じ速さで言い返す', hint: 'ワード力＋＋・体調−', apply: (s) => (gain(s, 'word', 4), (s.condition = clamp(s.condition - 6))) },
+          { reply: '早瀬（笑い）「それや今のでええ客の笑いと重なった」', label: 'ツッコミを0.3秒早める', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 8)), bond(s, 4)) },
+          { reply: '早瀬（爆笑）「無理やこれ以上早よしたら日本語ちゃうなる」', label: '「お前の注意を0.3秒早めろ」', hint: 'ワード力＋・関係値＋', apply: (s) => (gain(s, 'word', 2), bond(s, 6)) },
+          { reply: '早瀬（爆笑）「ほらできるやん最初からそれやれや」', label: '同じ速さで言い返す', hint: 'ワード力＋＋・体調−', apply: (s) => (gain(s, 'word', 4), (s.condition = clamp(s.condition - 6))) },
         ],
       },
       {
@@ -215,8 +215,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           'ナレーション：5分後、反対側の壁がドンと鳴った。大家さんの部屋だった。',
         ],
         choices: [
-          { label: '小声で続ける', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 6)), bond(s, 4)) },
-          { label: '「大家さんも入れて3人でやろ」', hint: '対応力＋・関係値＋', apply: (s) => (gain(s, 'adlib', 2), bond(s, 6)) },
+          { reply: '早瀬（笑い）「小声の方がウケるな今の」', label: '小声で続ける', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 6)), bond(s, 4)) },
+          { reply: 'ナレーション：大家さんの部屋から、ドン、ドン、と2回鳴った。たぶん、断られた。', label: '「大家さんも入れて3人でやろ」', hint: '対応力＋・関係値＋', apply: (s) => (gain(s, 'adlib', 2), bond(s, 6)) },
         ],
       },
       {
@@ -228,8 +228,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           'ナレーション：早瀬がゆっくりしゃべるのを、初めて聞いた。',
         ],
         choices: [
-          { label: '壁をトントンと叩く', hint: '関係値＋', apply: (s) => bond(s, 8) },
-          { label: '聞かなかったことにする', hint: '体調＋', apply: (s) => (s.condition = clamp(s.condition + 5)) },
+          { reply: 'ナレーション：少しして、トン、と1回だけ返ってきた。', label: '壁をトントンと叩く', hint: '関係値＋', apply: (s) => bond(s, 8) },
+          { reply: 'ナレーション：翌朝の早瀬は、いつもより3割増しで早口だった。', label: '聞かなかったことにする', hint: '体調＋', apply: (s) => (s.condition = clamp(s.condition + 5)) },
         ],
       },
     ],
@@ -252,8 +252,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           `${me}（ふつう）「学祭の客は、ウケに来てるからな」`,
         ],
         choices: [
-          { label: 'オチを1個ずらす', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 8)), bond(s, 3)) },
-          { label: '「鉄板のまま、どこまで通じるか試そ」', hint: '関係値＋', apply: (s) => bond(s, 6) },
+          { reply: '佐倉（驚き）「……ずらした方がウケる。悔しいけど」', label: 'オチを1個ずらす', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 8)), bond(s, 3)) },
+          { reply: '佐倉（笑い）「学祭の鉄板が、劇場で通じたら最強やろ」', label: '「鉄板のまま、どこまで通じるか試そ」', hint: '関係値＋', apply: (s) => bond(s, 6) },
         ],
       },
       {
@@ -265,8 +265,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
           'ナレーション：ゴミ箱のフォルダに、まだ残っているのが見えた。',
         ],
         choices: [
-          { label: '見なかったことにする', hint: '関係値＋', apply: (s) => bond(s, 4) },
-          { label: '「ゴミ箱も空にしとけよ」', hint: '関係値＋・尖り＋', apply: (s) => (bond(s, 6), (s.edge += 1)) },
+          { reply: 'ナレーション：佐倉はスマホを伏せて、いつもより大きな声でネタ合わせを始めた。', label: '見なかったことにする', hint: '関係値＋', apply: (s) => bond(s, 4) },
+          { reply: '佐倉（驚き）「……見てたんか。……ほな、空にする。今ここで」', label: '「ゴミ箱も空にしとけよ」', hint: '関係値＋・尖り＋', apply: (s) => (bond(s, 6), (s.edge += 1)) },
         ],
       },
       {
@@ -274,8 +274,8 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
         place: 'famires',
         lines: () => ['佐倉（ふつう）「内定の、最終の返事の期限、今月末やねん」', '佐倉（考え中）「4年やってきて、今がいちばん迷ってる」'],
         choices: [
-          { label: '「4年やったら、あと1年もいけるやろ」', hint: '関係値＋', apply: (s) => bond(s, 6) },
-          { label: '何も言わずに、ドリンクバーを取りに行く', hint: '体調＋', apply: (s) => (s.condition = clamp(s.condition + 4)) },
+          { reply: '佐倉（笑い）「……その計算、辻堂さんと一緒やな」', label: '「4年やったら、あと1年もいけるやろ」', hint: '関係値＋', apply: (s) => bond(s, 6) },
+          { reply: 'ナレーション：戻ってくると、佐倉はメロンソーダとコーラを混ぜていた。少しだけ笑っていた。', label: '何も言わずに、ドリンクバーを取りに行く', hint: '体調＋', apply: (s) => (s.condition = clamp(s.condition + 4)) },
         ],
       },
     ],
@@ -296,7 +296,7 @@ export const PARTNER_STORIES: Record<string, StoryDef> = {
     view: (s, p) => {
       const sc = scriptOf(s)?.scenes[Number(p.n)]
       if (!sc) return { title: '相方', lines: ['ナレーション：相方と、いつものファミレスでネタを合わせた。'], choices: [] }
-      return { title: sc.title, place: sc.place, lines: [...sc.lines(s.player.callName), ...(Number(p.n) === 2 ? recall(s) : [])], choices: sc.choices.map((c) => ({ label: c.label, hint: c.hint })) }
+      return { title: sc.title, place: sc.place, lines: [...sc.lines(s.player.callName), ...(Number(p.n) === 2 ? recall(s) : [])], choices: sc.choices.map((c) => ({ label: c.label, hint: c.hint, reply: c.reply })) }
     },
     resolve: (s, c, _r, p) => scriptOf(s)?.scenes[Number(p.n)]?.choices[c]?.apply(s),
   },

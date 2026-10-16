@@ -5,7 +5,7 @@ import type { StoryDef } from './events'
 import { KODAWARI, KODAWARI_KEYS, recall } from './kodawari'
 import { makePartner, nextPartnerBase } from './partner'
 import { scriptOf } from './partnerLines'
-import type { GameState } from './types'
+import type { GameState, Kodawari } from './types'
 
 // 1年間の流れ（scenario/1年間の流れ.md）のうち、あとから足した行事
 // 下敷き：research/01 公式の年間行事、02 卒業生の体験談、06 あるある
@@ -37,6 +37,14 @@ const PARTNER_STAY: Record<string, string> = {
   岸辺: '岸辺は主宰に断りの手紙を書いた。「笑わせる方が、性に合ってました」',
   早瀬: '早瀬は親に言った。「もう1年だけ、壁越しにネタ合わせさせてくれ」',
   佐倉: '佐倉は内定を断った。人事の人に「もったいない」と言われた。「知ってる」と思った。',
+}
+
+// 面談で答えたあとの辻堂の返し
+const MENDAN_REPLY: Record<Kodawari, string[]> = {
+  jisaku: ['辻堂（ふつう）「ほな、毎週書いてこい。書いてこんかったら、その日からお前は“言うてただけの人”や」'],
+  aikata: ['辻堂（ふつう）「相方は？」', 'ナレーション：「外で待ってます」と答えた。', '辻堂（怒り）「呼んでこい言うてへん。面談は1人ずつや」'],
+  kyaku: ['辻堂（ふつう）「審査員も客やぞ」', '辻堂（笑い）「顔、納得してへんな。それでええ」'],
+  nokoru: ['辻堂（考え中）「入学1か月で言うことちゃうな」', 'ナレーション：辻堂が、ほんの少しだけ笑った。'],
 }
 
 export const YEAR_STORIES: Record<string, StoryDef> = {
@@ -84,8 +92,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         `${me(s)}（落ち込み）「……全力です」`,
       ],
       choices: [
-        { label: '全力で型を決める', hint: '表現力＋・体力＋' },
-        { label: 'ふざけて見えるのを逆に使う', hint: '対応力＋' },
+        { reply: '三宅（爆笑）「型は完璧！ 顔がずっと面白い！ なんでや！」', label: '全力で型を決める', hint: '表現力＋・体力＋' },
+        { reply: '三宅（爆笑）「それはもうカンフーちゃう、コントや！ 正解！」', label: 'ふざけて見えるのを逆に使う', hint: '対応力＋' },
       ],
     }),
     resolve: (s, c) => {
@@ -108,19 +116,11 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         'ナレーション：ここで言ったことは、たぶん1年間ついて回る。',
         `${me(s)}（考え中）「……」`,
       ],
-      choices: KODAWARI_KEYS.map((k) => ({ label: KODAWARI[k].answer, hint: 'これが譲れないものになる' })),
+      choices: KODAWARI_KEYS.map((k) => ({ label: KODAWARI[k].answer, hint: 'これが譲れないものになる', reply: MENDAN_REPLY[k] })),
     }),
     resolve: (s, c) => {
       s.kodawari = KODAWARI_KEYS[c] ?? 'nokoru'
       tie(s, 'tsujido', 3)
-      s.weekLog.push(
-        {
-          jisaku: '辻堂「ほな、毎週書いてこい。書いてこんかったら、その日からお前は“言うてただけの人”や」',
-          aikata: '辻堂「相方は？」「外で待ってます」「呼んでこい言うてへん。面談は1人ずつや」',
-          kyaku: '辻堂「審査員も客やぞ」「……はい」「顔、納得してへんな。それでええ」',
-          nokoru: '辻堂「入学1か月で言うことちゃうな」。辻堂が、ほんの少しだけ笑った。',
-        }[s.kodawari],
-      )
     },
   },
 
@@ -137,8 +137,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         `ナレーション：同期は${s.classmates}人になった。`,
       ],
       choices: [
-        { label: '鮫島にLINEを送る', hint: '同期の結束＋・やる気−' },
-        { label: '送らない', hint: '度胸＋' },
+        { reply: 'ナレーション：既読はつかなかった。3日後、「ありがとう」とだけ返ってきた。', label: '鮫島にLINEを送る', hint: '同期の結束＋・やる気−' },
+        { reply: 'ナレーション：同期LINEの通知は、その日も200件を超えていた。', label: '送らない', hint: '度胸＋' },
       ],
     }),
     resolve: (s, c) => {
@@ -162,9 +162,9 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         `${me(s)}（考え中）「最初の10秒……」`,
       ],
       choices: [
-        { label: 'ツカミを作り直す', hint: 'ネタの完成度＋' },
-        { label: '削って2分に収める', hint: 'ワード力＋' },
-        { label: '「ツカミで“2分10秒です”って言います」', hint: '対応力＋・講師の評価−' },
+        { reply: '辻堂（ふつう）「10秒で名前。それだけ覚えて帰れ」', label: 'ツカミを作り直す', hint: 'ネタの完成度＋' },
+        { reply: '辻堂（ふつう）「削った分だけ、残ったボケが強なる」', label: '削って2分に収める', hint: 'ワード力＋' },
+        { reply: '辻堂（怒り）「……それで2秒使うてるやろ」', label: '「ツカミで“2分10秒です”って言います」', hint: '対応力＋・講師の評価−' },
       ],
     }),
     resolve: (s, c) => {
@@ -192,8 +192,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         '三宅（爆笑）「死体がいちばんおもろいコント、見てみたいなあ！」',
       ],
       choices: [
-        { label: '死体を極める', hint: '表現力＋＋' },
-        { label: '主役の子と役を交換してもらう', hint: '度胸＋・ワード力＋' },
+        { reply: '三宅（爆笑）「死体が一番ウケてる！ 主役、泣いてるで！」', label: '死体を極める', hint: '表現力＋＋' },
+        { reply: '三宅（笑い）「交換成立！ 主役の子、死体役で寝てもうたけどな」', label: '主役の子と役を交換してもらう', hint: '度胸＋・ワード力＋' },
       ],
     }),
     resolve: (s, c) => {
@@ -225,8 +225,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
           `ナレーション：同期は${s.classmates}人になった。`,
         ],
         choices: [
-          { label: '名前を思い出そうとする', hint: 'やる気＋' },
-          { label: '自分の台本を読む', hint: 'ワード力＋' },
+          { reply: 'ナレーション：思い出せたのは、名字の最初の1文字だけだった。', label: '名前を思い出そうとする', hint: 'やる気＋' },
+          { reply: 'ナレーション：台本の余白に、知らないうちに今日の日付を書いていた。', label: '自分の台本を読む', hint: 'ワード力＋' },
         ],
       }
     },
@@ -258,12 +258,12 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         ],
         choices: by
           ? [
-              { label: '一番にネタを出す', hint: '度胸＋' },
-              { label: '新ネタを試す場にする', hint: '発想力＋' },
+              { reply: '辻堂（ふつう）「一番に出したやつだけ、俺の機嫌がええ。覚えとけ」', label: '一番にネタを出す', hint: '度胸＋' },
+              { reply: '三宅（笑い）「新ネタ大歓迎！ ……ここからは褒めへんけどな」', label: '新ネタを試す場にする', hint: '発想力＋' },
             ]
           : [
-              { label: '次から最前列に座る', hint: '度胸＋・講師の評価＋' },
-              { label: '自分のペースでいく', hint: 'やる気＋' },
+              { reply: 'ナレーション：最前列に座ると、辻堂の「おもんない」が少しだけ大きく聞こえた。', label: '次から最前列に座る', hint: '度胸＋・講師の評価＋' },
+              { reply: 'ナレーション：自分のペース。それが一番難しいと分かったのは、もう少しあとだった。', label: '自分のペースでいく', hint: 'やる気＋' },
             ],
       }
     },
@@ -295,8 +295,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         `${pn(s)}（ふつう）「それ、ほんまのことや」`,
       ],
       choices: [
-        { label: 'たこ焼きを焼く', hint: 'お金＋・同期の結束＋' },
-        { label: '大喜利のステージに出る', hint: '対応力＋・ファン＋' },
+        { reply: `${pn(s)}（笑い）「うまいやん！ 将来、たこ焼き屋で食っていけるで」`, label: 'たこ焼きを焼く', hint: 'お金＋・同期の結束＋' },
+        { reply: `${pn(s)}（爆笑）「今の答え、客席の講師が一番笑ってたで」`, label: '大喜利のステージに出る', hint: '対応力＋・ファン＋' },
       ],
     }),
     resolve: (s, c) => {
@@ -326,12 +326,12 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         ],
         choices: chosen
           ? [
-              { label: '他校の組を研究する', hint: '発想力＋' },
-              { label: '自分たちのネタを仕上げる', hint: 'ネタの完成度＋' },
+              { reply: 'ナレーション：ワイシャツ同盟のネタは、ボケの数が少ないのに、一つ一つが長くウケていた。', label: '他校の組を研究する', hint: '発想力＋' },
+              { reply: 'ナレーション：本番前日、ネタ合わせの回数が100を超えた。', label: '自分たちのネタを仕上げる', hint: 'ネタの完成度＋' },
             ]
           : [
-              { label: '一番前で観る', hint: '発想力＋' },
-              { label: '観ずにネタ合わせする', hint: 'ネタの完成度＋' },
+              { reply: 'ナレーション：一番前の席で、ワイシャツ同盟の汗が飛んできた。', label: '一番前で観る', hint: '発想力＋' },
+              { reply: 'ナレーション：遠くから笑い声が聞こえた。誰がウケたのかは、あとで知った。', label: '観ずにネタ合わせする', hint: 'ネタの完成度＋' },
             ],
       }
     },
@@ -358,9 +358,9 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         'ナレーション：「101回目は、決勝の翌日にやりました。スベりました」。教室が、今日いちばん笑った。',
       ],
       choices: [
-        { label: '手を挙げて質問する', hint: '度胸＋' },
-        { label: 'ひたすらメモを取る', hint: 'ネタの完成度＋' },
-        { label: '「102回目、ここでやってください」', hint: '対応力＋' },
+        { reply: 'ナレーション：「いい質問ですね。……答えは、100回やれば分かります」。教室がまた笑った。', label: '手を挙げて質問する', hint: '度胸＋' },
+        { reply: 'ナレーション：メモは3ページになった。いちばん大きく書いたのは「直す」の2文字だった。', label: 'ひたすらメモを取る', hint: 'ネタの完成度＋' },
+        { reply: 'ナレーション：ファイナリストは本当にやった。102回目は、ウケた。', label: '「102回目、ここでやってください」', hint: '対応力＋' },
       ],
     }),
     resolve: (s, c) => {
@@ -391,8 +391,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
             ...recall(s),
           ],
           choices: [
-            { label: 'ありがたく使わせてもらう', hint: 'ネタの完成度＋＋' },
-            { label: '「自分で書いたやつで、勝ちたいです」', hint: '発想力＋' },
+            { reply: '大河内（笑い）「おう。スベったら俺のせいにしてええ。ウケたら自分の手柄にせえ」', label: 'ありがたく使わせてもらう', hint: 'ネタの完成度＋＋' },
+            { reply: '大河内（笑い）「……生意気やな。俺も18年前、同じこと言うたわ」', label: '「自分で書いたやつで、勝ちたいです」', hint: '発想力＋' },
           ],
         },
         aikata: {
@@ -406,8 +406,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
             ...recall(s),
           ],
           choices: [
-            { label: '「1回だけなら」と受ける', hint: '社員の評価＋・ファン＋' },
-            { label: '「2人で出られる枠、待ちます」', hint: '関係値＋' },
+            { reply: '社員（笑い）「助かります。じゃあ、ネタ時間は3分で」', label: '「1回だけなら」と受ける', hint: '社員の評価＋・ファン＋' },
+            { reply: '社員（ふつう）「……分かりました。コンビの枠、空いたら声かけます」', label: '「2人で出られる枠、待ちます」', hint: '関係値＋' },
           ],
         },
         kyaku: {
@@ -421,8 +421,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
             ...recall(s),
           ],
           choices: [
-            { label: '審査員向けに作り変える', hint: '講師の評価＋・社員の評価＋' },
-            { label: '客席の一番後ろが笑う方を取る', hint: 'ファン＋・表現力＋' },
+            { reply: 'ナレーション：「いいね、点は取れる」。構成作家は、ペンで丸をつけた。', label: '審査員向けに作り変える', hint: '講師の評価＋・社員の評価＋' },
+            { reply: 'ナレーション：構成作家は少し笑って、「じゃあ、後ろの客を見とくよ」と言った。', label: '客席の一番後ろが笑う方を取る', hint: 'ファン＋・表現力＋' },
           ],
         },
         nokoru: {
@@ -436,8 +436,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
             ...recall(s),
           ],
           choices: [
-            { label: '「考えさせてください」', hint: 'お金＋' },
-            { label: '「まかない食べ放題は、売れてからにします」', hint: 'やる気＋' },
+            { reply: '店長（ふつう）「おう。急がんでええ。席は空けとくわ」', label: '「考えさせてください」', hint: 'お金＋' },
+            { reply: '店長（爆笑）「言うたな！ ほな売れるまで、まかないはおかわり1回までや」', label: '「まかない食べ放題は、売れてからにします」', hint: 'やる気＋' },
           ],
         },
       }[k]
@@ -490,10 +490,10 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         `${pn(s)}（驚き）「……」`,
       ],
       choices: [
-        { label: 'アドリブで拾う', hint: '対応力しだい' },
-        { label: '「もう一回最初から言うて！」と頭からやり直す', hint: '度胸しだい' },
-        { label: '黙って待つ' },
-        { label: '「飛んでんのはお前の頭や！」と客席に向かって言う', hint: '対応力しだい・関係値−' },
+        { reply: `${pn(s)}（驚き）「……！」`, label: 'アドリブで拾う', hint: '対応力しだい' },
+        { reply: `${pn(s)}（笑い）「……もう一回最初からやな！」`, label: '「もう一回最初から言うて！」と頭からやり直す', hint: '度胸しだい' },
+        { reply: `${pn(s)}（落ち込み）「……」`, label: '黙って待つ' },
+        { reply: `${pn(s)}（爆笑）「お前の頭の方が飛んどるわ！」`, label: '「飛んでんのはお前の頭や！」と客席に向かって言う', hint: '対応力しだい・関係値−' },
       ],
     }),
     resolve: (s, c, rng) => {
@@ -521,8 +521,8 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
               `${me(s)}（笑い）「飛ばしたとこがいちばんウケたな」`,
             ],
             choices: [
-              { label: '「あの流れ、ネタに入れよか」', hint: 'ネタの完成度＋・関係値＋' },
-              { label: '「次は飛ばすなよ」と釘を刺す', hint: '尖り＋' },
+              { reply: `${pn(s)}（笑い）「……ほな、毎回飛ばさなあかんやん」`, label: '「あの流れ、ネタに入れよか」', hint: 'ネタの完成度＋・関係値＋' },
+              { reply: `${pn(s)}（落ち込み）「……うん。分かってる」`, label: '「次は飛ばすなよ」と釘を刺す', hint: '尖り＋' },
             ],
           }
         : {
@@ -537,9 +537,9 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
               ...recall(s),
             ],
             choices: [
-              { label: '追いかけて、先に謝る', hint: '関係値＋' },
-              { label: '「なんで飛ばすねん」とLINEを送る', hint: '関係値−・尖り＋' },
-              { label: 'ベンチに座ったまま朝を待つ', hint: 'やる気−' },
+              { reply: `${pn(s)}（驚き）「……なんで、そっちが謝んねん」`, label: '追いかけて、先に謝る', hint: '関係値＋' },
+              { reply: 'ナレーション：既読はついた。返事は、朝になっても来なかった。', label: '「なんで飛ばすねん」とLINEを送る', hint: '関係値−・尖り＋' },
+              { reply: 'ナレーション：始発の時間。ベンチの横に、缶コーヒーが1本置いてあった。', label: 'ベンチに座ったまま朝を待つ', hint: 'やる気−' },
             ],
           },
     resolve: (s, c) => {
@@ -597,9 +597,9 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         `${me(s)}（考え中）「8年……」`,
       ],
       choices: [
-        { label: '「なんで辞めなかったんですか」と聞く', hint: 'やる気＋' },
-        { label: '王者のネタの構成を書き写す', hint: 'ワード力＋・発想力＋' },
-        { label: '「8年後、ここに凱旋しに来ます」と宣言する', hint: '度胸＋・尖り＋' },
+        { reply: 'ナレーション：「辞める理由が、ネタにならなかったからです」。王者は少しも笑わずに言った。', label: '「なんで辞めなかったんですか」と聞く', hint: 'やる気＋' },
+        { reply: 'ナレーション：書き写してみると、ボケは思ったより少なかった。', label: '王者のネタの構成を書き写す', hint: 'ワード力＋・発想力＋' },
+        { reply: 'ナレーション：「待ってます。8年は長いですよ」。教室が少しだけ笑った。', label: '「8年後、ここに凱旋しに来ます」と宣言する', hint: '度胸＋・尖り＋' },
       ],
     }),
     resolve: (s, c) => {
@@ -630,9 +630,9 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         `${me(s)}（怒り）「どっちも要るねん」`,
       ],
       choices: [
-        { label: '企画と構成に回る', hint: '発想力＋・ワード力＋' },
-        { label: '出演に専念する', hint: '表現力＋' },
-        { label: '意見を曲げない', hint: '尖り＋・度胸＋' },
+        { reply: 'ナレーション：構成表を書いたら、自分の出番が一番短くなっていた。', label: '企画と構成に回る', hint: '発想力＋・ワード力＋' },
+        { reply: 'ナレーション：出演に専念した。一番ウケたのは、台本になかった一言だった。', label: '出演に専念する', hint: '表現力＋' },
+        { reply: 'ナレーション：本番、オチは2つとも残した。2つ目の方が、少しだけウケた。', label: '意見を曲げない', hint: '尖り＋・度胸＋' },
       ],
     }),
     resolve: (s, c) => {
@@ -675,13 +675,13 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
             ],
         choices: leaving
           ? [
-              { label: `${p.name}を引き止める`, hint: '関係値しだい' },
-              { label: `${next}と組み直す` },
-              { label: 'ピンでやっていく' },
+              { reply: `${p.name}（落ち込み）「……そこまで言われたら、もうちょっとやるしかないやん」`, label: `${p.name}を引き止める`, hint: '関係値しだい' },
+              { reply: `${next}（笑い）「よろしく。……ネタ合わせ、明日からでええ？」`, label: `${next}と組み直す` },
+              { reply: 'ナレーション：ひとりで帰る道は、思っていたより静かだった。', label: 'ピンでやっていく' },
             ]
           : [
-              { label: '「全部出よう」', hint: '関係値＋' },
-              { label: '「ピンでやってみたい」と切り出す' },
+              { reply: `${p.name}（爆笑）「全部や！ 全部落ちても、全部出る！」`, label: '「全部出よう」', hint: '関係値＋' },
+              { reply: `${p.name}（驚き）「……そうか。……ちょっと、考えさせて」`, label: '「ピンでやってみたい」と切り出す' },
             ],
       }
     },

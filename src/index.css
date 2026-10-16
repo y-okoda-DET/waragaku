@@ -1197,7 +1197,7 @@ p {
 .adv-cast.has-focus .adv-chara.focus {
   z-index: 1;
 }
-.adv-chara.me figcaption {
+.adv-chara.is-me figcaption {
   background: var(--coral);
   color: #fff;
 }
@@ -1403,5 +1403,66 @@ p {
   background: var(--sun);
   font-size: 14px;
   line-height: 26px;
+  font-weight: 900;
+}
+
+/* 会話：ログ */
+.adv-top-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.adv-log-btn {
+  font-weight: 900;
+  font-size: 12px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 10px;
+  min-height: 0;
+  box-shadow: none;
+}
+.adv-rest {
+  visibility: hidden;
+}
+.adv-log {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.adv-log-sheet {
+  width: min(100%, 520px);
+  max-height: 80dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  padding: 12px 16px 20px;
+}
+.adv-log-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 6px;
+}
+.adv-log-list p {
+  margin: 0;
+  line-height: 1.6;
+  font-weight: 700;
+}
+.adv-log-list b {
+  display: block;
+  font-size: 12px;
+  color: var(--sub);
+}
+.adv-log-list .log-choice {
+  color: var(--coral);
   font-weight: 900;
 }
