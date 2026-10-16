@@ -287,7 +287,7 @@ function applyNight(s: GameState, a: NightAction, rng: Rng): void {
       break
     }
     case 'sleep':
-      s.condition = clamp(s.condition + 12)
+      s.condition = clamp(s.condition + 15)
       log.push(flavor('sleep', rng))
       break
   }
@@ -325,6 +325,7 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   if (s.partner && month === 6 && week === 1) story(s, 'aikata_scene', { n: 0 })
   if (s.partner && month === 9 && week === 3) story(s, 'aikata_scene', { n: 1 })
   if (s.partner && month === 2 && week === 1) story(s, 'aikata_scene', { n: 2 })
+  if (month === 5 && week === 1) story(s, 'taichou')
   if (month === 5 && week === 1) story(s, 'nazo_jugyo')
   if (month === 5 && week === 3) story(s, 'mendan')
   if (month === 6 && week === 3) story(s, 'ikitteta')

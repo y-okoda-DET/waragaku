@@ -84,7 +84,10 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
   ]
   const dayLabel = DAY_OPTIONS.find((o) => o.key === curDay)!.label
   const nightLabel = nightOptions.find((o) => o.k === curNight)?.label ?? ''
-  const dayTag = (k: DayKey) => (k === 'awase' && state.partner ? `${state.partner.name}と！` : '')
+  // 休むは8回目で出席不足（3月の卒業認定で救済の手伝い）。残りを見せる
+  const restLeft = 8 - (state.counters.rest ?? 0)
+  const dayTag = (k: DayKey) =>
+    k === 'awase' && state.partner ? `${state.partner.name}と！` : k === 'rest' ? (restLeft > 0 ? `あと${restLeft}回で出席不足` : '出席不足') : ''
 
   return (
     <div className="screen week">
