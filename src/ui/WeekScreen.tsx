@@ -114,13 +114,12 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
 
       <div className="row-between">
         <h2 className="section-title">今週の企画</h2>
-        <div className="tabs" role="tablist">
-          <button role="tab" aria-selected={tab === 'day'} className={tab === 'day' ? 'on' : ''} onClick={() => setTab('day')}>
-            昼
+        <div className="steps" aria-label="予定を決める順番">
+          <button className={tab === 'day' ? 'on' : 'done'} onClick={() => setTab('day')} disabled={tab === 'day'}>
+            ① 昼
           </button>
-          <button role="tab" aria-selected={tab === 'night'} className={tab === 'night' ? 'on' : ''} onClick={() => setTab('night')}>
-            夜
-          </button>
+          <span aria-hidden="true">→</span>
+          <span className={tab === 'night' ? 'on' : ''}>② 夜</span>
         </div>
       </div>
 
@@ -131,10 +130,7 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
               <button
                 key={o.key}
                 className={`tile ${day === o.key ? 'on' : ''}`}
-                onClick={() => {
-                  setDay(o.key)
-                  if (o.key !== 'awase' && o.key !== 'jishuren' && o.key !== 'baito') setTab('night')
-                }}
+                onClick={() => setDay(o.key)}
               >
                 {dayTag(o.key) && <span className="tile-tag">{dayTag(o.key)}</span>}
                 <span className="tile-name">{o.label}</span>
@@ -158,12 +154,22 @@ export function WeekScreen({ state, onRun, onNeta }: { state: GameState; onRun: 
         </div>
       )}
 
-      <button className="primary big sticky" onClick={() => onRun(buildDay(), buildNight())}>
-        これでいく！
-        <span className="go-sub">
-          昼：{dayLabel} ／ 夜：{nightLabel}
-        </span>
-      </button>
+      {tab === 'day' ? (
+        <button
+          className="primary big sticky"
+          onClick={() => setTab('night')}
+        >
+          昼はこれ！
+          <span className="go-sub">昼：{dayLabel} → 次は夜の予定</span>
+        </button>
+      ) : (
+        <button className="primary big sticky" onClick={() => onRun(buildDay(), buildNight())}>
+          これでいく！
+          <span className="go-sub">
+            昼：{dayLabel} ／ 夜：{nightLabel}
+          </span>
+        </button>
+      )}
 
       {sheet === 'neta' && (
         <Modal title="ネタ帳" onNext={() => setSheet(null)} nextLabel="閉じる">

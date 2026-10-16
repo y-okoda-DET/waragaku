@@ -3,50 +3,37 @@ import { weekLabel } from '../game/data/calendar'
 import { storyView } from '../game/events'
 import { STAGES } from '../game/stage'
 import type { GameState, StageKind, StageResult } from '../game/types'
+import { AdvScreen } from './Adv'
 import { NetaPanel } from './NetaPanel'
 
 export function StoryScreen({ state, eventKey, params, onChoose }: { state: GameState; eventKey: string; params?: Record<string, string | number>; onChoose: (choice: number, text?: string) => void }) {
   const view = storyView(state, eventKey, params)
   const [text, setText] = useState('')
-  return (
-    <div className="screen event">
-      <div className="date small">{weekLabel(Math.min(state.turn, 41))}</div>
-      <article className="card story">
-        <h1>{view.title}</h1>
-        {view.lines.map((l, i) => (
-          <p key={i}>{l}</p>
-        ))}
-      </article>
-      {view.input ? (
-        <div className="card">
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder={view.input.placeholder} maxLength={14} />
-          <div className="chips">
-            {view.input.suggestions.map((sg) => (
-              <button key={sg} className="chip" onClick={() => setText(sg)}>
-                {sg}
-              </button>
-            ))}
-          </div>
-          <button className="primary" disabled={!text.trim()} onClick={() => onChoose(0, text)}>
-            これにする
+  const after = view.input ? (
+    <div className="card">
+      <input value={text} onChange={(e) => setText(e.target.value)} placeholder={view.input.placeholder} maxLength={14} />
+      <div className="chips">
+        {view.input.suggestions.map((sg) => (
+          <button key={sg} className="chip" onClick={() => setText(sg)}>
+            {sg}
           </button>
-        </div>
-      ) : view.choices.length ? (
-        <div className="options">
-          {view.choices.map((c, i) => (
-            <button key={i} className="option" onClick={() => onChoose(i)}>
-              <span>{c.label}</span>
-              {c.hint && <span className="small">{c.hint}</span>}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <button className="primary big" onClick={() => onChoose(0)}>
-          次へ
-        </button>
-      )}
+        ))}
+      </div>
+      <button className="primary" disabled={!text.trim()} onClick={() => onChoose(0, text)}>
+        これにする
+      </button>
     </div>
-  )
+  ) : view.choices.length ? (
+    <div className="options">
+      {view.choices.map((c, i) => (
+        <button key={i} className="option" onClick={() => onChoose(i)}>
+          <span>{c.label}</span>
+          {c.hint && <span className="small">{c.hint}</span>}
+        </button>
+      ))}
+    </div>
+  ) : undefined
+  return <AdvScreen state={state} title={view.title} lines={view.lines} after={after} onEnd={() => onChoose(0)} />
 }
 
 export function StageIntro({ state, kind, onPerform, onNeta }: { state: GameState; kind: StageKind; onPerform: () => void; onNeta: (s: GameState) => void }) {

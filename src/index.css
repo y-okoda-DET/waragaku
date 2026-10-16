@@ -1066,3 +1066,151 @@ p {
   padding: 0 6px;
   text-align: center;
 }
+
+/* 今週の企画：昼→夜の順番 */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 900;
+  font-size: 13px;
+}
+.steps > button,
+.steps > span:not([aria-hidden]) {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--sub);
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: none;
+}
+.steps .on {
+  background: var(--ink) !important;
+  color: #fff !important;
+}
+.steps button.done {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* 会話画面 */
+.adv {
+  min-height: 100dvh;
+  padding-bottom: 24px;
+}
+.adv-scene {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 46dvh;
+  background: var(--sun-light);
+  border: var(--stroke) solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+  cursor: pointer;
+}
+.adv-scene .blob {
+  z-index: -1;
+}
+.adv-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.adv-date {
+  font-weight: 900;
+  font-size: 12px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 10px;
+  white-space: nowrap;
+}
+.adv-cast {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 4px;
+  margin-bottom: -14px;
+}
+.adv-chara {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.adv-chara figcaption {
+  margin-top: -18px;
+  position: relative;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 0 10px;
+  font-weight: 900;
+  font-size: 12px;
+}
+.adv-chara.me figcaption {
+  background: var(--coral);
+  color: #fff;
+}
+.adv-box {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 132px;
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 5px 0 var(--line);
+  padding: 14px 16px 26px;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.7;
+  cursor: pointer;
+  white-space: pre-wrap;
+}
+.adv-box.talk {
+  font-weight: 900;
+}
+.adv-box:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 2px;
+}
+.adv-next {
+  position: absolute;
+  right: 14px;
+  bottom: 6px;
+  color: var(--coral);
+  animation: adv-bob 0.8s ease-in-out infinite;
+}
+.adv-count {
+  position: absolute;
+  left: 16px;
+  bottom: 6px;
+  font-size: 11px;
+  color: var(--sub);
+  font-weight: 800;
+}
+@keyframes adv-bob {
+  50% {
+    transform: translateY(3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adv-next {
+    animation: none;
+  }
+}
+.adv-after {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

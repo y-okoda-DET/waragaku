@@ -3,7 +3,7 @@ import { clearSave, createGame, doStage, endEvents, load, resolveStory, runWeek,
 import type { GameState } from './game/types'
 import { CreateScreen } from './ui/CreateScreen'
 import { StageIntro, StageResultView, StoryScreen } from './ui/EventScreens'
-import { Modal } from './ui/parts'
+import { AdvScreen } from './ui/Adv'
 import { ResultScreen } from './ui/ResultScreen'
 import { PracticeScreen } from './ui/PracticeScreen'
 import { ShowcaseScreen } from './ui/ShowcaseScreen'
@@ -138,16 +138,7 @@ export default function App() {
     else body = <StageIntro state={game} kind={ev.kind} onNeta={setGame} onPerform={() => setScenes(pickScenes(game, ev.kind))} />
   }
 
-  return (
-    <>
-      {body}
-      {popup && (
-        <Modal title={popup.title} onNext={closePopup}>
-          {popup.lines.map((l, i) => (
-            <p key={i}>{l}</p>
-          ))}
-        </Modal>
-      )}
-    </>
-  )
+  // 結果は会話画面で読み切ってから、次のイベントに進む
+  if (popup) return <AdvScreen key={`${game.turn}-${popup.title}-${popup.lines.join('').length}-${game.pending.length}`} state={game} title={popup.title} lines={popup.lines} onEnd={closePopup} />
+  return body
 }
