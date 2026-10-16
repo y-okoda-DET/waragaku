@@ -168,8 +168,8 @@ export function stagePressure(kind: StageKind): number {
 export function tsukkomiZones(state: GameState, scene: TsukkomiScene, kind: StageKind): TsukkomiZones {
   const skill = (state.stats.expr + state.stats.word) / 2
   const shrink = 1 - stagePressure(kind) * 0.15
-  const great = Math.min(0.16, 0.05 + skill * 0.0016) * shrink
-  const good = Math.min(0.42, 0.2 + skill * 0.003) * shrink
+  const great = Math.min(0.11, 0.035 + skill * 0.0011) * shrink
+  const good = Math.min(0.3, 0.14 + skill * 0.0022) * shrink
   const c = scene.center
   return {
     great: { from: c - great / 2, to: c + great / 2 },
@@ -179,7 +179,7 @@ export function tsukkomiZones(state: GameState, scene: TsukkomiScene, kind: Stag
 
 // 針が端まで行く時間（ミリ秒）
 export function maDuration(kind: StageKind): number {
-  return 1800 - stagePressure(kind) * 250
+  return 1500 - stagePressure(kind) * 200
 }
 
 // 針のブレ幅。大きい舞台で度胸が低いほど大きい
