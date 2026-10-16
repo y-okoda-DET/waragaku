@@ -148,12 +148,12 @@ p {
 .primary:active:not(:disabled) {
   box-shadow: 0 0 0 var(--coral);
 }
+/* ボタンは本文と同じ丸ゴシック（押すもの）。Dela Gothicは見出しと数字（見るもの）に使う */
 .big {
   width: 100%;
   min-height: 56px;
   padding: 14px;
-  font-family: var(--display);
-  font-weight: 400;
+  font-weight: 900;
   font-size: 18px;
 }
 .sticky {
@@ -223,11 +223,6 @@ p {
 /* 全角の「！」は左側があいて見えるので、前の字に寄せる */
 .title-logo .bang {
   margin-left: -0.18em;
-}
-/* タイトルを明朝にしたので、ボタンは本文と同じ丸ゴシックにして、タイトルだけを目立たせる */
-.title .big {
-  font-family: 'M PLUS Rounded 1c', sans-serif;
-  font-weight: 900;
 }
 .title-logo small {
   display: block;
