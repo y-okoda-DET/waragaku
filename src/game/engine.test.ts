@@ -129,6 +129,14 @@ describe('ネタ見せの見せ場', () => {
     expect(great.tally).toBeDefined()
   })
 
+  it('見せ場の出来で舞台のあとの伸びが変わる', () => {
+    const s = base()
+    const great = doStage(s, ['great'])
+    const miss = doStage(s, ['miss'])
+    expect(great.stats.idea).toBeGreaterThan(miss.stats.idea)
+    expect(great.lastStage!.lines.some((l) => l.startsWith('見せ場の手ごたえ'))).toBe(true)
+  })
+
   it('ボケ担当はワード選び、普段の舞台は見せ場1つ', () => {
     const scenes = pickScenes(base(), 'netamise')
     expect(scenes).toHaveLength(1)

@@ -6,7 +6,8 @@ import { addSkill, clamp, count, gain, has, push, removeSkill, story, yen } from
 import { STORIES } from './events'
 import { Rng } from './rng'
 import { STAGES, performStage } from './stage'
-import type { CardSlot, GameState, Origin, Role, Stats, Style } from './types'
+import type { ShowcaseGrade } from './showcase'
+import { STAT_LABEL, type CardSlot, type GameState, type Origin, type Role, type StageResult, type StatKey, type Stats, type Style } from './types'
 
 export interface NewGameInput {
   name: string
@@ -362,6 +363,30 @@ export function doStage(prev: GameState, showcase: ('great' | 'good' | 'miss')[]
   return s
 }
 
+// 見せ場の手ごたえ。うまくいった分だけ担当の能力が伸び、スベった分は度胸だけが残る
+const SHOWCASE_GAIN: Record<Role, Record<ShowcaseGrade, [StatKey, number][]>> = {
+  boke: { great: [['idea', 2], ['word', 1]], good: [['idea', 1]], miss: [['guts', 0.5]] },
+  tsukkomi: { great: [['expr', 2], ['word', 1]], good: [['expr', 1]], miss: [['guts', 0.5]] },
+}
+
+function applyShowcaseGains(s: GameState, r: StageResult): void {
+  const grades = r.showcase ?? []
+  if (!grades.length) return
+  const total: Partial<Record<StatKey, number>> = {}
+  for (const g of grades) for (const [k, v] of SHOWCASE_GAIN[s.player.role][g]) total[k] = (total[k] ?? 0) + v
+  const parts: string[] = []
+  for (const [k, v] of Object.entries(total) as [StatKey, number][]) {
+    const d = gain(s, k, v)
+    if (d > 0) parts.push(`${STAT_LABEL[k]}+${Math.round(d * 10) / 10}`)
+  }
+  const greats = grades.filter((g) => g === 'great').length
+  if (greats && s.partner) {
+    s.partner.bond = clamp(s.partner.bond + greats * 2)
+    parts.push(`相方との息+${greats * 2}`)
+  }
+  if (parts.length) r.lines.push(`見せ場の手ごたえ：${parts.join('、')}`)
+}
+
 function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rng): void {
   const spec = STAGES[r.kind]
   count(s, `level${r.level}`)
@@ -373,6 +398,7 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
   if (r.level === 0) s.motivation = clamp(s.motivation - (has(s, 'hagane') ? 3 : 8))
   if (r.level >= 2) s.motivation = clamp(s.motivation + 5)
   gain(s, 'guts', 0.5 + r.level * 0.3)
+  applyShowcaseGains(s, r)
 
   // 見ていた人の評価（認められ度は、ウケたときだけ上がる）
   if (r.level >= 2) for (const sr of s.seniors) sr.respect = clamp(sr.respect + (r.level === 3 ? 5 : 3))
