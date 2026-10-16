@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { gradeTsukkomi, tsukkomiZones, wordHint, type Scene, type ShowcaseGrade, type TsukkomiScene, type WordScene } from '../game/showcase'
+import { AUDIENCE_TASTE, LEAN_LABEL, gradeTsukkomi, gradeWord, maDuration, needleShake, playerLean, shuffledOptions, tsukkomiZones, wordHint, type Scene, type ShowcaseGrade, type TsukkomiScene, type WordScene } from '../game/showcase'
 import { STAGES } from '../game/stage'
 import type { GameState, StageKind } from '../game/types'
 
@@ -29,9 +29,9 @@ export function ShowcaseScreen({ state, kind, scenes, onDone, nextLabel = '続�
         </span>
       </div>
       {scene.kind === 'word' ? (
-        <WordGame key={index} state={state} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
+        <WordGame key={index} state={state} kind={kind} seed={state.turn * 31 + state.stageHistory.length * 7 + index} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
       ) : (
-        <TsukkomiGame key={index} state={state} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
+        <TsukkomiGame key={index} state={state} kind={kind} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
       )}
       {footer}
     </div>
@@ -56,11 +56,14 @@ function Outcome({ grade, label, nextLabel, onNext }: { grade: ShowcaseGrade; la
 
 const WORD_SECONDS = 8
 
-function WordGame({ state, scene, partner, nextLabel, onDone }: { state: GameState; scene: WordScene; partner: string; nextLabel: string; onDone: (g: ShowcaseGrade) => void }) {
+function WordGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { state: GameState; kind: StageKind; seed: number; scene: WordScene; partner: string; nextLabel: string; onDone: (g: ShowcaseGrade) => void }) {
   const [picked, setPicked] = useState<number | null>(null)
   const [timedOut, setTimedOut] = useState(false)
   const [left, setLeft] = useState(WORD_SECONDS)
   const hint = wordHint(state)
+  const [options] = useState(() => shuffledOptions(scene, seed))
+  const grades = options.map((o) => gradeWord(state, kind, o.flavor))
+  const taste = AUDIENCE_TASTE[STAGES[kind].audience]
 
   useEffect(() => {
     if (picked !== null || timedOut) return
@@ -73,8 +76,8 @@ function WordGame({ state, scene, partner, nextLabel, onDone }: { state: GameSta
   }, [left, picked, timedOut])
 
   const done = picked !== null || timedOut
-  const opt = picked !== null ? scene.options[picked] : null
-  const grade: ShowcaseGrade = opt ? opt.grade : 'miss'
+  const opt = picked !== null ? options[picked] : null
+  const grade: ShowcaseGrade = picked !== null ? grades[picked] : 'miss'
 
   return (
     <>
@@ -92,32 +95,43 @@ function WordGame({ state, scene, partner, nextLabel, onDone }: { state: GameSta
           <div className="sc-timer" aria-label={`残り${left}秒`}>
             <span style={{ width: `${(left / WORD_SECONDS) * 100}%` }} />
           </div>
-          <p className="sc-help">ボケで返す。一番おもしろいのはどれ？</p>
+          <div className="sc-read">
+            <span>
+              <b>客席</b>
+              {taste.label}
+            </span>
+            <span>
+              <b>芸風</b>
+              {LEAN_LABEL[playerLean(state)]}
+            </span>
+          </div>
+          <p className="sc-help">ボケで返す。今日の客に一番ウケるのはどれ？</p>
           <div className="options">
-            {scene.options.map((o, i) => (
-              <button key={i} className={`option sc-opt ${hint && o.grade === 'great' ? 'hint' : ''}`} onClick={() => setPicked(i)}>
+            {options.map((o, i) => (
+              <button key={i} className={`option sc-opt ${hint && grades[i] === 'great' ? 'hint' : ''}`} onClick={() => setPicked(i)}>
                 <span>{o.text}</span>
-                {hint && o.grade === 'great' && <span className="small">ピンときた</span>}
+                {hint && grades[i] === 'great' && <span className="small">ピンときた</span>}
               </button>
             ))}
           </div>
         </>
       ) : (
-        <Outcome nextLabel={nextLabel} grade={grade} label={grade === 'great' ? '会心のボケ' : grade === 'good' ? 'そこそこ' : timedOut ? '時間切れ' : '外した'} onNext={() => onDone(grade)} />
+        <Outcome nextLabel={nextLabel} grade={grade} label={grade === 'great' ? '会心のボケ' : grade === 'good' ? (opt?.flavor === playerLean(state) ? '客には少し遠かった' : '自分らしさは薄かった') : timedOut ? '時間切れ' : '外した'} onNext={() => onDone(grade)} />
       )}
     </>
   )
 }
 
-const MA_MS = 1800
 const TYPE_MS = 45
 
-function TsukkomiGame({ state, scene, partner, nextLabel, onDone }: { state: GameState; scene: TsukkomiScene; partner: string; nextLabel: string; onDone: (g: ShowcaseGrade) => void }) {
+function TsukkomiGame({ state, kind, scene, partner, nextLabel, onDone }: { state: GameState; kind: StageKind; scene: TsukkomiScene; partner: string; nextLabel: string; onDone: (g: ShowcaseGrade) => void }) {
   const [shown, setShown] = useState(0)
   const [ma, setMa] = useState(0)
   const [result, setResult] = useState<{ grade: ShowcaseGrade; label: string } | null>(null)
   const start = useRef<number | null>(null)
-  const zones = tsukkomiZones(state)
+  const zones = tsukkomiZones(state, scene, kind)
+  const duration = maDuration(kind)
+  const shake = needleShake(state, kind)
   const typing = shown < scene.boke.length
 
   // ボケを1文字ずつ出す
@@ -133,19 +147,21 @@ function TsukkomiGame({ state, scene, partner, nextLabel, onDone }: { state: Gam
     let raf = 0
     const tick = (now: number) => {
       if (start.current === null) start.current = now
-      const v = Math.min(1, (now - start.current) / MA_MS)
+      const t = (now - start.current) / duration
+      // 緊張で針が小刻みに揺れる
+      const v = Math.max(0, Math.min(1, t + Math.sin(t * 40) * shake))
       setMa(v)
-      if (v >= 1) setResult(gradeTsukkomi(state, null))
+      if (t >= 1) setResult(gradeTsukkomi(state, scene, kind, null))
       else raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [typing, result, state])
+  }, [typing, result, state, scene, kind, duration, shake])
 
   const tap = () => {
     if (result) return
     // 言い終わる前のツッコミは、かなりの食い気味
-    setResult(gradeTsukkomi(state, typing ? 0 : ma))
+    setResult(gradeTsukkomi(state, scene, kind, typing ? 0 : ma))
   }
 
   return (
@@ -170,6 +186,7 @@ function TsukkomiGame({ state, scene, partner, nextLabel, onDone }: { state: Gam
             <span className="great">ドッ</span>
           </div>
           <p className="sc-help">{typing ? 'ボケを最後まで聞いて……' : '赤い「ドッ」の間を狙ってツッコむ！'}</p>
+          {shake > 0.01 && <p className="small center">大舞台で手が震えている（度胸が低いと針がブレる）</p>}
           <button className="primary big sc-tap" onClick={tap}>
             ツッコむ！
           </button>

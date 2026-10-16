@@ -4,7 +4,7 @@ import { TOTAL_TURNS, turnOf, weekInfo } from './data/calendar'
 import { createGame, doStage, endEvents, resolveStory, runWeek, type DayAction, type NightAction } from './engine'
 import { buildEpilogue } from './epilogue'
 import { STORIES } from './events'
-import { gradeTsukkomi, pickScenes, tsukkomiZones } from './showcase'
+import { TSUKKOMI_SCENES, gradeTsukkomi, gradeWord, pickScenes, playerLean, tsukkomiZones } from './showcase'
 import type { GameState } from './types'
 
 // 簡単なボット。ネタ作り・ネタ合わせ・バイトを状況に応じて回す
@@ -135,14 +135,29 @@ describe('ネタ見せの見せ場', () => {
     expect(scenes[0].kind).toBe('word')
   })
 
-  it('ツッコミの間の判定', () => {
+  it('ボケの評価は芸風と客層で変わる', () => {
     const s = base()
-    const z = tsukkomiZones(s)
-    expect(z.great.to - z.great.from).toBeLessThan(z.good.to - z.good.from)
-    expect(gradeTsukkomi(s, (z.great.from + z.great.to) / 2).grade).toBe('great')
-    expect(gradeTsukkomi(s, (z.good.from + z.great.from) / 2).grade).toBe('good')
-    expect(gradeTsukkomi(s, (z.good.to + z.great.to) / 2).grade).toBe('good')
-    expect(gradeTsukkomi(s, 0).grade).toBe('miss')
-    expect(gradeTsukkomi(s, null).label).toBe('ツッコミ忘れ')
+    const lean = playerLean(s)
+    const other = lean === 'shuru' ? 'oudou' : 'shuru'
+    expect(gradeWord(s, 'netamise', 'flat')).toBe('miss')
+    // 講師は王道、審査員はシュールを買う
+    const teacherBest = gradeWord(s, 'netamise', 'oudou')
+    const judgeBest = gradeWord(s, 'contest_manzai', 'shuru')
+    expect(lean === 'oudou' ? teacherBest : judgeBest).toBe('great')
+    expect(gradeWord(s, lean === 'oudou' ? 'contest_manzai' : 'netamise', other)).toBe('good')
+  })
+
+  it('ツッコミの間はボケごとに位置が違い、大舞台ほど狭い', () => {
+    const s = base()
+    const [a, b] = TSUKKOMI_SCENES
+    const za = tsukkomiZones(s, a, 'netamise')
+    expect(za.great.to - za.great.from).toBeLessThan(za.good.to - za.good.from)
+    expect(tsukkomiZones(s, b, 'netamise').great.from).not.toBe(za.great.from)
+    const zf = tsukkomiZones(s, a, 'grad_final')
+    expect(zf.great.to - zf.great.from).toBeLessThan(za.great.to - za.great.from)
+    expect(gradeTsukkomi(s, a, 'netamise', (za.great.from + za.great.to) / 2).grade).toBe('great')
+    expect(gradeTsukkomi(s, a, 'netamise', (za.good.from + za.great.from) / 2).grade).toBe('good')
+    expect(gradeTsukkomi(s, a, 'netamise', 0).grade).toBe('miss')
+    expect(gradeTsukkomi(s, a, 'netamise', null).label).toBe('ツッコミ忘れ')
   })
 })

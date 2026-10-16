@@ -1049,3 +1049,20 @@ p {
 .practice .tabs {
   margin: 4px 0 8px;
 }
+.sc-read {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sc-read b {
+  display: inline-block;
+  min-width: 3em;
+  margin-right: 6px;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0 6px;
+  text-align: center;
+}
