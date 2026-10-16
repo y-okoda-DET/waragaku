@@ -10,7 +10,20 @@ for (const [path, url] of Object.entries(FILES)) ART[path.slice(path.lastIndexOf
 export type Expr = 'normal' | 'smile' | 'laugh' | 'surprise' | 'down' | 'angry' | 'think' | 'shy'
 
 // 名前 → 絵のキー。まだ絵がない人は出てこない（仮の似顔絵になる）
-const CHARA_BY_NAME: Record<string, string> = { 向井: 'mukai', 講師: 'tsujido', 辻堂: 'tsujido' }
+const CHARA_BY_NAME: Record<string, string> = {
+  向井: 'mukai',
+  堂島: 'dojima',
+  岸辺: 'kishibe',
+  早瀬: 'hayase',
+  灰原: 'haibara',
+  大河内: 'ookouchi',
+  ナカジ: 'nakaji',
+  講師: 'tsujido',
+  辻堂: 'tsujido',
+  三宅: 'miyake',
+  店長: 'tencho',
+  支配人: 'shihainin',
+}
 
 export function heroKey(gender: Gender | undefined): string {
   return gender === 'female' ? 'hero_f' : 'hero_m'
@@ -28,13 +41,34 @@ export function portrait(key: string | undefined, expr: Expr): string | undefine
 
 // イベント名 → 場所。背景がまだない場所は従来の色背景のまま
 const PLACE_BY_TITLE: Record<string, string> = {
+  入学式: 'koudou',
   '「実質、芸歴9年やろ」': 'kyoushitsu',
   相方見つけ会: 'kyoushitsu',
-  ネタ見せの順番: 'kyoushitsu',
+  コンビ名を決める: 'famires',
+  ネタ見せの順番: 'rouka',
+  ごちそうさまでした: 'izakaya',
+  コント頂のエントリー: 'livehouse',
+  漫才天下一のエントリー: 'livehouse',
+  夏の強化合宿: 'rouka',
   コンプライアンス講習: 'kyoushitsu',
-  クラス替え: 'kyoushitsu',
+  クラス替え: 'rouka',
+  光と影: 'rouka',
   東西寄席合戦の選考: 'kyoushitsu',
   卒業公演のオーディション: 'kyoushitsu',
+  '卒業大会「門出」': 'butai',
+  夜の公園: 'kouen',
+  相方が来ない: 'ekimae',
+  '「新ネタやろう！」': 'gakuya',
+  貸した金: 'famires',
+  同期LINE: 'heya',
+  バラシ: 'heya',
+  風呂なしアパート: 'heya',
+  先輩の引っ越し: 'heya',
+  知り合いの知り合いからの仕事: 'baito',
+  相方の内定: 'famires',
+  解散の危機: 'sodeura',
+  お金が尽きた: 'heya',
+  '3月 卒業': 'koudou',
 }
 
 export function background(title: string): string | undefined {
