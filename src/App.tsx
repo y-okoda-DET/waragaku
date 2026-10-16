@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { clearSave, createGame, doStage, endEvents, load, resolveStory, runWeek, save, type NewGameInput } from './game/engine'
-import type { GameState } from './game/types'
+import { STAT_KEYS, type GameState, type StatKey, type Stats } from './game/types'
 import { CreateScreen } from './ui/CreateScreen'
 import { StageIntro, StageResultView, StoryScreen } from './ui/EventScreens'
 import { AdvScreen } from './ui/Adv'
@@ -19,11 +19,18 @@ export default function App() {
   const [popup, setPopup] = useState<Popup>(null)
   const [stageShown, setStageShown] = useState(false)
   const [scenes, setScenes] = useState<Scene[] | null>(null)
+  // 最後に行動選択の画面を見せた週と、そのときの能力。週が変わったら切り替えの演出を入れ、上がった能力を光らせる
+  const [shown, setShown] = useState<{ turn: number; stats: Stats } | null>(null)
   const saved = load()
 
   useEffect(() => {
     if (game) save(game)
   }, [game])
+
+  const onWeek = !!game && game.phase === 'week' && !popup && !stageShown
+  useEffect(() => {
+    if (onWeek && game && shown?.turn !== game.turn) setShown({ turn: game.turn, stats: { ...game.stats } })
+  }, [onWeek, game, shown])
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -69,7 +76,7 @@ export default function App() {
         <div className="title-mark">大笑芸能学院</div>
         <h1 className="title-logo">
           ワラガク！
-          <small>お笑い養成所の1年</small>
+          <small>とあるお笑い養成所の一年</small>
         </h1>
         <p className="title-lead">入学から卒業までの1年。同期は300人。卒業するころには、両隣はいなくなっている。</p>
         <button className="primary big" onClick={() => setCreating(true)}>
@@ -115,7 +122,25 @@ export default function App() {
         </button>
       </div>
     )
-  else if (game.phase === 'week') body = <WeekScreen state={game} onNeta={setGame} onRun={(d, n) => apply(runWeek(game, d, n), '今週のできごと')} />
+  else if (game.phase === 'week') {
+    const fresh = shown?.turn !== game.turn
+    const gains: Partial<Record<StatKey, number>> = {}
+    if (fresh && shown)
+      for (const k of STAT_KEYS) {
+        const d = Math.round(game.stats[k]) - Math.round(shown.stats[k])
+        if (d > 0) gains[k] = d
+      }
+    body = (
+      <WeekScreen
+        key={game.turn}
+        state={game}
+        intro={fresh}
+        gains={gains}
+        onNeta={setGame}
+        onRun={(d, n) => apply(runWeek(game, d, n), '今週のできごと')}
+      />
+    )
+  }
   else {
     const ev = game.pending[0]
     if (!ev) body = <div className="screen" />

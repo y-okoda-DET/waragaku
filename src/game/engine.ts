@@ -7,6 +7,7 @@ import { applyKodawari } from './kodawari'
 import { addSkill, clamp, count, gain, has, push, removeSkill, story, yen } from './core'
 import { STORIES } from './events'
 import { flavor } from './data/flavor'
+import { LUCKY, LUCKY_CHANCE } from './data/lucky'
 import { RIVAL_SCHEDULE } from './rivalEvents'
 import { Rng } from './rng'
 import { STAGES, performStage } from './stage'
@@ -29,14 +30,18 @@ export interface NewGameInput {
 
 export type DayAction =
   | { type: 'neta' }
-  | { type: 'awase'; place: 'park' | 'karaoke' | 'family' }
-  | { type: 'jishuren'; kind: 'hassei' | 'kintore' | 'dance' }
-  | { type: 'baito'; kind: 'izakaya' | 'karaoke' | 'hikkoshi' | 'call' }
+  // 場所と練習の中身は選ばない（その週ごとにランダム）。テストでは固定できる
+  | { type: 'awase'; place?: 'park' | 'karaoke' | 'family' }
+  | { type: 'jishuren'; kind?: JishurenKind }
+  | { type: 'baito'; kind?: 'izakaya' }
   | { type: 'jishulive' }
   | { type: 'kangeki' }
+  | { type: 'tetsudai' }
   | { type: 'rest' }
 
-export type NightAction = { type: 'nomi'; senior: string } | { type: 'douki' } | { type: 'netacho' } | { type: 'egosa' } | { type: 'sleep' }
+export type JishurenKind = 'radio' | 'hassei' | 'kintore' | 'dance'
+
+export type NightAction = { type: 'nomi'; senior: string } | { type: 'douki' } | { type: 'netacho' } | { type: 'egosa' } | { type: 'jikka' } | { type: 'sleep' }
 
 const clone = (s: GameState): GameState => structuredClone(s)
 
@@ -96,6 +101,7 @@ export function createGame(raw: NewGameInput): GameState {
     for (const sr of s.seniors) sr.respect = clamp(sr.respect + 5)
   }
   s.flags.intro = true
+  s.flags.met_haibara = true // 入学式で会う
   story(s, 'nyugaku')
   if (bg.startsWithPartner) {
     s.partner = { ...CIRCLE_PARTNER, stats: { ...CIRCLE_PARTNER.stats }, skills: [...CIRCLE_PARTNER.skills], bond: 60, role: input.role === 'boke' ? 'tsukkomi' : 'boke' }
@@ -111,9 +117,7 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
   const log = s.weekLog
   switch (a.type) {
     case 'neta': {
-      gain(s, 'idea', 3)
-      gain(s, 'word', 1.5)
-      s.neta.polish = clamp(s.neta.polish + (has(s, 'ryousan') ? 12 : 8))
+      gain(s, 'idea', has(s, 'ryousan') ? 4.5 : 3.5)
       s.condition = clamp(s.condition - 8)
       count(s, 'neta')
       log.push(flavor('netazukuri', rng))
@@ -132,83 +136,66 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
     case 'awase': {
       if (!s.partner) {
         log.push(flavor('awase_solo', rng))
-        gain(s, 'expr', 1)
+        s.neta.polish = clamp(s.neta.polish + 5)
         break
       }
       s.neta.polish = clamp(s.neta.polish + (has(s, 'awasema') ? 15 : 10))
       s.partner.bond = clamp(s.partner.bond + 4)
-      gain(s, 'expr', 1.5)
       s.condition = clamp(s.condition - (has(s, 'awasema') ? 3 : 6))
       count(s, 'awase')
-      if (a.place === 'park') {
+      // 場所はその週の都合で決まる。お金はかからない（割り勘の小銭は生活費のうち）
+      const place = a.place ?? rng.pick(['park', 'park', 'family', 'karaoke'] as const)
+      if (place === 'park') {
         log.push(flavor('awase_park', rng))
         if (rng.chance(0.3)) story(s, 'park')
         else if (weekInfo(s.turn).month >= 6 && weekInfo(s.turn).month <= 9 && rng.chance(0.5)) log.push(flavor('awase_park_summer', rng))
-      } else if (a.place === 'karaoke') {
-        s.money -= 2000
-        s.neta.polish = clamp(s.neta.polish + 3)
-        log.push(flavor('awase_karaoke', rng))
-      } else {
-        s.money -= 800
-        s.partner.bond = clamp(s.partner.bond + 2)
-        log.push(flavor('awase_family', rng))
-      }
+      } else if (place === 'karaoke') log.push(flavor('awase_karaoke', rng))
+      else log.push(flavor('awase_family', rng))
       if (rng.chance(0.08)) story(s, 'late_partner')
       break
     }
     case 'jishuren': {
       s.condition = clamp(s.condition - 10)
-      if (a.kind === 'hassei') {
-        gain(s, 'expr', 2)
-        gain(s, 'guts', 1)
+      // 何をやるかは選べない。深夜ラジオ投稿＝ワード力、発声・滑舌＝表現力、筋トレ＝体力、ダンス＝対応力
+      const kind = a.kind ?? rng.pick(['radio', 'hassei', 'kintore', 'dance'] as const)
+      if (kind === 'radio') {
+        gain(s, 'word', 3)
+        log.push(flavor('jishuren_radio', rng))
+      } else if (kind === 'hassei') {
+        gain(s, 'expr', 3)
         count(s, 'hassei')
         tie(s, 'miyake', 3)
         tie(s, 'kishibe', 2)
         log.push(flavor('jishuren_hassei', rng))
-      } else if (a.kind === 'kintore') {
+      } else if (kind === 'kintore') {
         gain(s, 'stamina', 3)
         log.push(flavor('jishuren_kintore', rng))
       } else {
-        gain(s, 'expr', 2)
-        gain(s, 'stamina', 1.5)
+        gain(s, 'adlib', 3)
         log.push(flavor('jishuren_dance', rng))
       }
       break
     }
     case 'baito': {
-      const pay = { izakaya: 18000, karaoke: 15000, hikkoshi: 25000, call: 20000 }[a.kind]
+      // バイトは居酒屋だけ。まかないで食費が浮く
       const bonus = has(s, 'kugaku') ? 1.25 : 1
-      s.money += Math.round(pay * bonus)
+      s.money += Math.round(18000 * bonus)
       count(s, 'baito')
-      if (a.kind === 'izakaya') {
-        s.condition = clamp(s.condition - (has(s, 'makanai') ? 4 : 10))
-        s.money += has(s, 'makanai') ? 5000 : 2500 // まかないで食費が浮く
-        tie(s, 'tencho', 6)
-        tie(s, 'nakaji', 3)
-        log.push(flavor('baito_izakaya', rng))
-      } else if (a.kind === 'karaoke') {
-        s.condition = clamp(s.condition - 8)
-        if (s.partner && rng.chance(0.5)) {
-          s.neta.polish = clamp(s.neta.polish + 3)
-          log.push(flavor('baito_karaoke_neta', rng))
-        } else log.push(flavor(s.player.background === 'forty' ? 'baito_karaoke_forty' : 'baito_karaoke', rng))
-      } else if (a.kind === 'hikkoshi') {
-        s.condition = clamp(s.condition - 25)
-        gain(s, 'stamina', 1)
-        log.push(flavor('baito_hikkoshi', rng))
-      } else {
-        s.condition = clamp(s.condition - 8)
-        s.motivation = clamp(s.motivation - 3)
-        gain(s, 'adlib', 0.5)
-        log.push(flavor('baito_call', rng))
-      }
+      s.condition = clamp(s.condition - (has(s, 'makanai') ? 4 : 10))
+      s.money += has(s, 'makanai') ? 5000 : 2500
+      tie(s, 'tencho', 6)
+      if (s.flags.met_nakaji) tie(s, 'nakaji', 3)
+      log.push(flavor('baito_izakaya', rng))
+      // バイト先で先輩芸人のナカジに出会い、何度か一緒に入ると連絡先を交換する
+      if (!s.flags.met_nakaji) story(s, 'senpai_nakaji_deai')
+      else if (!s.flags.contact_nakaji && (s.counters.baito ?? 0) >= 3) story(s, 'senpai_nakaji_renraku')
       break
     }
     case 'jishulive': {
       s.money -= 2000
       s.condition = clamp(s.condition - 6)
-      gain(s, 'guts', 1.5)
-      gain(s, 'adlib', 2)
+      gain(s, 'guts', 3)
+      gain(s, 'adlib', 1)
       s.outsideRep = clamp(s.outsideRep + (has(s, 'chika') ? 6 : 3))
       count(s, 'jishulive')
       tie(s, 'nakaji', 3)
@@ -231,6 +218,17 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
       log.push(flavor('kangeki', rng))
       break
     }
+    case 'tetsudai': {
+      // 先輩ライブの裏方。タダ。袖から見られて、知っている先輩には顔を覚えてもらえる
+      s.condition = clamp(s.condition - 6)
+      gain(s, 'guts', 1.5)
+      for (const sr of s.seniors) if (s.flags[`met_${sr.id}`]) sr.respect = clamp(sr.respect + 3)
+      if (s.flags.met_nakaji) tie(s, 'nakaji', 2)
+      tie(s, 'haibara', 2)
+      count(s, 'tetsudai')
+      log.push(flavor('tetsudai', rng))
+      break
+    }
     case 'rest':
       count(s, 'rest')
       s.condition = clamp(s.condition + 30)
@@ -245,7 +243,7 @@ function applyNight(s: GameState, a: NightAction, rng: Rng): void {
   switch (a.type) {
     case 'nomi': {
       const senior = s.seniors.find((x) => x.id === a.senior)
-      if (!senior) break
+      if (!senior || !s.flags[`contact_${senior.id}`]) break
       senior.like = clamp(senior.like + (has(s, 'kawaigarare') ? 11 : 7) + (has(s, 'hitorashi') ? 3 : 0))
       s.condition = clamp(s.condition - 10)
       s.money += 2500 // ごちそうになった分、食費が浮く
@@ -284,6 +282,16 @@ function applyNight(s: GameState, a: NightAction, rng: Rng): void {
       const delta = rng.int(-8, 8)
       s.motivation = clamp(s.motivation + delta)
       log.push(flavor(delta >= 0 ? 'egosa_good' : 'egosa_bad', rng, { name: s.player.callName, combo: s.comboName || s.player.callName }))
+      break
+    }
+    case 'jikka': {
+      s.motivation = clamp(s.motivation + 8)
+      // たまに仕送りが届く
+      if (rng.chance(0.2)) {
+        const amount = rng.pick([10000, 10000, 20000])
+        s.money += amount
+        log.push(flavor('jikka_shiokuri', rng, { amount: amount.toLocaleString() }))
+      } else log.push(flavor('jikka', rng))
       break
     }
     case 'sleep':
@@ -326,6 +334,10 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   if (s.partner && month === 9 && week === 3) story(s, 'aikata_scene', { n: 1 })
   if (s.partner && month === 2 && week === 1) story(s, 'aikata_scene', { n: 2 })
   if (month === 5 && week === 1) story(s, 'taichou')
+  if (month === 5 && week === 2) story(s, 'senpai_ookouchi_deai')
+  if (month === 6 && week === 3 && s.flags.met_ookouchi && !s.flags.contact_ookouchi) story(s, 'senpai_ookouchi_renraku')
+  // 休むが5回になったら（あと3回で出席不足）、講師から注意される
+  if ((s.counters.rest ?? 0) >= 5 && !s.flags.shusseki_warned) story(s, 'shusseki_chui')
   if (month === 5 && week === 1) story(s, 'nazo_jugyo')
   if (month === 5 && week === 3) story(s, 'mendan')
   if (month === 6 && week === 3) story(s, 'ikitteta')
@@ -375,14 +387,25 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   if (s.money < 0) story(s, 'debt')
 }
 
+// 予定の画面には書いていない、たまに起きる能力アップ
+function lucky(s: GameState, key: string, rng: Rng): void {
+  const list = LUCKY[key]
+  if (!list || !rng.chance(LUCKY_CHANCE)) return
+  const l = rng.pick(list)
+  gain(s, l.stat, l.amount)
+  s.weekLog.push(`${l.line}（${STAT_LABEL[l.stat]}＋${l.amount}）`)
+}
+
 export function runWeek(prev: GameState, day: DayAction, night: NightAction): GameState {
   const s = clone(prev)
   s.weekLog = []
   s.queueChoice = null
   withRng(s, (rng) => {
     applyDay(s, day, rng)
+    lucky(s, day.type, rng)
     s.dayLines = s.weekLog.length
     applyNight(s, night, rng)
+    lucky(s, night.type, rng)
     weeklyUpkeep(s)
     scheduleEvents(s, rng)
   })

@@ -3,6 +3,7 @@ import { kodawariOf } from './kodawari'
 import { PARTNER_STORIES } from './partnerLines'
 import { YEAR_STORIES } from './yearEvents'
 import { RIVAL_STORIES } from './rivalEvents'
+import { SENPAI_STORIES } from './senpaiEvents'
 import { CARDS } from './data/cards'
 import { PARTNER_CANDIDATES } from './data/people'
 import { clamp, count, gain, has, push, story, yen } from './core'
@@ -45,7 +46,8 @@ export const STORIES: Record<string, StoryDef> = {
         '灰原（ふつう）「助手の灰原です。最初に言うときます」',
         '灰原（ふつう）「今はたくさんいるけど、マジで今、自分の両隣にいる人、いなくなるから」',
         'ナレーション：講堂が静かになった。右隣の人と、少しだけ目が合った。',
-        '灰原（笑い）「挨拶は夜でも“おはようございます”。授業の20分前におらんかったら遅刻。恋愛禁止。以上です」',
+        '灰原（笑い）「挨拶は夜でも“おはようございます”。授業の20分前におらんかったら遅刻。恋愛禁止」',
+        '灰原（ふつう）「あと、出席は全部数えてます。足りん人は、どんだけおもろくても卒業させません。以上です」',
       ],
       choices: [{ reply: '灰原（笑い）「ええ声。ほんで今、夕方やで」', label: '「おはようございます！」と声を張る', hint: '度胸＋' }, { reply: '灰原（ふつう）「そこの見回してる人。両隣の顔、今のうちに覚えとき」', label: '黙って周りを見回す', hint: '発想力＋' }],
     }),
@@ -502,7 +504,7 @@ export const STORIES: Record<string, StoryDef> = {
   },
 }
 
-Object.assign(STORIES, DEV_STORIES, YEAR_STORIES, PARTNER_STORIES, RIVAL_STORIES)
+Object.assign(STORIES, DEV_STORIES, YEAR_STORIES, PARTNER_STORIES, RIVAL_STORIES, SENPAI_STORIES)
 
 export function storyView(s: GameState, key: string, params: Record<string, string | number> = {}): StoryView {
   const view = STORIES[key].view(s, params)

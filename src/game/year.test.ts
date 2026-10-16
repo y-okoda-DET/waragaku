@@ -31,7 +31,7 @@ describe('1年間の流れ', () => {
   it('足した行事が1年のうちに全部起きる', () => {
     const { s, seen } = play(5, () => 0)
     expect(s.phase).toBe('result')
-    for (const key of ['taichou', 'aikata_kekka', 'nazo_jugyo', 'mendan', 'ikitteta', 'taisaku', 'natsu_jugyo', 'kiteinai', 'tokushin', 'gakuensai', 'sankou', 'finalist', 'jiko', 'jiko_yoru', 'tozai_home', 'gaisen', 'kougyou', 'ketsudan', 'sotsugyo'])
+    for (const key of ['senpai_ookouchi_deai', 'senpai_ookouchi_renraku', 'senpai_nakaji_deai', 'senpai_nakaji_renraku', 'taichou', 'aikata_kekka', 'nazo_jugyo', 'mendan', 'ikitteta', 'taisaku', 'natsu_jugyo', 'kiteinai', 'tokushin', 'gakuensai', 'sankou', 'finalist', 'jiko', 'jiko_yoru', 'tozai_home', 'gaisen', 'kougyou', 'ketsudan', 'sotsugyo'])
       expect(seen).toContain(key)
   })
 
