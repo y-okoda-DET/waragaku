@@ -10,8 +10,18 @@ import { pickScenes, type Scene } from './game/showcase'
 import { WeekScreen } from './ui/WeekScreen'
 import { AlbumScreen } from './ui/AlbumScreen'
 import { loadAlbum } from './game/album'
+import { STORIES } from './game/events'
+import { startPlaceOf } from './ui/art'
 
-type Popup = { title: string; lines: string[]; dayLines?: number } | null
+// 出来事の場所（その結果の画面を同じ場所から始めるため）
+function storyPlace(s: GameState, key: string, params?: Record<string, string | number>): string | undefined {
+  // view が状態に触れても本物に響かないよう、写しで呼ぶ
+  const v = STORIES[key]?.view(structuredClone(s), params ?? {})
+  return v && startPlaceOf(v.title, v.place)
+}
+
+// startPlace：その結果を見せる場所（直前の出来事と同じ場所から始める）
+type Popup = { title: string; lines: string[]; dayLines?: number; startPlace?: string } | null
 
 export default function App() {
   const [game, setGame] = useState<GameState | null>(null)
@@ -38,8 +48,8 @@ export default function App() {
   }, [game?.turn, game?.pending.length, game?.phase])
 
   // エンジンの処理結果を反映し、ログがあればポップアップで見せる
-  const apply = (next: GameState, title: string, week = false) => {
-    if (next.weekLog.length) setPopup({ title, lines: next.weekLog, dayLines: week ? next.dayLines : undefined })
+  const apply = (next: GameState, title: string, week = false, startPlace?: string) => {
+    if (next.weekLog.length) setPopup({ title, lines: next.weekLog, dayLines: week ? next.dayLines : undefined, startPlace })
     if (!next.pending.length && next.phase === 'event' && !next.weekLog.length) {
       const after = endEvents(next)
       setGame(after)
@@ -161,7 +171,7 @@ export default function App() {
     const ev = game.pending[0]
     if (!ev) body = <div className="screen" />
     else if (ev.type === 'story')
-      body = <StoryScreen key={`${game.turn}-${ev.key}-${game.pending.length}`} state={game} eventKey={ev.key} params={ev.params} onChoose={(c, t) => apply(resolveStory(game, c, t), 'その結果')} />
+      body = <StoryScreen key={`${game.turn}-${ev.key}-${game.pending.length}`} state={game} eventKey={ev.key} params={ev.params} onChoose={(c, t) => apply(resolveStory(game, c, t), 'その結果', false, storyPlace(game, ev.key, ev.params))} />
     else if (scenes)
       body = (
         <ShowcaseScreen
@@ -180,6 +190,6 @@ export default function App() {
   }
 
   // 結果は会話画面で読み切ってから、次のイベントに進む
-  if (popup) return <AdvScreen key={`${game.turn}-${popup.title}-${popup.lines.join('').length}-${game.pending.length}`} state={game} title={popup.title} lines={popup.lines} dayLines={popup.dayLines} onEnd={closePopup} />
+  if (popup) return <AdvScreen key={`${game.turn}-${popup.title}-${popup.lines.join('').length}-${game.pending.length}`} state={game} title={popup.title} lines={popup.lines} dayLines={popup.dayLines} startPlace={popup.startPlace} onEnd={closePopup} />
   return body
 }

@@ -82,7 +82,7 @@ function Chara({ state, name, expr, focus, me }: { state: GameState; name: strin
   )
 }
 
-export function AdvScreen({ state, title, lines: script, place, onEnd, after, dayLines }: { state: GameState; title: string; lines: string[]; place?: string; onEnd?: () => void; after?: ReactNode; dayLines?: number }) {
+export function AdvScreen({ state, title, lines: script, place, startPlace, onEnd, after, dayLines }: { state: GameState; title: string; lines: string[]; place?: string; startPlace?: string; onEnd?: () => void; after?: ReactNode; dayLines?: number }) {
   const [index, setIndex] = useState(0)
   const [shown, setShown] = useState(0)
   const parsed = script.map(parseLine)
@@ -157,7 +157,7 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
   const talking = line.trimStart().startsWith('「')
   const focus = shot.speaker ?? (shot.cast.length === 1 ? shot.cast[0] : undefined)
   const exprFor = (n: string): Expr => (n !== focus ? 'normal' : n === cur?.speaker && cur.expr ? cur.expr : exprOf(line))
-  const bg = backgrounds(title, lines, place, dayLines)[index]
+  const bg = backgrounds(title, lines, place, dayLines, startPlace)[index]
 
   return (
     // 画面のどこをタップしても進む（選択肢とログは除く）

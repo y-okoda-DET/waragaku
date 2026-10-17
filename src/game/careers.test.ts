@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { CAREER_SCHEDULE, CAREER_STORIES, CAREERS, unlockedCareers } from './careers'
-import { createGame } from './engine'
+import { CAREER_SCENES, CAREER_SCHEDULE, CAREER_STORIES, CAREERS, pickFlag, unlockedCareers } from './careers'
+import { createGame, resolveStory } from './engine'
 import { STORIES } from './events'
 import { RIVAL_STORIES } from './rivalEvents'
 import { YEAR_STORIES } from './yearEvents'
@@ -61,5 +61,22 @@ describe('経歴ごとのシナリオ', () => {
       const g = createGame({ name: 'a', callName: 'a', role: 'boke', style: 'manzai', seed, background: 'salaryman' })
       expect(g.skills).not.toContain('koukou_sho')
     }
+  })
+})
+
+describe('アルバムに出す経歴の場面', () => {
+  it('場面の名前と選択肢の数が、実際の出来事と合っている', () => {
+    for (const c of CAREER_SCENES) {
+      const v = CAREER_STORIES[c.key].view(game(c.career), {})
+      expect(v.title, c.key).toBe(c.title)
+      expect(v.choices.length, c.key).toBe(c.choices)
+    }
+  })
+
+  it('選んだ選択肢に印がつく', () => {
+    const s = game('salaryman')
+    s.pending.unshift({ type: 'story', key: 's_bonus' })
+    const t = resolveStory(s, 2)
+    expect(t.flags[pickFlag('s_bonus', 2)]).toBe(true)
   })
 })

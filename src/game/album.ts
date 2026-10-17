@@ -2,7 +2,7 @@
 import { SKILLS, type SkillKind } from './data/skills'
 import { RANKS, buildEpilogue } from './epilogue'
 import { rivalOf } from './rivalEvents'
-import { CAREERS, MOCK_ALL_OPEN, careerLabel } from './careers'
+import { CAREERS, CAREER_SCENES, MOCK_ALL_OPEN, careerLabel, pickFlag } from './careers'
 import type { GameState } from './types'
 
 export interface Album {
@@ -15,6 +15,8 @@ export interface Album {
   rivals: string[]
   // 卒業したことのある経歴（選べる経歴は、卒業した回数で決まる）
   careers: string[]
+  // 経歴ごとの場面で選んだ選択肢（「場面:番号」）
+  careerPicks: string[]
   // 同じ卒業を二度数えないための印（新しい順に少しだけ持つ）
   keys: string[]
 }
@@ -48,7 +50,7 @@ export const KIND_ORDER: { kind: SkillKind; label: string }[] = [
 ]
 
 const KEY = 'lough-academy-album-v1'
-const empty = (): Album => ({ runs: 0, skills: [], routes: [], rivals: [], careers: [], keys: [] })
+const empty = (): Album => ({ runs: 0, skills: [], routes: [], rivals: [], careers: [], careerPicks: [], keys: [] })
 
 export function loadAlbum(): Album {
   try {
@@ -75,7 +77,8 @@ export function runEntries(s: GameState) {
   const got = SKILLS.filter((d) => s.skills.includes(d.id) || s.counters[`got_${d.id}`]).map((d) => d.id)
   const r = rivalOf(s)
   const rivals = RIVAL_ENDINGS.filter((e) => e.rival === r && (e.id.endsWith('_win') ? s.gradRank === 1 : s.flags[e.id])).map((e) => e.id)
-  return { key: `${s.player.name}|${s.rng}|${ep.total}`, rank: ep.rank, total: ep.total, route: ep.route, skills: got, rivals }
+  const picks = CAREER_SCENES.flatMap((c) => Array.from({ length: c.choices }, (_, i) => i).filter((i) => s.flags[pickFlag(c.key, i)]).map((i) => `${c.key}:${i}`))
+  return { key: `${s.player.name}|${s.rng}|${ep.total}`, rank: ep.rank, total: ep.total, route: ep.route, skills: got, rivals, picks }
 }
 
 // 卒業を書き込む。新しく増えたものを返す（もう書いた卒業なら何も足さない）
@@ -101,6 +104,9 @@ export function recordRun(s: GameState): { album: Album; fresh: string[] } {
   if (s.gradRank && (!a.bestGrad || s.gradRank < a.bestGrad)) a.bestGrad = s.gradRank
   add(a.routes, e.route, `芸人1年目「${e.route}」`)
   if (!a.careers.includes(s.player.background)) a.careers.push(s.player.background)
+  const newPicks = e.picks.filter((p) => !a.careerPicks.includes(p))
+  a.careerPicks.push(...newPicks)
+  if (newPicks.length) fresh.push(`${careerLabel(s.player.background)}の場面：まだ選んでいなかった道を${newPicks.length}つ見た`)
   for (const id of e.rivals) add(a.rivals, id, `同期の結末「${RIVAL_ENDINGS.find((x) => x.id === id)?.name}」`)
   // 特殊能力は数が多いので、1行にまとめる
   const newSkills = e.skills.filter((id) => !a.skills.includes(id))

@@ -80,6 +80,23 @@ const PLACE_BY_TITLE: Record<string, string> = {
   解散の危機: 'sodeura',
   お金が尽きた: 'heya',
   '3月 卒業': 'koudou',
+  既読スルー: 'heya',
+}
+
+// 週の予定の画面（「ネタ作り／早く寝る」）は、昼の予定から最初の場所を決める。行の言葉に場所が出てきたらそちらに移る
+const PLACE_BY_PLAN: [RegExp, string][] = [
+  [/^ネタ作り/, 'famires'],
+  [/^ネタ合わせ/, 'kouen'],
+  [/^自主練（深夜ラジオ|^自主練（筋トレ|^休む/, 'heya'],
+  [/^自主練/, 'kouen'],
+  [/^先輩ライブの手伝い/, 'gakuya'],
+  [/^自主ライブ|^ライブを観/, 'livehouse'],
+  [/^バイト/, 'baito'],
+]
+
+// 場面の最初の場所。決まった場所がなければ予定の名前から選ぶ（それもなければ廊下）
+export function startPlaceOf(title: string, place?: string): string | undefined {
+  return place ?? PLACE_BY_TITLE[title] ?? PLACE_BY_PLAN.find(([re]) => re.test(title))?.[1]
 }
 
 // 「今週のできごと」のように場所が決まっていない画面は、その行の言葉から場所を選ぶ。上から順に先に当たったもの
@@ -96,14 +113,14 @@ const PLACE_BY_WORD: [RegExp, string][] = [
   [/授業|ネタ見せ|講師|教室|発声|練習/, 'kyoushitsu'],
   [/同期|掲示|選抜|クラス/, 'rouka'],
   [/駅|終電/, 'ekimae'],
-  [/部屋|家賃|寝|ネタ帳|ネタの種|ネタを書|休/, 'heya'],
+  [/部屋|家賃|寝|ネタ帳|ネタの種|ネタを書|休|エゴサ|実家|電話/, 'heya'],
 ]
 
 // その行の背景。イベントが場所を指定していればそれ、イベントごとに決まった場所があればそれ、なければ行の言葉、それもなければ前の行の場所を引き継ぐ
 // dayLines: 先頭から何行が昼のできごとか。昼の行では、夜の絵を昼の絵（bg_◯◯_day）に差し替える
-export function backgrounds(title: string, lines: string[], at?: string, dayLines = 0): (string | undefined)[] {
+export function backgrounds(title: string, lines: string[], at?: string, dayLines = 0, start?: string): (string | undefined)[] {
   const fixed = at ?? PLACE_BY_TITLE[title]
-  let place = fixed ?? (title.includes('授業') || title.includes('ネタ見せ') ? 'kyoushitsu' : undefined)
+  let place = fixed ?? start ?? startPlaceOf(title) ?? (title.includes('授業') || title.includes('ネタ見せ') ? 'kyoushitsu' : undefined)
   return lines.map((line, i) => {
     if (!fixed) place = PLACE_BY_WORD.find(([re]) => re.test(line))?.[1] ?? place ?? 'rouka'
     if (!place) return undefined

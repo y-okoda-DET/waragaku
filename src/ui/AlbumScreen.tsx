@@ -1,12 +1,15 @@
 import { KIND_ORDER, KIWAMI_HINT, RIVAL_ENDINGS, ROUTES, type Album } from '../game/album'
 import { SKILLS } from '../game/data/skills'
-import { CAREERS, openCareers } from '../game/careers'
+import { CAREERS, CAREER_SCENES, openCareers } from '../game/careers'
 import { SkillBadge } from './parts'
 
 // 卒業アルバム。見たもの・取ったものを周をまたいで並べ、まだのところは伏せて数だけ見せる
 export function AlbumScreen({ album, onBack }: { album: Album; onBack: () => void }) {
-  const total = SKILLS.length + ROUTES.length + RIVAL_ENDINGS.length + CAREERS.length
-  const have = album.skills.length + album.routes.length + album.rivals.length + album.careers.length
+  const picks = album.careerPicks ?? []
+  const pickCount = CAREER_SCENES.reduce((a, c) => a + c.choices, 0)
+  const total = SKILLS.length + ROUTES.length + RIVAL_ENDINGS.length + CAREERS.length + pickCount
+  const have = album.skills.length + album.routes.length + album.rivals.length + album.careers.length + picks.length
+  const seenOf = (key: string) => picks.filter((p) => p.startsWith(`${key}:`)).length
   return (
     <div className="screen album">
       <section className="card">
@@ -35,6 +38,29 @@ export function AlbumScreen({ album, onBack }: { album: Album; onBack: () => voi
             </li>
           ))}
         </ul>
+        {/* 経歴だけの場面。選んだ道の数を出し、まだ一度も見ていない場面は名前を伏せる */}
+        {CAREERS.filter((c) => CAREER_SCENES.some((x) => x.career === c.id)).map((c) => {
+          const list = CAREER_SCENES.filter((x) => x.career === c.id)
+          const seen = list.reduce((a, x) => a + seenOf(x.key), 0)
+          const all = list.reduce((a, x) => a + x.choices, 0)
+          return (
+            <div key={c.id} className="album-group">
+              <h3>
+                {c.label}の場面
+                <span className="small">
+                  選んだ道 {seen} / {all}
+                </span>
+              </h3>
+              <ul className="album-list">
+                {list.map((x) => (
+                  <li key={x.key} className={seenOf(x.key) ? '' : 'locked'}>
+                    {seenOf(x.key) ? `${x.title}（${seenOf(x.key)} / ${x.choices}）` : '？？？'}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        })}
       </section>
 
       <section className="card">

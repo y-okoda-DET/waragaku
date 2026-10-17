@@ -210,6 +210,18 @@ export const CAREER_SCHEDULE: { career: CareerId; month: number; week: number; k
   { career: 'salaryman', month: 11, week: 4, key: 's_joushi' },
 ]
 
+// アルバムに出す、経歴ごとの場面の名前と選択肢の数（見ていない場面は名前を伏せて数だけ見せる）
+export const CAREER_SCENES: { career: CareerId; key: string; title: string; choices: number }[] = [
+  { career: 'circle', key: 'c_kouhai', title: '後輩のネタ', choices: 3 },
+  { career: 'circle', key: 'c_haishin', title: '決勝の配信', choices: 2 },
+  { career: 'circle', key: 'c_bokou', title: '母校の学祭', choices: 2 },
+  { career: 'salaryman', key: 's_meishi', title: '名刺', choices: 2 },
+  { career: 'salaryman', key: 's_bonus', title: 'ボーナスの日', choices: 3 },
+  { career: 'salaryman', key: 's_joushi', title: '前の上司', choices: 3 },
+]
+// 選んだ選択肢の印（アルバムに「場面:番号」で残す）
+export const pickFlag = (key: string, choice: number) => `cpick_${key}_${choice}`
+
 export function careerEvents(s: GameState, month: number, week: number): string[] {
   return CAREER_SCHEDULE.filter((e) => e.career === career(s) && e.month === month && e.week === week && (!e.when || e.when(s))).map((e) => e.key)
 }

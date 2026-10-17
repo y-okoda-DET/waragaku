@@ -9,7 +9,7 @@ import { STORIES } from './events'
 import { flavor } from './data/flavor'
 import { LUCKY, LUCKY_CHANCE } from './data/lucky'
 import { RIVAL_SCHEDULE, rivalOf } from './rivalEvents'
-import { careerEvents } from './careers'
+import { CAREER_SCENES, careerEvents, pickFlag } from './careers'
 import { Rng } from './rng'
 import { STAGES, performStage } from './stage'
 import type { ShowcaseGrade } from './showcase'
@@ -452,6 +452,7 @@ export function resolveStory(prev: GameState, choice: number, text?: string): Ga
   if (!ev || ev.type !== 'story') return prev
   s.weekLog = []
   applyKodawari(s, ev.key, choice)
+  if (CAREER_SCENES.some((c) => c.key === ev.key)) s.flags[pickFlag(ev.key, choice)] = true
   const k = ev.key in DEV_STORIES ? TUNING.bond : TUNING.event
   withRng(s, (rng) => withGainScale(k, () => STORIES[ev.key].resolve?.(s, choice, rng, ev.params ?? {}, text)))
   return s
