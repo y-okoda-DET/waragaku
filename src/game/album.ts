@@ -106,7 +106,7 @@ export function recordRun(s: GameState): { album: Album; fresh: string[] } {
   if (!a.careers.includes(s.player.background)) a.careers.push(s.player.background)
   const newPicks = e.picks.filter((p) => !a.careerPicks.includes(p))
   a.careerPicks.push(...newPicks)
-  if (newPicks.length) fresh.push(`${careerLabel(s.player.background)}の場面：まだ選んでいなかった道を${newPicks.length}つ見た`)
+  if (newPicks.length) fresh.push(`経歴の場面で、新しく選んだ道：${newPicks.length}つ`)
   for (const id of e.rivals) add(a.rivals, id, `同期の結末「${RIVAL_ENDINGS.find((x) => x.id === id)?.name}」`)
   // 特殊能力は数が多いので、1行にまとめる
   const newSkills = e.skills.filter((id) => !a.skills.includes(id))
