@@ -8,6 +8,8 @@ import { ResultScreen } from './ui/ResultScreen'
 import { ShowcaseScreen } from './ui/ShowcaseScreen'
 import { pickScenes, type Scene } from './game/showcase'
 import { WeekScreen } from './ui/WeekScreen'
+import { AlbumScreen } from './ui/AlbumScreen'
+import { loadAlbum } from './game/album'
 
 type Popup = { title: string; lines: string[]; dayLines?: number } | null
 
@@ -19,6 +21,7 @@ export default function App() {
   const [scenes, setScenes] = useState<Scene[] | null>(null)
   // 最後に行動選択の画面を見せた週と、そのときの能力。週が変わったら切り替えの演出を入れ、上がった能力を光らせる
   const [shown, setShown] = useState<{ turn: number; stats: Stats } | null>(null)
+  const [albumOpen, setAlbumOpen] = useState(false)
   const saved = load()
 
   useEffect(() => {
@@ -54,6 +57,11 @@ export default function App() {
       if (next.weekLog.length) setPopup({ title: 'お知らせ', lines: next.weekLog })
     }
   }
+
+  useEffect(() => {
+    if (albumOpen) window.scrollTo(0, 0)
+  }, [albumOpen])
+  if (albumOpen) return <AlbumScreen album={loadAlbum()} onBack={() => setAlbumOpen(false)} />
 
   if (!game) {
     if (creating)
@@ -92,6 +100,11 @@ export default function App() {
             続きから（{saved.player.callName}）
           </button>
         )}
+        {loadAlbum().runs > 0 && (
+          <button className="big" onClick={() => setAlbumOpen(true)}>
+            卒業アルバム
+          </button>
+        )}
         <p className="small center">登場する養成所・事務所・劇場・大会・人物はすべて架空です。</p>
       </div>
     )
@@ -104,7 +117,7 @@ export default function App() {
   }
 
   let body
-  if (game.phase === 'result') body = <ResultScreen state={game} onRestart={restart} />
+  if (game.phase === 'result') body = <ResultScreen state={game} onRestart={restart} onAlbum={() => setAlbumOpen(true)} />
   else if (stageShown && game.lastStage)
     body = (
       <div className="screen event">

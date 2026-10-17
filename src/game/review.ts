@@ -195,7 +195,13 @@ export function buildReview(s: GameState, rank: string): Review {
     ? '爆笑請負人'
     : has(s, 'kumi')
       ? '秘蔵っ子'
-      : s.gradRank === 1
+      : has(s, 'meikonbi')
+        ? '名コンビ'
+        : has(s, 'tatakiage')
+          ? '叩き上げ'
+          : has(s, 'izumi')
+            ? 'ネタの泉'
+            : s.gradRank === 1
         ? '卒業総代'
         : s.flags.pin
           ? 'ピン芸人'

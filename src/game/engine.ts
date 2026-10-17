@@ -100,6 +100,7 @@ export function createGame(raw: NewGameInput): GameState {
     s.stats.idea += 4
     for (const sr of s.seniors) sr.respect = clamp(sr.respect + 5)
   }
+  for (const id of s.skills) s.counters[`got_${id}`] = 1
   s.flags.intro = true
   s.flags.met_haibara = true // 入学式で会う
   story(s, 'nyugaku')
@@ -494,6 +495,7 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
   const spec = STAGES[r.kind]
   count(s, `level${r.level}`)
   if (r.level === 0) count(s, 'suberi')
+  if (spec.big && r.level === 3) count(s, 'bigLevel3')
   if (spec.audience === 'general' && r.level >= 2) count(s, 'generalUke')
   if (r.level >= 2 && s.neta.cards.tsukami) count(s, 'tsukamiUke')
 
@@ -698,8 +700,15 @@ function checkSkills(s: GameState): void {
     addSkill(s, 'kurouto', '「学生お笑い臭」が化けて、芸風スキル「玄人殺し」になった。')
   }
   if (has(s, 'agari') && s.stats.guts >= 50) removeSkill(s, 'agari', '舞台に慣れて「あがり症」が消えた。')
-  if (has(s, 'honban') && has(s, 'tsukami') && c('level3') >= 6 && s.stats.guts >= 65)
-    addSkill(s, 'bakushou', '本番に強く、最初の一言でつかめて、爆笑をとった舞台が6回を数えた。どこに出ても笑いを持って帰ってこられる。極み「爆笑請負人」に到達した。')
+  // 極みは、うまく遊ぶだけでは届かない。それぞれ違う道を最後まで通した人だけが着く
+  if (has(s, 'honban') && has(s, 'tsukami') && c('bigLevel3') >= 2 && c('contestPass') >= 1)
+    addSkill(s, 'bakushou', '賞レースの1回戦を抜け、2,000人のホールや大阪の劇場でも爆笑をとった。どこに出ても笑いを持って帰ってこられる。極み「爆笑請負人」に到達した。')
+  if (has(s, 'ryousan') && has(s, 'netacho_oni') && c('neta') >= 15)
+    addSkill(s, 'izumi', 'ネタ帳が何冊目か、もう数えていない。書けない日がなくなった。極み「ネタの泉」に到達した。')
+  if (has(s, 'suberikaeshi') && c('ume') >= 1 && s.classRank === 'matsu' && c('bigLevel3') >= 1)
+    addSkill(s, 'tatakiage', '梅組で何度もスベって、松組まで上がり、大舞台で爆笑をとった。スベった数だけ強くなった。極み「叩き上げ」に到達した。')
+  if (has(s, 'aikata') && s.partner && s.partner.bond >= 100 && c('awase') >= 8 && c('mvp') >= 1)
+    addSkill(s, 'meikonbi', '数えきれないほどネタを合わせ、合宿でMVPをとった。目を見なくても、相方の次の一言が分かる。極み「名コンビ」に到達した。')
   const patron = s.seniors.find((x) => x.like >= 75 && x.respect >= 60)
   if (patron && !has(s, 'kumi')) {
     addSkill(s, 'kumi', `${patron.name}さんとすっかり仲良くなり、芸も認めてもらえた。この人が引き上げてくれる。極み「秘蔵っ子」に到達した。`)

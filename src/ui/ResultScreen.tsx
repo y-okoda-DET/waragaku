@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { buildEpilogue, nextGoal, scoreParts } from '../game/epilogue'
+import { recordRun } from '../game/album'
 import type { GameState } from '../game/types'
 import { portrait } from './art'
 import { PlayerAvatar, SkillBadge } from './parts'
@@ -10,8 +11,10 @@ type Downloads = { save: (r: { filename: string; data: Blob }) => Promise<unknow
 type ClaudeRuntime = { use: (name: 'downloads') => Promise<Downloads | null> }
 const runtime = (): ClaudeRuntime | undefined => (window as unknown as { claude?: ClaudeRuntime }).claude
 
-export function ResultScreen({ state, onRestart }: { state: GameState; onRestart: () => void }) {
+export function ResultScreen({ state, onRestart, onAlbum }: { state: GameState; onRestart: () => void; onAlbum: () => void }) {
   const ep = useMemo(() => buildEpilogue(state), [state])
+  // 卒業アルバムに書き込む。2周目からは、新しく増えたものを見せる
+  const fresh = useMemo(() => recordRun(state).fresh, [state])
   const [shown, setShown] = useState(0)
   const [copied, setCopied] = useState(false)
   const allShown = shown >= ep.months.length
@@ -221,6 +224,19 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
         </section>
       )}
 
+      {fresh.length > 0 && (
+        <section className="card album-new">
+          <h2>卒業アルバムに新しく記録</h2>
+          <ul>
+            {fresh.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <button className="big" onClick={onAlbum}>
+        卒業アルバムを見る
+      </button>
       <button className="primary big" onClick={onRestart}>
         もう一度入学する
       </button>

@@ -10,6 +10,8 @@ export function has(state: GameState, skill: string): boolean {
 export function addSkill(state: GameState, skill: string, log: string): void {
   if (has(state, skill)) return
   state.skills.push(skill)
+  // 途中で消えたクセも、卒業アルバムには残す
+  state.counters[`got_${skill}`] = 1
   state.weekLog.push(log)
 }
 

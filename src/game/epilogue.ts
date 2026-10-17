@@ -198,5 +198,5 @@ export function buildEpilogue(s: GameState): ResultSummary {
 }
 
 export function hasKiwami(s: GameState): boolean {
-  return has(s, 'bakushou') || has(s, 'kumi')
+  return s.skills.some((id) => SKILL_BY_ID[id]?.kind === 'kiwami')
 }

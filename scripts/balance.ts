@@ -146,7 +146,7 @@ for (const [name, player] of Object.entries(POLICIES)) {
     let broke = 0
     let sk = 0
     let bk = 0
-    let bkOld = 0
+    const kw: Record<string, number> = {}
     let fail = 0
     const totals: number[] = []
     const grads: number[] = []
@@ -168,7 +168,7 @@ for (const [name, player] of Object.entries(POLICIES)) {
       for (const k of STAT_KEYS) stat[k] = (stat[k] ?? 0) + s.stats[k] / N
       sk += s.skills.length / N
       if (s.skills.includes('bakushou')) bk++
-      if (s.skills.includes('honban') && s.skills.includes('tsukami')) bkOld++
+      for (const id of ['izumi', 'tatakiage', 'meikonbi', 'kumi']) if (s.skills.includes(id)) kw[id] = (kw[id] ?? 0) + 1
       if (s.money < 0) broke++
       if (s.flags.kyusai || (s.counters.rest ?? 0) >= 8) fail++
     }
@@ -176,7 +176,7 @@ for (const [name, player] of Object.entries(POLICIES)) {
     console.log(
       `${name}: 平均${Math.round(total / N)}点 ｜ ${order.map((k) => `${k}${ranks[k] ?? 0}`).join(' ')} ｜ ` +
         STAT_KEYS.map((k) => `${k}${Math.round(stat[k])}`).join(' ') +
-        ` ｜ 特殊能力${sk.toFixed(1)}個 ｜ 爆笑請負人${bk}（旧条件${bkOld}）/${N} ｜ 借金${broke} 出席不足${fail}`,
+        ` ｜ 特殊能力${sk.toFixed(1)}個 ｜ 爆笑請負人${bk} 秘蔵っ子${kw.kumi ?? 0} 泉${kw.izumi ?? 0} 叩き上げ${kw.tatakiage ?? 0} 名コンビ${kw.meikonbi ?? 0} /${N} ｜ 借金${broke} 出席不足${fail}`,
       `\n   点の幅 ${pct(totals, 0.1)}〜${pct(totals, 0.5)}〜${pct(totals, 0.9)} ｜ 卒業大会の順位 ${pct(grads, 0.1)}〜${pct(grads, 0.5)}〜${pct(grads, 0.9)}位`,
       `\n   舞台の出来 スベり${lv[0]} まばら${lv[1]} ウケ${lv[2]} 爆笑${lv[3]} ｜ 賞レース1回戦通過 ${pass[1]}/${pass[0] + pass[1]}`,
       `\n   舞台の点（真ん中） ` + Object.entries(sc).map(([k, v]) => `${k}${pct(v, 0.5)}`).join(' '),
@@ -227,4 +227,41 @@ if (process.argv[3] === 'q') {
     for (let i = 1; i <= N; i++) t.push(buildEpilogue(play(i, player)).total)
     console.log(name, [0.1, 0.25, 0.5, 0.75, 0.9].map((q) => pct(t, q)).join(' / '))
   }
+}
+
+// 極みの条件に使う数の分布（取りやすさを決める用）
+if (process.argv[3] === 'kiwami') {
+  const BIG = ['tozai', 'grad_prelim', 'grad_final']
+  for (const [name, player] of Object.entries(POLICIES)) {
+    const rows: Record<string, number[]> = {}
+    const put = (k: string, v: number) => (rows[k] ??= []).push(v)
+    for (let i = 1; i <= N; i++) {
+      const s = play(i, player)
+      const c = (k: string) => s.counters[k] ?? 0
+      put('大舞台の爆笑', s.stageHistory.filter((h) => BIG.includes(h.kind) && h.level === 3).length)
+      put('爆笑', c('level3'))
+      put('ネタ作り', c('neta'))
+      put('ネタ合わせ', c('awase'))
+      put('スベり', c('suberi'))
+      put('梅組', c('ume'))
+      put('松組', s.classRank === 'matsu' ? 1 : 0)
+      put('相方', s.partner?.bond ?? 0)
+      put('MVP', c('mvp'))
+      put('1回戦通過', c('contestPass'))
+      const has = (id: string) => s.skills.includes(id)
+      put('叩き上げ(梅1)', has('suberikaeshi') && c('ume') >= 1 && s.classRank === 'matsu' && c('bigLevel3') >= 1 ? 1 : 0)
+      put('叩き上げ(梅2)', has('suberikaeshi') && c('ume') >= 2 && s.classRank === 'matsu' && c('bigLevel3') >= 1 ? 1 : 0)
+      put('名コンビ(合わせ抜き)', has('aikata') && (s.partner?.bond ?? 0) >= 100 && c('mvp') >= 1 ? 1 : 0)
+      put('泉(鬼抜き)', has('ryousan') && c('neta') >= 15 ? 1 : 0)
+      for (const id of ['ryousan', 'netacho_oni', 'suberikaeshi', 'aikata', 'honban', 'tsukami', 'kumi', 'bakushou']) put(id, s.skills.includes(id) ? 1 : 0)
+    }
+    console.log(`\n${name}`)
+    for (const [k, v] of Object.entries(rows)) console.log(`  ${k.padEnd(12)} 平均${(v.reduce((a, b) => a + b, 0) / v.length).toFixed(2)} ｜ ${pct(v, 0.1)}〜${pct(v, 0.5)}〜${pct(v, 0.9)}`)
+  }
+}
+
+// 卒業した状態を1つ書き出す（画面の確認用）。npx vite-node scripts/balance.ts 種 dump 出力先
+if (process.argv[3] === 'dump') {
+  const { writeFileSync } = await import('node:fs')
+  writeFileSync(process.argv[4], JSON.stringify(play(N, POLICIES['すごくうまい'])))
 }

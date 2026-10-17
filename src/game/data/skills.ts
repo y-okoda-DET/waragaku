@@ -1,4 +1,4 @@
-// 芸風スキル（最小版の25個）。kind で武器・クセ・極みを見分ける
+// 芸風スキル。kind で武器・クセ・極みを見分ける
 // gift は発展イベントで人から受け継ぐ特殊能力
 export type SkillKind = 'buki' | 'kuse' | 'kiwami' | 'gift'
 
@@ -35,6 +35,9 @@ export const SKILLS: SkillDef[] = [
   { id: 'kurouto', name: '玄人殺し', kind: 'buki', desc: '作家・審査員に強く刺さる（学生お笑い臭が化けた）' },
   { id: 'bakushou', name: '爆笑請負人', kind: 'kiwami', desc: '大舞台で爆発しやすい' },
   { id: 'kumi', name: '秘蔵っ子', kind: 'kiwami', desc: '先輩に引き上げてもらえる' },
+  { id: 'izumi', name: 'ネタの泉', kind: 'kiwami', desc: 'どの舞台でも、ネタの出来で勝負できる' },
+  { id: 'tatakiage', name: '叩き上げ', kind: 'kiwami', desc: '講師や審査員の前で、スベってきた分だけ強い' },
+  { id: 'meikonbi', name: '名コンビ', kind: 'kiwami', desc: '相方との掛け合いで、どの舞台でも点が上がる' },
   // 入学時に、たまに最初から持っている
   { id: 'koukou_sho', name: '高校お笑い賞', kind: 'buki', desc: '高校生の大会で賞をとった。最初から度胸と発想力が高く、先輩にも名前を知られている' },
   // 発展イベントで受け継ぐ特殊能力（data/bonds の人ごとに1つ）

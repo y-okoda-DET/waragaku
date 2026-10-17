@@ -180,6 +180,9 @@ export function scoreStage(state: GameState, spec: StageSpec, rng: Rng, lines: s
   }
   if (spec.big && has(state, 'bakushou')) b.mods += 8
   if (spec.big && has(state, 'gekidan')) b.mods += 3
+  if (has(state, 'izumi')) b.mods += 4
+  if ((spec.audience === 'judge' || spec.audience === 'teacher') && has(state, 'tatakiage')) b.mods += 5
+  if (state.partner && has(state, 'meikonbi')) b.mods += 4
   if ((spec.audience === 'judge' || spec.audience === 'teacher') && has(state, 'makezu')) b.mods += 3
   if (spec.audience === 'general' && has(state, 'kaonajimi')) b.mods += 3
 
