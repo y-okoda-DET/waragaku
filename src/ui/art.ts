@@ -91,7 +91,7 @@ const PLACE_BY_WORD: [RegExp, string][] = [
 ]
 
 // その行の背景。イベントが場所を指定していればそれ、イベントごとに決まった場所があればそれ、なければ行の言葉、それもなければ前の行の場所を引き継ぐ
-// dayLines: 先頭から何行が昼のできごとか。昼の行では、窓の外が夜の絵を昼の絵（bg_◯◯_day）に差し替える
+// dayLines: 先頭から何行が昼のできごとか。昼の行では、夜の絵を昼の絵（bg_◯◯_day）に差し替える
 export function backgrounds(title: string, lines: string[], at?: string, dayLines = 0): (string | undefined)[] {
   const fixed = at ?? PLACE_BY_TITLE[title]
   let place = fixed ?? (title.includes('授業') || title.includes('ネタ見せ') ? 'kyoushitsu' : undefined)
