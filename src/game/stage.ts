@@ -106,13 +106,14 @@ interface Breakdown {
   polish: number
   partner: number
   luck: number
+  cond: number
   mods: number
 }
 
 // ネタの点数を計算する。lines には客席の反応やスキルの発動を書き足す
 export function scoreStage(state: GameState, spec: StageSpec, rng: Rng, lines: string[]): { score: number; b: Breakdown } {
   const style = state.player.style
-  const b: Breakdown = { cards: 0, stats: 0, polish: 0, partner: 0, luck: 0, mods: 0 }
+  const b: Breakdown = { cards: 0, stats: 0, polish: 0, partner: 0, luck: 0, cond: 0, mods: 0 }
 
   b.cards = cardPower(state)
   if (!netaComplete(state)) {
@@ -134,7 +135,7 @@ export function scoreStage(state: GameState, spec: StageSpec, rng: Rng, lines: s
   if (has(state, 'honban')) luck = Math.max(luck, rng.int(-4, 12))
   if (has(state, 'agari')) luck -= 6
   if (state.condition < 30) {
-    luck -= 8
+    b.cond = -8
     lines.push('体調が悪く、声に張りがない。')
   }
   b.luck = luck
@@ -181,7 +182,7 @@ export function scoreStage(state: GameState, spec: StageSpec, rng: Rng, lines: s
     if (q === 'last') b.mods -= 5
   }
 
-  const score = Math.round(b.cards + b.stats + b.polish + b.partner + b.luck + b.mods)
+  const score = Math.round(b.cards + b.stats + b.polish + b.partner + b.luck + b.cond + b.mods)
   return { score, b }
 }
 
@@ -260,6 +261,28 @@ function summarize(state: GameState, spec: StageSpec, t: Tally, rank: number | n
   return `${head}${who}は ${parts.join('、')}。${tail}${state.player.gender === 'female' ? '私' : '俺'}は 噛み ${t.kami}回 でした。`
 }
 
+const signed = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '±0')
+
+// 点数がどう決まったかを、見せ場・ネタと能力・体調・本番のブレに分けて書く
+function explain(state: GameState, b: Breakdown, showcase: Grade[], accident: boolean, line: number): { label: string; text: string }[] {
+  const rows: { label: string; text: string }[] = []
+  if (showcase.length) {
+    const n = (g: Grade) => showcase.filter((x) => x === g).length
+    const parts = [n('great') && `ドッと${n('great')}`, n('good') && `まずまず${n('good')}`, n('miss') && `スベり${n('miss')}`].filter(Boolean)
+    rows.push({ label: '見せ場の出来', text: `${parts.join('・')}（${signed(showcaseBonus(showcase))}点）` })
+  }
+  const base = [`ネタ${Math.round(b.cards)}`, `能力${Math.round(b.stats)}`, `仕上がり${Math.round(b.polish)}`]
+  if (state.partner) base.push(`相方${Math.round(b.partner)}`)
+  rows.push({ label: 'ネタと能力', text: `${base.join('＋')}（${Math.round(b.cards + b.stats + b.polish + b.partner)}点）` })
+  const cond =
+    state.condition < 30 ? `悪い（${signed(b.cond)}点、事故も起きやすい）` : state.condition < 45 ? 'いまいち（点数はそのまま、噛みやすい）' : 'よい（影響なし）'
+  rows.push({ label: '体調', text: accident ? `${cond}。本番で事故が起き、笑いが1段下がった` : cond })
+  const etc = Math.round(b.luck + b.mods)
+  rows.push({ label: '本番のブレ・相性', text: `${signed(etc)}点（度胸・特殊能力・客層との相性・出番の順番）` })
+  rows.push({ label: '合計', text: `${Math.round(b.cards + b.stats + b.polish + b.partner + b.luck + b.cond + b.mods) + showcaseBonus(showcase)}点（ウケるライン ${line + 12}点・爆笑ライン ${line + 26}点）` })
+  return rows
+}
+
 export function performStage(state: GameState, kind: StageKind, rng: Rng, showcase: Grade[] = []): StageResult {
   const spec = STAGES[kind]
   const lines: string[] = []
@@ -326,5 +349,6 @@ export function performStage(state: GameState, kind: StageKind, rng: Rng, showca
     showcase,
     tally,
     summary: summarize(state, spec, tally, rank, field),
+    why: explain(state, b, showcase, !!accident, spec.difficulty + ramp),
   }
 }

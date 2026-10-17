@@ -1717,3 +1717,25 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .week-curtain, .week-card, .screen.week.week-enter, .stat.hit, .stat-up { animation-duration: 0.01s !important; animation-delay: 0s !important; }
 }
+
+/* 本番の点数の内訳 */
+.why h2 { margin: 0 0 6px; font-size: 14px; }
+.why-row { display: grid; grid-template-columns: 7.5em 1fr; gap: 8px; padding: 5px 0; border-top: 1px dashed var(--soft); font-size: 13px; }
+.why-row span { color: var(--sub); }
+.why-row b { font-weight: 600; }
+.why-row.total b { font-weight: 800; }
+
+/* コントの見せ場（入り・役・暗転の3つの山） */
+.sc-steps { display: flex; gap: 4px; }
+.sc-steps span { flex: 1; text-align: center; font-size: 11px; font-weight: 900; padding: 4px 2px; border: 2px solid var(--line); border-radius: 999px; background: var(--card); color: var(--sub); }
+.sc-steps span.on { background: var(--sun); color: var(--ink); }
+.sc-steps span.done { background: var(--soft); }
+.sc-steps span.done.grade-great { background: var(--coral-light); }
+.small-outcome .sc-sound { font-size: 40px; }
+.grade-good.small-outcome .sc-sound { font-size: 36px; }
+.grade-miss.small-outcome .sc-sound { font-size: 30px; }
+.role-legend { justify-content: space-between; }
+.role-legend span:not(.great)::before { display: none; }
+.sc-stage.blackout { filter: brightness(0.35); transition: filter 0.4s; }
+.conte-beats span.grade-great b { color: var(--coral); }
+.sc-tap { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }

@@ -129,6 +129,17 @@ export function StageResultView({ result }: { result: StageResult }) {
           <p key={i}>{l}</p>
         ))}
       </div>
+      {result.why && (
+        <div className="card why" style={{ marginTop: 12 }}>
+          <h2>点数の内訳</h2>
+          {result.why.map((w) => (
+            <div key={w.label} className={`why-row${w.label === '合計' ? ' total' : ''}`}>
+              <span>{w.label}</span>
+              <b>{w.text}</b>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

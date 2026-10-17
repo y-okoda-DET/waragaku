@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { AUDIENCE_TASTE, LEAN_LABEL, gradeTsukkomi, gradeWord, maDuration, needleShake, playerLean, rememberPicks, shuffledOptions, tsukkomiZones, wordHint, type ConteSetting, type Scene, type ShowcaseGrade, type ShowcasePick, type TsukkomiScene, type WordScene } from '../game/showcase'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { AUDIENCE_TASTE, LEAN_LABEL, gradeBlackout, gradeConte, gradeRole, gradeTsukkomi, gradeWord, roleBand, roleDrift, maDuration, needleShake, playerLean, rememberPicks, shuffledOptions, tsukkomiZones, wordHint, type ConteScene, type ConteSetting, type Scene, type ShowcaseGrade, type ShowcasePick, type TsukkomiScene, type WordScene } from '../game/showcase'
 import { STAGES, conditionWarning } from '../game/stage'
 import type { GameState, StageKind } from '../game/types'
 
@@ -39,7 +39,9 @@ export function ShowcaseScreen({ state, kind, scenes, onDone, nextLabel = '続�
           {warning}
         </p>
       )}
-      {scene.kind === 'word' ? (
+      {scene.kind === 'conte' ? (
+        <ConteGame key={index} state={state} kind={kind} seed={state.turn * 31 + state.stageHistory.length * 7 + index} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
+      ) : scene.kind === 'word' ? (
         <WordGame key={index} state={state} kind={kind} seed={state.turn * 31 + state.stageHistory.length * 7 + index} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
       ) : (
         <TsukkomiGame key={index} state={state} kind={kind} scene={scene} partner={partner} nextLabel={nextLabel} onDone={finish} />
@@ -226,6 +228,284 @@ function TsukkomiGame({ state, kind, scene, partner, nextLabel, onDone }: { stat
         </>
       ) : (
         <Outcome nextLabel={nextLabel} grade={result.grade} label={result.label} onNext={() => onDone(result)} />
+      )}
+    </>
+  )
+}
+
+const BEAT_NAME = ['設定に入る', '役を演じ切る', '暗転前のオチ']
+const ROLE_TAIL_MS = 900
+const ROLE_GRACE_MS = 500
+
+// コントの見せ場。入り（3択）→ 役（ゲージを帯に保つ）→ オチ（暗転のきっかけ）の順に遊ぶ
+function ConteGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { state: GameState; kind: StageKind; seed: number; scene: ConteScene; partner: string; nextLabel: string; onDone: (p: ShowcasePick) => void }) {
+  const [beat, setBeat] = useState(0)
+  const [beats, setBeats] = useState<{ grade: ShowcaseGrade; label: string }[]>([])
+  const [said, setSaid] = useState<string | undefined>()
+  const settled = beats.length > beat
+  const next = () => setBeat((b) => b + 1)
+  // 子の山はこのコールバックを effect の依存に持つので、山が変わるまで同じ関数を渡す
+  const record = useCallback((r: { grade: ShowcaseGrade; label: string }) => setBeats((bs) => (bs.length > beat ? bs : [...bs, r])), [beat])
+  const pickOpen = useCallback(
+    (r: { grade: ShowcaseGrade; label: string }, text?: string) => {
+      setSaid(text)
+      record(r)
+    },
+    [record],
+  )
+
+  if (beat >= 3) {
+    const grade = gradeConte(beats.map((b) => b.grade))
+    return (
+      <>
+        <div className="sc-read conte-beats">
+          {beats.map((b, i) => (
+            <span key={i} className={`grade-${b.grade}`}>
+              <b>{BEAT_NAME[i]}</b>
+              {GRADE_SOUND[b.grade]} {b.label}
+            </span>
+          ))}
+        </div>
+        <Outcome nextLabel={nextLabel} grade={grade} label={grade === 'great' ? 'コントの世界に連れていった' : grade === 'good' ? 'あと一歩' : '世界に入れなかった'} onNext={() => onDone({ grade, said, label: beats.map((b) => b.label).join('／'), beats: beats.map((b) => b.grade) })} />
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div className="sc-steps" aria-label={`${beat + 1}つ目の山`}>
+        {BEAT_NAME.map((n, i) => (
+          <span key={n} className={i === beat ? 'on' : i < beat ? `done grade-${beats[i]?.grade}` : ''}>
+            {i + 1}. {n}
+          </span>
+        ))}
+      </div>
+      {beat === 0 && <ConteOpen state={state} kind={kind} seed={seed} scene={scene} result={beats[0]} onPick={pickOpen} />}
+      {beat === 1 && <ConteRole state={state} kind={kind} scene={scene} partner={partner} result={beats[1]} onEnd={record} />}
+      {beat === 2 && <ConteOchi state={state} kind={kind} scene={scene} partner={partner} result={beats[2]} onEnd={record} />}
+      {settled && (
+        <button className="primary big" onClick={next}>
+          {beat === 0 ? 'コントが始まる' : beat === 1 ? 'オチへ' : '暗転'}
+        </button>
+      )}
+    </>
+  )
+}
+
+function BeatResult({ r }: { r: { grade: ShowcaseGrade; label: string } }) {
+  return (
+    <div className={`sc-outcome small-outcome grade-${r.grade}`}>
+      <span className="sc-sound" aria-hidden="true">
+        {GRADE_SOUND[r.grade]}
+      </span>
+      <span className="sc-label">{r.label}</span>
+    </div>
+  )
+}
+
+function ConteOpen({ state, kind, seed, scene, result, onPick }: { state: GameState; kind: StageKind; seed: number; scene: ConteScene; result?: { grade: ShowcaseGrade; label: string }; onPick: (r: { grade: ShowcaseGrade; label: string }, text?: string) => void }) {
+  const [options] = useState(() => shuffledOptions({ options: scene.open }, seed))
+  const [left, setLeft] = useState(WORD_SECONDS)
+  const [picked, setPicked] = useState<number | null>(null)
+  const taste = AUDIENCE_TASTE[STAGES[kind].audience]
+  const hint = wordHint(state)
+  const grades = options.map((o) => gradeWord(state, kind, o.flavor))
+
+  useEffect(() => {
+    if (result) return
+    if (left <= 0) {
+      onPick({ grade: 'miss', label: '出だしで固まった' })
+      return
+    }
+    const t = setTimeout(() => setLeft((v) => v - 1), 1000)
+    return () => clearTimeout(t)
+  }, [left, result, onPick])
+
+  const pick = (i: number) => {
+    setPicked(i)
+    const o = options[i]
+    const g = grades[i]
+    onPick({ grade: g, label: o.flavor === 'flat' ? '説明しすぎた' : g === 'great' ? 'ひと目で世界が伝わった' : '伝わったが、引きは弱い' }, o.text)
+  }
+
+  return (
+    <>
+      <div className="studio sc-stage">
+        <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
+        <div className="sc-bubble">
+          <span className="telop-tag">明転</span>
+          <span className="sc-line">{result ? (picked !== null ? options[picked].text : '（……第一声が出ない）') : `${scene.conte.place}。${scene.conte.me}として、最初に何をする？`}</span>
+        </div>
+      </div>
+      {!result ? (
+        <>
+          <div className="sc-timer" aria-label={`残り${left}秒`}>
+            <span style={{ width: `${(left / WORD_SECONDS) * 100}%` }} />
+          </div>
+          <div className="sc-read">
+            <span>
+              <b>客席</b>
+              {taste.label}
+            </span>
+            <span>
+              <b>芸風</b>
+              {LEAN_LABEL[playerLean(state)]}
+            </span>
+          </div>
+          <p className="sc-help">最初の一言・一動作で、どこで誰なのかを見せる。説明セリフは客が冷める。</p>
+          <div className="options">
+            {options.map((o, i) => (
+              <button key={i} className={`option sc-opt ${hint && grades[i] === 'great' ? 'hint' : ''}`} onClick={() => pick(i)}>
+                <span>{o.text}</span>
+                {hint && grades[i] === 'great' && <span className="small">ピンときた</span>}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <BeatResult r={result} />
+      )}
+    </>
+  )
+}
+
+function ConteRole({ state, kind, scene, partner, result, onEnd }: { state: GameState; kind: StageKind; scene: ConteScene; partner: string; result?: { grade: ShowcaseGrade; label: string }; onEnd: (r: { grade: ShowcaseGrade; label: string }) => void }) {
+  const [shown, setShown] = useState(0)
+  const [level, setLevel] = useState(0.15)
+  const holding = useRef(false)
+  const band = roleBand(state, kind)
+  const drift = roleDrift(state, kind)
+  const total = scene.role.length * TYPE_MS + ROLE_TAIL_MS
+
+  useEffect(() => {
+    if (result) return
+    let raf = 0
+    let last: number | null = null
+    let start: number | null = null
+    let p = 0.15
+    const time = { inside: 0, low: 0, high: 0 }
+    const phase = Math.random() * 6
+    const tick = (now: number) => {
+      if (start === null) start = last = now
+      const dt = Math.min(50, now - last!) / 1000
+      last = now
+      const el = now - start
+      // 押すと役が濃くなり、離すと素に戻っていく。度胸が低いと勝手に揺れる
+      p += ((holding.current ? 0.7 : -0.55) + Math.sin(el * 0.006 + phase) * drift * 5) * dt
+      p = Math.max(0, Math.min(1, p))
+      if (el > ROLE_GRACE_MS) {
+        if (p < band.from) time.low += dt
+        else if (p > band.to) time.high += dt
+        else time.inside += dt
+      }
+      setLevel(p)
+      setShown(Math.min(scene.role.length, Math.floor(el / TYPE_MS)))
+      if (el >= total) {
+        const sum = time.inside + time.low + time.high || 1
+        onEnd(gradeRole(time.inside / sum, time.low / sum, time.high / sum))
+      } else raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [result, band.from, band.to, drift, total, scene.role.length, onEnd])
+
+  const down = () => (holding.current = true)
+  const up = () => (holding.current = false)
+
+  return (
+    <>
+      <div className="studio sc-stage">
+        <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
+        <div className="sc-bubble">
+          <span className="telop-tag">{speaker(partner, scene.conte)}</span>
+          <span className="sc-line">「{result ? scene.role : scene.role.slice(0, shown)}」</span>
+        </div>
+        {result && <div className={`sc-answer ${result.grade === 'miss' ? 'off' : ''}`}>「{scene.uke}」</div>}
+      </div>
+      {!result ? (
+        <>
+          <div className="sc-ma role-meter" aria-hidden="true">
+            <span className="sc-zone great" style={{ left: `${band.from * 100}%`, width: `${(band.to - band.from) * 100}%` }} />
+            <span className="sc-needle" style={{ left: `${level * 100}%` }} />
+          </div>
+          <div className="sc-legend role-legend" aria-hidden="true">
+            <span>素が出る</span>
+            <span className="great">役</span>
+            <span>やりすぎ</span>
+          </div>
+          <p className="sc-help">{scene.conte.me}のまま、相方のボケを受け切る。押している間は役が濃くなる。赤い帯に保とう。</p>
+          <button className="primary big sc-tap" onPointerDown={down} onPointerUp={up} onPointerLeave={up} onPointerCancel={up} onContextMenu={(e) => e.preventDefault()}>
+            役に入る（長押し）
+          </button>
+        </>
+      ) : (
+        <BeatResult r={result} />
+      )}
+    </>
+  )
+}
+
+function ConteOchi({ state, kind, scene, partner, result, onEnd }: { state: GameState; kind: StageKind; scene: ConteScene; partner: string; result?: { grade: ShowcaseGrade; label: string }; onEnd: (r: { grade: ShowcaseGrade; label: string }) => void }) {
+  const [shown, setShown] = useState(0)
+  const [ma, setMa] = useState(0)
+  const start = useRef<number | null>(null)
+  const zones = tsukkomiZones(state, { kind: 'tsukkomi', boke: '', tsukkomi: '', center: 0.5 }, kind)
+  const duration = maDuration(kind)
+  const shake = needleShake(state, kind)
+  const typing = shown < scene.ochi.length
+
+  useEffect(() => {
+    if (!typing || result) return
+    const t = setTimeout(() => setShown((v) => v + 1), TYPE_MS)
+    return () => clearTimeout(t)
+  }, [shown, typing, result])
+
+  useEffect(() => {
+    if (typing || result) return
+    let raf = 0
+    const tick = (now: number) => {
+      if (start.current === null) start.current = now
+      const t = (now - start.current) / duration
+      setMa(Math.max(0, Math.min(1, t + Math.sin(t * 40) * shake)))
+      if (t >= 1) onEnd(gradeBlackout(state, kind, null))
+      else raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [typing, result, state, kind, duration, shake, onEnd])
+
+  const tap = () => {
+    if (result) return
+    onEnd(gradeBlackout(state, kind, typing ? 0 : ma))
+  }
+
+  return (
+    <>
+      <div className={`studio sc-stage ${result ? 'blackout' : ''}`}>
+        <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
+        <div className="sc-bubble">
+          <span className="telop-tag">{speaker(partner, scene.conte)}</span>
+          <span className="sc-line">「{scene.ochi.slice(0, shown)}」</span>
+        </div>
+      </div>
+      {!result ? (
+        <>
+          <div className="sc-ma" aria-hidden="true">
+            <span className="sc-zone good" style={{ left: `${zones.good.from * 100}%`, width: `${(zones.good.to - zones.good.from) * 100}%` }} />
+            <span className="sc-zone great" style={{ left: `${zones.great.from * 100}%`, width: `${(zones.great.to - zones.great.from) * 100}%` }} />
+            <span className="sc-needle" style={{ left: `${ma * 100}%` }} />
+          </div>
+          <div className="sc-legend" aria-hidden="true">
+            <span className="good">クスッ</span>
+            <span className="great">ドッ</span>
+          </div>
+          <p className="sc-help">{typing ? 'オチのセリフを最後まで聞いて……' : '余韻の頂点で、暗転のきっかけを出す！'}</p>
+          <button className="primary big sc-tap" onClick={tap}>
+            暗転！
+          </button>
+        </>
+      ) : (
+        <BeatResult r={result} />
       )}
     </>
   )

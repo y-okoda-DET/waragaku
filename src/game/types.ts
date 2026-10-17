@@ -79,6 +79,7 @@ export interface StageResult {
   showcase?: ('great' | 'good' | 'miss')[]
   tally?: Tally
   summary?: string
+  why?: { label: string; text: string }[]
 }
 
 // 結果文で数えるもの

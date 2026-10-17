@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createGame, doStage, endEvents } from './engine'
 import { Rng } from './rng'
-import { CONTE_TSUKKOMI_SCENES, CONTE_WORD_SCENES, TSUKKOMI_SCENES, WORD_SCENES, gradeWord, pickScenes, rememberPicks, type Scene, type WordScene } from './showcase'
+import { CONTE_SCENES, TSUKKOMI_SCENES, WORD_SCENES, gradeConte, gradeRole, gradeWord, pickScenes, rememberPicks, type Scene, type WordScene } from './showcase'
 import { accidentRate, conditionWarning, performStage } from './stage'
 import type { GameState, Role, StageResult, Style } from './types'
 
@@ -15,15 +15,15 @@ const played = (s: GameState, n: number): GameState => ({ ...s, stageHistory: [.
 
 describe('見せ場の中身', () => {
   it('どの山も24本以上あり、選択肢は シュール・王道・平凡 が1つずつ', () => {
-    for (const pool of [WORD_SCENES, TSUKKOMI_SCENES, CONTE_WORD_SCENES, CONTE_TSUKKOMI_SCENES]) expect(pool.length).toBeGreaterThanOrEqual(24)
-    for (const sc of [...WORD_SCENES, ...CONTE_WORD_SCENES]) expect(sc.options.map((o) => o.flavor).sort()).toEqual(['flat', 'oudou', 'shuru'])
-    for (const sc of [...CONTE_WORD_SCENES, ...CONTE_TSUKKOMI_SCENES]) expect(sc.conte).toBeDefined()
+    for (const pool of [WORD_SCENES, TSUKKOMI_SCENES, CONTE_SCENES]) expect(pool.length).toBeGreaterThanOrEqual(24)
+    for (const sc of WORD_SCENES) expect(sc.options.map((o) => o.flavor).sort()).toEqual(['flat', 'oudou', 'shuru'])
+    for (const sc of CONTE_SCENES) expect(sc.open.map((o) => o.flavor).sort()).toEqual(['flat', 'oudou', 'shuru'])
     for (const sc of [...WORD_SCENES, ...TSUKKOMI_SCENES]) expect(sc.conte).toBeUndefined()
   })
 
-  it('コントの主人公にはコントの見せ場が出る', () => {
-    expect(pickScenes(base('boke', 'conte'), 'netamise')[0].conte).toBeDefined()
-    expect(pickScenes(base('tsukkomi', 'conte'), 'netamise')[0]).toMatchObject({ kind: 'tsukkomi', conte: expect.anything() })
+  it('コントの主人公には、担当によらずコントの見せ場（入り・役・暗転）が出る', () => {
+    expect(pickScenes(base('boke', 'conte'), 'netamise')[0]).toMatchObject({ kind: 'conte' })
+    expect(pickScenes(base('tsukkomi', 'conte'), 'netamise')[0]).toMatchObject({ kind: 'conte' })
     expect(pickScenes(base('boke', 'manzai'), 'netamise')[0].conte).toBeUndefined()
   })
 
@@ -98,5 +98,19 @@ describe('体調と本番の事故', () => {
     let hit = 0
     for (let seed = 1; seed <= 100; seed++) if (performStage(bad, 'netamise', new Rng(seed)).lines.some((l) => l.startsWith('体調の悪さがたたった'))) hit++
     expect(hit).toBeGreaterThan(10)
+  })
+})
+
+describe('コントの見せ場', () => {
+  it('入り・役・暗転の3つの山を合わせて出来が決まる', () => {
+    expect(gradeConte(['great', 'great', 'good'])).toBe('great')
+    expect(gradeConte(['great', 'miss', 'good'])).toBe('good')
+    expect(gradeConte(['miss', 'good', 'miss'])).toBe('miss')
+  })
+
+  it('役のゲージは、外れた向きで「素が出た」か「やりすぎた」かが変わる', () => {
+    expect(gradeRole(0.8, 0.1, 0.1).grade).toBe('great')
+    expect(gradeRole(0.5, 0.4, 0.1).label).toBe('少し素が出た')
+    expect(gradeRole(0.2, 0.1, 0.7).label).toBe('やりすぎた')
   })
 })

@@ -4,7 +4,7 @@ import { STAGES, type Audience } from './stage'
 import type { GameState, StageKind, Style } from './types'
 
 export type ShowcaseGrade = 'great' | 'good' | 'miss'
-export type ShowcaseKind = 'word' | 'tsukkomi'
+export type ShowcaseKind = 'word' | 'tsukkomi' | 'conte'
 
 // ボケの芸風の寄り。どちらが正解かは、自分の芸風と客層の組み合わせで決まる
 export type Lean = 'shuru' | 'oudou'
@@ -37,7 +37,20 @@ export interface TsukkomiScene {
   conte?: ConteSetting
 }
 
-export type Scene = WordScene | TsukkomiScene
+// コントの見せ場（担当によらず共通）。漫才と違い、1本のコントを3つの山で見せる
+// 1. 設定に入る：最初の一言・一動作で、どこで誰なのかを見せる（説明セリフはスベる）
+// 2. 役を演じ切る：相方のボケの間、役の濃さをゲージの帯に保つ（薄いと素が出る、濃すぎるとやりすぎ）
+// 3. 暗転前のオチ：最後のセリフの余韻を見て、暗転のきっかけを出す
+export interface ConteScene {
+  kind: 'conte'
+  conte: ConteSetting
+  open: { text: string; flavor: Lean | 'flat' }[]
+  role: string
+  uke: string
+  ochi: string
+}
+
+export type Scene = WordScene | TsukkomiScene | ConteScene
 
 type Opt = [text: string, react: string]
 function w(furi: string, shuru: Opt, oudou: Opt, flat: Opt, conte?: ConteSetting): WordScene {
@@ -113,36 +126,8 @@ export const TSUKKOMI_SCENES: TsukkomiScene[] = [
   t('将来は、宇宙飛行士か……実家の酒屋です', '振れ幅えぐいな！', 0.7),
 ]
 
-// コントのフリ。相方が役になりきって振ってくる。自分も役のままボケる
-export const CONTE_WORD_SCENES: WordScene[] = [
-  w('これ、温めてもらえます？', ['では、私の手で', '「両手で包むな！」'], ['何分にしましょう。最長3時間まで', '「炭になるわ！」'], ['少々お待ちください', '「……普通の店員か」'], set('コンビニ', '店員', '客')),
-  w('当社を志望した理由を教えてください', ['ここ、何の会社ですか？', '「なんで来たんや！」'], ['エレベーターが速かったので', '「判断基準そこ！？」'], ['御社の理念に共感しました', '「……はい、次の方」'], set('面接', '志望者', '面接官')),
-  w('先生、最近ずっと頭が痛いんです', ['奇遇ですね。僕もです', '「お前も診てもらえ！」'], ['じゃあ、足のほうを切りましょう', '「なんで足やねん！」'], ['お薬出しておきますね', '「……普通の病院や」'], set('病院', '医者', '患者')),
-  w('前髪、ちょっとだけ揃えてください', ['前髪の、どのへんの前ですか？', '「前髪に前も後ろもないわ！」'], ['かしこまりました。では、バリカンで', '「ちょっとだけ言うたやろ！」'], ['1センチくらいですね', '「……ちゃんとしてる」'], set('美容院', '美容師', '客')),
-  w('ちょっといいですか。カバンの中、見せてもらえます？', ['カバンのほうが、見せたがってます', '「カバンの気持ち代弁すな！」'], ['どうぞ。中に、もう一個カバンが入ってます', '「マトリョーシカか！」'], ['はい、どうぞ', '「ご協力どうも……」'], set('職務質問', '通行人', '警察官')),
-  w('駅までお願いします', ['駅……懐かしい響きですね', '「どこから来た運転手や！」'], ['どこの駅ですか？ 日本に9000ありますけど', '「一番近いとこや！」'], ['かしこまりました', '「……普通に着きそう」'], set('タクシー', '運転手', '客')),
-  w('病める時も、愛することを誓いますか？', ['誓います。ここにいる全員に', '「誰と結婚すんねん！」'], ['病める時は、ちょっと実家に帰ります', '「正直すぎるやろ！」'], ['誓います', '「……おめでとうございます」'], set('結婚式', '新郎', '神父')),
-  w('この冷蔵庫、2階まで運べます？', ['冷蔵庫に、自分で歩いてもらいます', '「自分で歩くか！」'], ['はい。中身はここで全部食べていきます', '「運ぶ前に食うな！」'], ['2人で運びますね', '「頼もしいな」'], set('引っ越し', '業者', '依頼主')),
-  w('私の未来、見えますか？', ['見えます。……あ、今のは私の未来でした', '「自分の見てどうすんねん！」'], ['はい。5分後、ここにお金を払っています', '「この店の話や！」'], ['明るい未来ですね', '「ふわっとしてるな」'], set('占いの館', '占い師', '客')),
-  w('大将、おまかせで', ['では、おまかせします。お客さんが握ってください', '「客に握らすな！」'], ['おまかせなんで、あんたの分もワシが食べます', '「まかせすぎや！」'], ['へい、まずはマグロから', '「……おいしそう」'], set('寿司屋', '大将', '客')),
-  w('なんで宿題やってこなかったんや？', ['宿題が、僕をやってきませんでした', '「主語が逆や！」'], ['犬が食べました。うち、犬飼ってないですけど', '「よその犬か！」'], ['忘れました', '「……正直やな」'], set('職員室', '生徒', '先生')),
-  w('金を出せ！', ['金ですね。……では、金曜日に', '「曜日ちゃうわ！」'], ['番号札を取って、お待ちください', '「強盗も並ぶんか！」'], ['は、はい……', '「……素直か」'], set('銀行', '銀行員', '強盗')),
-  w('ライオンって、何食べるんですか？', ['最近は、サラダチキンに凝ってます', '「意識高いライオンか！」'], ['肉です。閉園後は、飼育員も', '「お前大丈夫か！」'], ['お肉ですね', '「へえ……」'], set('動物園', '飼育員', '客')),
-  w('すいません、延長お願いします', ['延長……人生の、ですか？', '「重いわ！」'], ['かしこまりました。何年延長しますか？', '「住む気か！」'], ['30分ですね', '「普通やな」'], set('カラオケ', '店員', '客')),
-  w('昨日の夜10時、どこにいた？', ['その時間は、時計の中にいました', '「どういう状況や！」'], ['家で寝てました。刑事さんの', '「俺の家か！」'], ['家にいました', '「アリバイ弱いな」'], set('取調室', '容疑者', '刑事')),
-  w('この資料、10部コピーしといて', ['1部を、10回見ておきます', '「暗記すな！」'], ['はい！ 10部、手書きで写します', '「コピー機使え！」'], ['すぐやります', '「……優秀やな」'], set('会社', '新入社員', '部長')),
-  w('先生、痛くしないでくださいね', ['痛くしません。痛みのほうから来ます', '「来させるな！」'], ['大丈夫です。痛いのはお会計だけです', '「そっちのほうが怖いわ！」'], ['麻酔しますね', '「安心やな」'], set('歯医者', '歯医者', '患者')),
-  w('お風呂は何時まで入れますか？', ['お風呂の気分次第です', '「風呂に気分あんの！？」'], ['24時間です。お湯は2時間だけ', '「ほな2時間やないか！」'], ['夜11時までです', '「わかりました」'], set('旅館', '仲居', '客')),
-  w('じゃあ、自己紹介お願いします！', ['はじめまして。前世はこの店の椅子です', '「座りにくいわ！」'], ['趣味は、合コンの反省会です', '「始まる前から反省すな！」'], ['会社員です。趣味は映画です', '「……よろしく」'], set('合コン', '参加者', '幹事')),
-  w('頼んだ荷物、まだですか？', ['荷物は、あなたの心の中に', '「ポエムで済ますな！」'], ['今ちょうど、お宅の前で迷ってます', '「家の前で何に迷うねん！」'], ['申し訳ありません、確認します', '「ちゃんとしてるやん」'], set('宅配便', '配達員', '住人')),
-  w('あんたに投票したら、何してくれるんや？', ['あなたの名前を、一回だけ呼びます', '「ささやかすぎるわ！」'], ['町の信号を、全部青にします', '「事故だらけや！」'], ['町を元気にします', '「ふわっとしてるな」'], set('選挙演説', '候補者', '聴衆')),
-  w('これ、似合ってますか？', ['服が、お客様を着てるみたいです', '「どっちが主役や！」'], ['大変お似合いです。特に値札が', '「値札褒めるな！」'], ['お似合いですよ', '「……ほんまに？」'], set('試着室', '店員', '客')),
-  w('ぜんぜん怖くないんですけど', ['私も、ぜんぜん怖くないです', '「お化けが言うな！」'], ['すいません、今日初出勤で。うらめしや、でしたっけ？', '「研修してから出ろ！」'], ['うらめしや〜', '「……はいはい」'], set('お化け屋敷', 'お化け', '客')),
-  w('先生、塩少々ってどれくらいですか？', ['塩が「もうええわ」って言うまでです', '「塩しゃべらへん！」'], ['だいたい、この袋ぜんぶです', '「少々ちゃうわ！」'], ['ひとつまみです', '「なるほど」'], set('料理教室', '先生', '生徒')),
-]
-
-// コントのボケ。相方が役のままボケて、自分も役のままツッコむ
-export const CONTE_TSUKKOMI_SCENES: TsukkomiScene[] = [
+// コントの芯になるボケ。相方が役のままボケて、自分は役のまま受ける
+const CONTE_BASE: TsukkomiScene[] = [
   t('お箸は何膳おつけしますか？……300膳でよろしいですか？', '何人で食うねん！', 0.6, set('コンビニ', '客', '店員')),
   t('長所は、時間を守ることです。……あ、今日は遅刻しました', '今証明できてへん！', 0.62, set('面接', '面接官', '志望者')),
   t('レントゲンの結果ですが……いい写真が撮れました', '写りの話すな！', 0.55, set('病院', '患者', '医者')),
@@ -169,14 +154,59 @@ export const CONTE_TSUKKOMI_SCENES: TsukkomiScene[] = [
   t('観覧車は一周15分です。途中で降りたい方は……勇気を出してください', '飛び降りさすな！', 0.64, set('遊園地', '客', '係員')),
 ]
 
+// 入りの3択（王道・シュール・説明）とオチ。CONTE_BASE と同じ並び
+const CONTE_EXTRA: Record<string, [oudou: string, shuru: string, flat: string, ochi: string]> = {
+  コンビニ: ['すいません、これ温めてもらえます？（弁当を差し出す）', '（無言で、弁当をレジに正座させる）', 'えー、ここはコンビニで、僕は客です', '温め終わりました。……お箸300膳のほうを'],
+  面接: ['では、お名前からどうぞ（書類をめくる）', '（志望者の椅子に、先に座っておく）', 'ここは面接会場で、僕は面接官です', '以上です。あ、合否はこちらから連絡しますね'],
+  病院: ['先生、最近ずっとお腹が痛くて……（お腹を押さえて座る）', '（松葉杖を4本ついて、診察室に入ってくる）', 'ここは病院で、僕は患者の役です', 'では、こちら焼き増ししておきますね'],
+  美容院: ['今日は、毛先を揃える感じで（鏡越しに）', '（ケープを、マントのように翻して座る）', '美容院に来た客です。髪を切りに来ました', 'はい、仕上がりました。……後ろ、見ます？ 僕の'],
+  タクシー: ['（手を挙げて）すいません、駅まで！', '（タクシーの屋根に向かって、行き先を言う）', '今からタクシーに乗るところです', '着きました。……出発したところに'],
+  職務質問: ['（イヤホンをして、普通に歩いてくる）', '（警察官の前を、3回往復する）', 'ここは夜道で、僕はただの通行人です', 'ご協力ありがとうございました。……で、ここどこですか？'],
+  寿司屋: ['（のれんをくぐって）大将、おまかせで！', '（のれんを、一枚ずつめくって数えながら入る）', 'ここはお寿司屋さんという設定です', 'お会計です。……機械のほうにお願いします'],
+  教室: ['はい、出席とるぞー（出席簿を開く）', '（黒板に、自分の名前を毛筆で書く）', '僕は先生役で、ここは教室です', '先生、ただいま戻りました。……家から'],
+  結婚式: ['（ベールを直して、一歩ずつ歩いてくる）', '（バージンロードを、ムーンウォークで歩いてくる）', '結婚式で、私は新婦の役です', 'では、お二人は……まず、文通から始めてください'],
+  占いの館: ['（そっとカーテンを開けて）あの……占ってもらえますか', '（水晶玉を、自分で持ってくる）', '占いの館に来たお客さんです', '以上で鑑定は終わりです。……連絡先は、こちらに'],
+  引っ越し: ['（段ボールの山を見て）今日はよろしくお願いします！', '（段ボールに入ったまま、業者を出迎える）', '今日は引っ越しの日という設定です', 'またのご利用を。……来週、こっちに運び直しに来ます'],
+  歯医者: ['（震えながら診察台に座る）よ、よろしくお願いします', '（自分で診察台を倒して、もう寝ている）', 'ここは歯医者で、僕は患者です', 'はい、終わりです。今日は、口を開ける練習でした'],
+  取調室: ['（机を叩いて）そろそろ、話してもらおうか', '（デスクライトを、自分の顔に当てる）', 'ここは警察の取調室で、僕は刑事です', '刑事さん。……僕がやりました。カツ丼の注文'],
+  旅館: ['（荷物を置いて）いやあ、いい部屋ですねえ', '（浴衣を、上下逆さまに着て入ってくる）', '旅館に泊まりに来た客という設定です', 'お布団は、去年飛ばなかったほうをご用意しました'],
+  会社: ['（腕時計を見て）おい、会議始まるぞ', '（デスクの上に、正座して待っている）', 'ここは会社で、僕は部長の役です', 'では、プレゼンを始めます。……頭の中で'],
+  カラオケ: ['（マイクを持って）よし、1曲目いくかー', '（マイクに向かって、注文を叫ぶ）', 'カラオケボックスにいる客です', '採点は98点でした。……僕の'],
+  動物園: ['（檻をのぞいて）うわー、でっかいなあ', '（檻の中から、外をのぞいている）', '動物園に来た客という設定です', 'ちなみに私の鼻が長いのも……同じ理由です'],
+  お化け屋敷: ['（腕を組んで）ぜんぜん怖くないわー', '（入口で、お化けに入場料を払う）', 'お化け屋敷に入る客の役です', 'またのお越しを。……次は、もっと怖がってくださいね'],
+  合コン: ['（グラスを持って）えー、かんぱーい！', '（ひとりだけ、スーツに名札で座っている）', '今日は合コンで、僕は参加者です', 'それでは、今日のカップルを発表します。……僕と、店長です'],
+  宅配便: ['（インターホンが鳴る）はーい、今出まーす', '（ドアの覗き穴から、こっちを覗き返す）', '家にいる住人の役です。荷物を待っています', 'ありがとうございました。……今のモノマネ、誰ですか？'],
+  料理教室: ['（エプロンを締めて）先生、今日もよろしくお願いします！', '（包丁を、両手で拝むように持って入ってくる）', '料理教室に来た生徒の役です', 'では、試食です。……しょっぱいのは、先生の涙です'],
+  試着室: ['（カーテンを開けて）どうですか、これ', '（カーテンを開けたら、もう一枚カーテンがある）', '洋服屋の試着室にいる客です', 'お会計は、こちらです。……私の服のほうも'],
+  選挙演説: ['（ビラを受け取って）おっ、演説始まるで', '（ひとりだけ、候補者の真横で拍手している）', '駅前で演説を聞いている人の役です', '清き一票を。……できれば、二票'],
+  遊園地: ['（チケットを渡して）観覧車、2人で！', '（観覧車の列に、ひとりで3回並び直す）', '遊園地の観覧車に乗る客という設定です', 'お疲れさまでした。……2周目は、自費です'],
+}
+
+export const CONTE_SCENES: ConteScene[] = CONTE_BASE.map((sc) => {
+  const [oudou, shuru, flat, ochi] = CONTE_EXTRA[sc.conte!.place]
+  return {
+    kind: 'conte',
+    conte: sc.conte!,
+    open: [
+      { text: oudou, flavor: 'oudou' },
+      { text: shuru, flavor: 'shuru' },
+      { text: flat, flavor: 'flat' },
+    ],
+    role: sc.boke,
+    uke: sc.tsukkomi,
+    ochi,
+  }
+})
+
 // 担当で見せ場の種類が決まる。タイプの仕組みが入るまでの仮
 export function showcaseKind(state: GameState): ShowcaseKind {
+  if (state.player.style === 'conte') return 'conte'
   return state.player.role === 'boke' ? 'word' : 'tsukkomi'
 }
 
 // 見せ場の山。担当と芸風（漫才・コント）で分ける
 export function scenePool(kind: ShowcaseKind, style: Style): Scene[] {
-  if (style === 'conte') return kind === 'word' ? CONTE_WORD_SCENES : CONTE_TSUKKOMI_SCENES
+  if (style === 'conte' || kind === 'conte') return CONTE_SCENES
   return kind === 'word' ? WORD_SCENES : TSUKKOMI_SCENES
 }
 
@@ -212,7 +242,7 @@ export function pickScenes(state: GameState, kind: StageKind): Scene[] {
 }
 
 // 選択肢の並びは毎回変える。位置で覚えられないように
-export function shuffledOptions(scene: WordScene, seed: number): WordScene['options'] {
+export function shuffledOptions<T>(scene: { options: T[] }, seed: number): T[] {
   const order = [0, 1, 2]
   let x = (seed * 2654435761) >>> 0
   for (let i = order.length - 1; i > 0; i--) {
@@ -298,12 +328,53 @@ export function gradeTsukkomi(state: GameState, scene: TsukkomiScene, kind: Stag
   return at <= z.good.to ? { grade: 'good', label: '少し間延び' } : { grade: 'miss', label: '間延び' }
 }
 
+// コントの「役を演じ切る」。ゲージの帯（役の濃さ）の中に針を保つ。押している間は濃く、離すと薄くなる
+// 帯は表現力で広がり、大舞台ほど狭く、度胸が低いほど針が勝手に揺れる
+export function roleBand(state: GameState, kind: StageKind): { from: number; to: number } {
+  const half = Math.min(0.17, 0.1 + state.stats.expr * 0.0012) * (1 - stagePressure(kind) * 0.12)
+  return { from: 0.55 - half, to: 0.55 + half }
+}
+
+export function roleDrift(state: GameState, kind: StageKind): number {
+  return 0.04 + stagePressure(kind) * 0.05 + Math.max(0, 60 - state.stats.guts) * 0.002
+}
+
+// 帯の中にいた割合と、外れたときにどちらへ外れていたか
+export function gradeRole(inside: number, low: number, high: number): { grade: ShowcaseGrade; label: string } {
+  if (inside >= 0.7) return { grade: 'great', label: '最後まで役のまま' }
+  const why = low >= high ? '素が出た' : 'やりすぎた'
+  return inside >= 0.4 ? { grade: 'good', label: `少し${why}` } : { grade: 'miss', label: why }
+}
+
+// コントの「暗転前のオチ」。最後のセリフの余韻を見て、暗転のきっかけを出す
+export function gradeBlackout(state: GameState, kind: StageKind, at: number | null): { grade: ShowcaseGrade; label: string } {
+  const r = gradeTsukkomi(state, { kind: 'tsukkomi', boke: '', tsukkomi: '', center: 0.5 }, kind, at)
+  const label: Record<string, string> = {
+    ツッコミ忘れ: '暗転しそびれた',
+    ドンピシャ: 'ドンピシャの暗転',
+    少し食い気味: '暗転が少し早い',
+    食い気味: '余韻を切った',
+    少し間延び: '暗転が少し遅い',
+    間延び: '暗転が遅れた',
+  }
+  return { grade: r.grade, label: label[r.label] ?? r.label }
+}
+
+const BEAT_POINT: Record<ShowcaseGrade, number> = { great: 2, good: 1, miss: 0 }
+// 3つの山の出来をまとめて、見せ場1つ分の出来にする
+export function gradeConte(beats: ShowcaseGrade[]): ShowcaseGrade {
+  const p = beats.reduce((n, g) => n + BEAT_POINT[g], 0)
+  return p >= 5 ? 'great' : p >= 3 ? 'good' : 'miss'
+}
+
 // 見せ場で実際に何をしたか。結果文で引用するため、舞台ごとに一時的に覚えておく
 // said はボケで返した言葉（時間切れなら無し）、label はツッコミの間の判定
 export interface ShowcasePick {
   grade: ShowcaseGrade
   said?: string
   label?: string
+  // コントの3つの山（入り・役・オチ）の出来
+  beats?: ShowcaseGrade[]
 }
 
 let memo: { key: string; picks: ShowcasePick[] } | null = null
@@ -323,6 +394,7 @@ function recallPicks(state: GameState, kind: StageKind, grades: ShowcaseGrade[])
 // 見せ場の出来を、結果文の1行にする。何を言って、客席がどうなったか
 function sceneLine(state: GameState, kind: StageKind, scene: Scene, grade: ShowcaseGrade, pick: ShowcasePick | null): string {
   const head = scene.conte ? `見せ場（${scene.conte.place}のコント）：` : '見せ場：'
+  if (scene.kind === 'conte') return conteLine(scene, grade, pick, head)
   if (scene.kind === 'word') {
     // 覚えていなければ、評価から言った言葉を推し量る
     const said = pick ? pick.said : scene.options.filter((o) => gradeWord(state, kind, o.flavor) === grade).length === 1 ? scene.options.find((o) => gradeWord(state, kind, o.flavor) === grade)!.text : undefined
@@ -344,6 +416,16 @@ function sceneLine(state: GameState, kind: StageKind, scene: Scene, grade: Showc
   if (label === '食い気味') return `${head}食い気味にツッコんで、ボケが客に届く前に潰してしまった。`
   if (label === '間延び') return `${head}${tk}が遅れて、笑いが死んだ。`
   return `${head}${tk}の間が合わず、笑いが起きなかった。`
+}
+
+const BEAT_MISS = ['入りで設定が伝わらず、前半はお客さんが置いてけぼりだった。', '途中で役が揺れて、コントの世界が少し崩れた。', 'オチのあとの暗転がずれて、笑いが流れた。']
+function conteLine(scene: ConteScene, grade: ShowcaseGrade, pick: ShowcasePick | null, head: string): string {
+  if (grade === 'great') return `${head}入りで${scene.conte.place}の空気を作り、「${scene.uke}」まで役を崩さず、オチで暗転がバチッと決まった。`
+  const beats = pick?.beats
+  const worst = beats ? beats.indexOf(beats.includes('miss') ? 'miss' : 'good') : -1
+  const why = worst >= 0 ? BEAT_MISS[worst] : ''
+  if (grade === 'good') return `${head}クスッとは来た。${why || 'ただ、コントの世界に客を連れていき切れなかった。'}`
+  return `${head}${why || 'コントの世界に、客がついてこなかった。'}そこから空気が戻らなかった。`
 }
 
 // 舞台の結果文に入れる、見せ場の行。どの見せ場を遊んだかは pickScenes と同じ決め方で戻す
