@@ -1908,3 +1908,22 @@ p {
 }
 @keyframes shogo-in { 0% { opacity: 0; transform: scale(1.6); letter-spacing: 0.4em; } 100% { opacity: 1; transform: scale(1); letter-spacing: 0.04em; } }
 @media (prefers-reduced-motion: reduce) { .result-title strong { animation: none; } }
+
+/* 結果画面：次の評価まであと何点か */
+.next-goal {
+  margin: 8px 0 10px;
+  padding: 8px 12px;
+  background: var(--sun-light);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  font-size: 14px;
+}
+.next-goal b {
+  font-weight: 900;
+}
+.next-goal ul {
+  margin: 4px 0 0;
+  padding-left: 1.2em;
+  color: var(--sub);
+  font-weight: 700;
+}

@@ -219,3 +219,12 @@ if (process.argv[3] === 'sources') {
   }
 }
 
+
+// 遊び方ごとの点の分位（区切りを決める用）
+if (process.argv[3] === 'q') {
+  for (const [name, player] of Object.entries(POLICIES)) {
+    const t: number[] = []
+    for (let i = 1; i <= N; i++) t.push(buildEpilogue(play(i, player)).total)
+    console.log(name, [0.1, 0.25, 0.5, 0.75, 0.9].map((q) => pct(t, q)).join(' / '))
+  }
+}

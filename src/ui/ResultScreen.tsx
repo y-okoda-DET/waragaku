@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { buildEpilogue, scoreParts } from '../game/epilogue'
+import { buildEpilogue, nextGoal, scoreParts } from '../game/epilogue'
 import type { GameState } from '../game/types'
 import { portrait } from './art'
 import { PlayerAvatar, SkillBadge } from './parts'
@@ -17,6 +17,7 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
   const allShown = shown >= ep.months.length
   const rv = ep.review
   const parts = useMemo(() => scoreParts(state), [state])
+  const goal = useMemo(() => nextGoal(state, parts.reduce((a, p) => a + p.value, 0)), [state, parts])
   const tsujido = portrait('tsujido', 'think')
 
   const copy = async () => {
@@ -100,6 +101,20 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
             <dd>{ep.total}点</dd>
           </div>
         </dl>
+        {goal && (
+          <div className="next-goal">
+            <b>
+              {goal.rank}まで、あと{goal.need}点
+            </b>
+            {goal.tips.length > 0 && (
+              <ul>
+                {goal.tips.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         <div className="grades">
           {rv.grades.map((g) => (
             <div key={g.key} className="grade-tile">

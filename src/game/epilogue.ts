@@ -3,7 +3,7 @@ import { rivalOf } from './rivalEvents'
 import { has } from './core'
 import { buildReview, type Review } from './review'
 import { Rng } from './rng'
-import { STAT_KEYS, type GameState } from './types'
+import { STAT_KEYS, STAT_LABEL, type GameState } from './types'
 
 export interface ResultSummary {
   rank: string
@@ -15,22 +15,25 @@ export interface ResultSummary {
   review: Review
 }
 
-// 遊び方で評価が分かれるように置く（scripts/balance.ts）。
-// なんとなく遊ぶとE〜G、ふつうに遊ぶとD〜E、考えて遊ぶとB〜C、見せ場もよく決めるとA。Sはその中の一握り
-const RANKS: [number, string][] = [
-  [705, 'S'],
-  [655, 'A'],
-  [605, 'B'],
-  [555, 'C'],
-  [505, 'D'],
-  [455, 'E'],
-  [410, 'F'],
+// 遊び方で評価が分かれるように置く（scripts/balance.ts の q で分位を見る）。
+// なんとなく遊ぶとE〜G、ふつうに遊ぶとD〜E、半分くらい考えて遊ぶとB〜C、考えて遊ぶとA〜B、見せ場もよく決めるとA。Sはその中の一握り
+export const RANKS: [number, string][] = [
+  [675, 'S'],
+  [635, 'A'],
+  [595, 'B'],
+  [545, 'C'],
+  [495, 'D'],
+  [450, 'E'],
+  [405, 'F'],
   [0, 'G'],
 ]
 
+export const statPoint = (v: number) => (v <= 60 ? v : 60 + (v - 60) * 0.5)
+
 // 総合評価の内訳。通信簿に出す
 export function scoreParts(s: GameState): { label: string; value: number }[] {
-  const stats = STAT_KEYS.reduce((sum, k) => sum + s.stats[k], 0)
+  // 能力は60を超えると、点の伸びが半分になる（上手な人どうしの差を詰め、少し考えるだけでAに届かないように）
+  const stats = STAT_KEYS.reduce((sum, k) => sum + statPoint(s.stats[k]), 0)
   const skills = s.skills.reduce((sum, id) => {
     const k = SKILL_BY_ID[id]?.kind
     return sum + (k === 'kiwami' ? 40 : k === 'gift' ? 15 : k === 'buki' ? 12 : -8)
@@ -49,6 +52,21 @@ export function totalScore(s: GameState): number {
   return scoreParts(s).reduce((sum, p) => sum + p.value, 0)
 }
 
+// 次の評価まであと何点か、と、点を取りやすかったところ（結果画面で次の1周の目標にする）
+export function nextGoal(s: GameState, total: number): { rank: string; need: number; tips: string[] } | null {
+  const i = RANKS.findIndex(([min]) => total >= min)
+  if (i <= 0) return null
+  const [min, rank] = RANKS[i - 1]
+  const tips: string[] = []
+  const low = STAT_KEYS.reduce((a, b) => (s.stats[b] < s.stats[a] ? b : a))
+  if (s.stats[low] < 60) tips.push(`いちばん低い${STAT_LABEL[low]}を伸ばす（60までは、上げた分がそのまま点になる）`)
+  if (!(s.gradRank && s.gradRank <= 8)) tips.push('卒業大会で決勝に残る（＋20点）')
+  else if (s.gradRank !== 1) tips.push('卒業大会で優勝する（決勝進出より＋20点）')
+  if (!s.skills.some((id) => SKILL_BY_ID[id]?.kind === 'kiwami')) tips.push('極みに到達する（＋40点）')
+  if (s.skills.some((id) => SKILL_BY_ID[id]?.kind === 'kuse')) tips.push('クセを消す（1つにつき＋8点）')
+  return { rank, need: min - total, tips: tips.slice(0, 2) }
+}
+
 export function rankOf(total: number): string {
   return RANKS.find(([min]) => total >= min)?.[1] ?? 'G'
 }
@@ -58,7 +76,9 @@ export function buildEpilogue(s: GameState): ResultSummary {
   const rng = new Rng(s.rng ^ 0x5eed)
   const total = totalScore(s)
   const rank = rankOf(total)
-  const power = total / 5 + rng.int(-8, 8) // おおむね 30〜100
+  // 卒業後の1年の強さは、能力の伸びを詰める前の点で決める（評価の区切りを変えても、その後の話が変わらないように）
+  const raw = total + STAT_KEYS.reduce((sum, k) => sum + s.stats[k] - statPoint(s.stats[k]), 0)
+  const power = raw / 5 + rng.int(-8, 8) // おおむね 30〜100
   const patron = s.seniors.find((x) => s.flags[`patron_${x.id}`])
   const friendOnly = s.seniors.find((x) => x.like >= 60 && x.respect < 40)
   const so = s.gradRank === 1
