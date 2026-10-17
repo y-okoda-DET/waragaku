@@ -1124,7 +1124,11 @@ p {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  min-height: 46dvh;
+  /* 絵の枠は場面の途中で大きさを変えない（人の有無や選択肢の表示で伸び縮みさせない）。
+     svh はスマホのツールバーの出し入れで変わらない */
+  --scene-h: clamp(230px, 40svh, 360px);
+  height: var(--scene-h);
+  flex-shrink: 0;
   background: var(--sun-light);
   border: var(--stroke) solid var(--line);
   border-radius: var(--radius);
@@ -1193,7 +1197,7 @@ p {
   display: block;
   max-width: 100%;
   height: auto;
-  max-height: clamp(150px, 30dvh, 250px);
+  max-height: calc(var(--scene-h) - 44px);
   object-fit: contain;
   object-position: bottom;
   transform-origin: bottom center;
@@ -1581,18 +1585,12 @@ p {
   margin: 4px 0 0;
 }
 
-/* 会話：選択肢が出たら絵を小さくして、一画面に収める */
+/* 会話：選択肢が出ても絵の大きさは変えず、文字の枠だけ詰める */
 .adv {
   cursor: pointer;
 }
 .adv.has-after {
   cursor: default;
-}
-.adv.has-after .adv-scene {
-  min-height: 30dvh;
-}
-.adv.has-after .adv-chara.art img {
-  max-height: clamp(120px, 24dvh, 200px);
 }
 .adv.has-after .adv-box {
   min-height: 0;
