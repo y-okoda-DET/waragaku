@@ -682,11 +682,13 @@ p {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  /* 舞台名・擬音・札のあいだを等しく空ける */
+  justify-content: space-between;
   gap: 10px;
 }
 .dokkan {
   position: relative;
-  margin: 4px 0 6px 2px;
+  margin: 6px 0 4px 2px;
   font-family: var(--display);
   font-size: 72px;
   line-height: 1;
@@ -703,7 +705,6 @@ p {
 }
 .telop {
   position: relative;
-  margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
