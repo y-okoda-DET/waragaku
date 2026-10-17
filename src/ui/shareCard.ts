@@ -1,6 +1,6 @@
 import type { ResultSummary } from '../game/epilogue'
 import type { GameState } from '../game/types'
-import { careerLabel } from '../game/careers'
+import { careerBadge } from '../game/careers'
 import { charaKey, heroKey, portrait } from './art'
 
 // 卒業の結果を、Xに貼れる横長の画像（1200×675）にする
@@ -153,8 +153,7 @@ export async function drawShareCard(state: GameState, ep: ResultSummary): Promis
   ctx.fillStyle = '#fff'
   ctx.fillText('大笑芸能学院 卒業', 78, 69)
   // 経歴（高校卒業以外のときだけ）
-  const bgId = state.player.background
-  const career = bgId === 'circle' ? `${careerLabel(bgId)}出身` : bgId && bgId !== 'fresh' ? careerLabel(bgId) : ''
+  const career = careerBadge(state.player.background)
   if (career) {
     const cw = ctx.measureText(career).width + 36
     card(ctx, 272, 44, cw, 36, '#fff', 18)

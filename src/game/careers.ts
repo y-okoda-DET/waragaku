@@ -17,6 +17,8 @@ export const CAREERS: { id: CareerId; label: string }[] = [
 ]
 
 export const careerLabel = (id: string) => CAREERS.find((c) => c.id === id)?.label ?? '高校卒業'
+// 共有画像の札。高校卒業はつけない
+export const careerBadge = (id: string | undefined) => (id === 'circle' ? '大学お笑い出身' : id === 'salaryman' ? '元会社員' : '')
 
 // 卒業した回数で、選べる経歴が決まる
 export function unlockedCareers(runs: number): CareerId[] {
