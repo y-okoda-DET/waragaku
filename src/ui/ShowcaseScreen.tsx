@@ -323,7 +323,7 @@ function ConteGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { s
       {beat === 2 && <ConteOchi state={state} kind={kind} scene={scene} partner={partner} result={beats[2]} onEnd={record} />}
       {settled && (
         <button className="primary big" onClick={next}>
-          {beat === 0 ? 'コントが始まる' : beat === 1 ? 'オチへ' : '暗転'}
+          {beat === 0 ? 'コントが始まる' : beat === 1 ? 'オチへ' : '舞台を下りる'}
         </button>
       )}
     </>

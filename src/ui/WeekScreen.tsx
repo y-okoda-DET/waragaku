@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { TOTAL_TURNS, weekLabel } from '../game/data/calendar'
-import { jishurenStat, type DayAction, type NightAction } from '../game/engine'
+import { jishurenKind, type DayAction, type JishurenKind, type NightAction } from '../game/engine'
 import { STAT_KEYS, STAT_LABEL, type GameState, type StatKey } from '../game/types'
 import { SKILL_BY_ID } from '../game/data/skills'
 import { LogPanel } from './Adv'
@@ -13,12 +13,20 @@ type DayKey = DayAction['type']
 const DAY_OPTIONS: { key: DayKey; label: string; hint: string }[] = [
   { key: 'neta', label: 'ネタ作り', hint: '発想力＋／新しいネタの種' },
   { key: 'awase', label: 'ネタ合わせ', hint: '完成度＋' },
-  { key: 'jishuren', label: '自主練', hint: '苦手なところを鍛える' },
+  { key: 'jishuren', label: '自主練', hint: '4つから選んで鍛える' },
   { key: 'tetsudai', label: '先輩ライブの手伝い', hint: '先輩の認め・度胸＋' },
   { key: 'jishulive', label: '自主ライブに出る', hint: '−2,000円／度胸・対応力＋' },
   { key: 'kangeki', label: 'ライブを観に行く', hint: '−1,500円／ワード力＋' },
   { key: 'baito', label: 'バイト', hint: 'お金＋・体調−' },
   { key: 'rest', label: '休む', hint: '体調・やる気＋' },
+]
+
+// 自主練の中身。どれも伸び方は同じ
+const JISHUREN: { v: JishurenKind; label: string; hint: string }[] = [
+  { v: 'radio', label: '深夜ラジオに投稿', hint: 'ワード力＋' },
+  { v: 'hassei', label: '発声・滑舌', hint: '表現力＋' },
+  { v: 'kintore', label: '筋トレ', hint: '体力＋' },
+  { v: 'dance', label: 'ダンス', hint: '対応力＋' },
 ]
 
 // お金がかかる予定
@@ -54,6 +62,9 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
   const need = weeklyNeed(state)
   const mustWork = state.money < need
   const [day, setDay] = useState<DayKey>(mustWork ? 'baito' : 'neta')
+  const [kind, setKind] = useState<JishurenKind>(() => jishurenKind(state))
+  // 自主練を選んだら、その中身を選ぶタイルに切り替える
+  const [sub, setSub] = useState(false)
   const [skill, setSkill] = useState<string | null>(null)
   const [night, setNight] = useState<string>('sleep')
   const [tab, setTab] = useState<'day' | 'night'>('day')
@@ -72,7 +83,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
   // 選んでいた予定がお金で選べなくなったら、バイトにする
   const curDay: DayKey = dayLocked(day) ? 'baito' : day
   const curNight = nightLocked(night) ? 'sleep' : night
-  const buildDay = (): DayAction => ({ type: curDay }) as DayAction
+  const buildDay = (): DayAction => (curDay === 'jishuren' ? { type: 'jishuren', kind } : ({ type: curDay } as DayAction))
   const buildNight = (): NightAction => (curNight.startsWith('nomi:') ? { type: 'nomi', senior: curNight.slice(5) } : ({ type: curNight } as NightAction))
 
   const weakest = STAT_KEYS.reduce((a, b) => (state.stats[b] < state.stats[a] ? b : a))
@@ -89,13 +100,21 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
     { k: 'jikka', label: '実家に電話', hint: 'やる気＋', tag: '' },
     { k: 'sleep', label: '早く寝る', hint: '体調＋', tag: '' },
   ]
-  const dayLabel = DAY_OPTIONS.find((o) => o.key === curDay)!.label
+  const dayLabel = curDay === 'jishuren' ? `自主練（${JISHUREN.find((j) => j.v === kind)!.label}）` : DAY_OPTIONS.find((o) => o.key === curDay)!.label
   const nightLabel = nightOptions.find((o) => o.k === curNight)?.label ?? ''
   // 休むは8回目で出席不足（3月の卒業認定で救済の手伝い）。残り1回になったときだけ見せる
   const restLeft = 8 - (state.counters.rest ?? 0)
   const dayTag = (k: DayKey) => (k === 'awase' && state.partner ? `${state.partner.name}と！` : k === 'rest' && restLeft === 1 ? 'あと1回で出席不足' : '')
   // 選んでいるものをもう一度タップしたら、次へ進む
-  const pickDay = (k: DayKey) => (k === curDay ? setTab('night') : setDay(k))
+  const pickDay = (k: DayKey) => {
+    if (k === 'jishuren') {
+      setDay(k)
+      setSub(true)
+    } else if (k === curDay) setTab('night')
+    else setDay(k)
+  }
+  const pickKind = (v: JishurenKind) => (v === kind ? setTab('night') : setKind(v))
+  const weakKind = jishurenKind(state)
   const pickNight = (k: string) => (k === curNight ? onRun(buildDay(), buildNight(), `${dayLabel}／${nightLabel}`) : setNight(k))
 
   return (
@@ -169,6 +188,25 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
       {tab === 'day' ? (
         <>
           {mustWork && <p className="warn-note">来週の家賃と食費（¥{need.toLocaleString()}）が払えない。今週はバイトしかない。</p>}
+          {sub && curDay === 'jishuren' ? (
+            <>
+              <div className="row-between sub-head">
+                <span className="tile-name">自主練で何をやる？</span>
+                <button className="link" onClick={() => setSub(false)}>
+                  ほかの予定にする
+                </button>
+              </div>
+              <div className="tiles">
+                {JISHUREN.map((j) => (
+                  <button key={j.v} className={`tile ${kind === j.v ? 'on' : ''}`} onClick={() => pickKind(j.v)}>
+                    {j.v === weakKind && <span className="tile-tag">いちばん苦手</span>}
+                    <span className="tile-name">{j.label}</span>
+                    <span className="tile-hint">{j.hint}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
           <div className="tiles">
             {DAY_OPTIONS.map((o) => (
               <button
@@ -179,10 +217,11 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
               >
                 {dayLocked(o.key) ? <span className="tile-tag lock">{dayLocked(o.key)}</span> : dayTag(o.key) && <span className="tile-tag">{dayTag(o.key)}</span>}
                 <span className="tile-name">{o.label}</span>
-                <span className="tile-hint">{o.key === 'jishuren' ? `苦手を鍛える（今は${STAT_LABEL[jishurenStat(state)]}）` : o.hint}</span>
+                <span className="tile-hint">{o.key === 'jishuren' && curDay === 'jishuren' ? JISHUREN.find((j) => j.v === kind)!.label : o.hint}</span>
               </button>
             ))}
           </div>
+          )}
         </>
       ) : (
         <div className="tiles">

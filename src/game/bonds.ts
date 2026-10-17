@@ -97,7 +97,7 @@ function inherit(s: GameState, id: string): void {
     s.counters[`dev_${id}`] = Math.max(0, (s.counters[`dev_${id}`] ?? 1) - 1)
     return
   }
-  addSkill(s, c.skill, `特殊能力「${SKILL_BY_ID[c.skill].name}」を${c.name}から受け継いだ。`)
+  addSkill(s, c.skill, `◆特殊能力「${SKILL_BY_ID[c.skill].name}」を${c.name}から受け継いだ。`)
   s.gifts ??= {}
   s.gifts[c.skill] = c.name
 }
@@ -747,7 +747,7 @@ const CHAINS: Record<string, DevEvent[]> = {
       title: '真壁のメモ帳',
       place: 'kouen',
       lines: (_s, me) => [
-        'ナレーション：公園のベンチ。真壁がキャップを少しだけ上げた。初めて目が見えた。',
+        'ナレーション：公園のベンチ。真壁がキャップのつばを少しだけ上げた。目までは、見えなかった。',
         '真壁（照れ）「しゃべるの、苦手。見るのは、得意」',
         '真壁（ふつう）「おもろい人。本人だけ、気づいてない」',
         '真壁（笑い）「たとえば、今の、あなた」',

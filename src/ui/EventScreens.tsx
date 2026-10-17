@@ -62,7 +62,13 @@ export function StageIntro({ state, kind, onPerform, onNeta }: { state: GameStat
       <div className="date small">{weekLabel(Math.min(state.turn, 41))}</div>
       <article className="card story stage">
         <div className="small">{spec.venue}</div>
-        <h1>{spec.title}</h1>
+        <h1>
+          {spec.title.split(/(?=「)/).map((t, i) => (
+            <span key={i} className="chunk">
+              {t}
+            </span>
+          ))}
+        </h1>
         {spec.intro.map((l, i) => (
           <p key={i}>{l}</p>
         ))}

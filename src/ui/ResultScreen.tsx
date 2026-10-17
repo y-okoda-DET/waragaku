@@ -151,7 +151,7 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
           <ul className="gifts">
             {rv.gifts.map((g) => (
               <li key={g.name}>
-                「{g.name}」は{g.from}から受け継いだ
+                ◆「{g.name}」は{g.from}から受け継いだ
               </li>
             ))}
           </ul>

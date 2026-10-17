@@ -644,7 +644,8 @@ p {
   overflow: hidden;
 }
 .stage .small {
-  display: inline-block;
+  display: block;
+  width: fit-content;
   background: var(--ink);
   color: #fff;
   font-weight: 800;
@@ -677,10 +678,15 @@ p {
   padding: 2px 12px;
   font-size: 13px;
 }
+.stage-result .studio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
 .dokkan {
-  position: absolute;
-  left: 14px;
-  top: 44px;
+  position: relative;
+  margin: 4px 0 6px 2px;
   font-family: var(--display);
   font-size: 72px;
   line-height: 1;
@@ -696,10 +702,8 @@ p {
   font-size: 54px;
 }
 .telop {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
+  position: relative;
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1081,7 +1085,8 @@ p {
 .sc-sound {
   font-family: var(--display);
   font-size: 64px;
-  line-height: 1;
+  line-height: 1.1;
+  margin-bottom: 8px;
   color: var(--coral);
   -webkit-text-stroke: 3px var(--ink);
   paint-order: stroke fill;
@@ -1514,8 +1519,9 @@ p {
   font-weight: 700;
 }
 .gifts {
+  list-style: none;
   margin: 10px 0 0;
-  padding-left: 1.2em;
+  padding-left: 0;
   font-size: 14px;
   color: var(--sub);
 }
@@ -1851,6 +1857,9 @@ p {
 @media (prefers-reduced-motion: reduce) { .verdict { animation: none; } }
 
 /* 舞台の名前と卒業の称号は「めくり」（寄席の演者名の札）のように見せる */
+.story.stage h1 .chunk {
+  display: inline-block;
+}
 .story.stage h1 {
   display: inline-block;
   align-self: flex-start;

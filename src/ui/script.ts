@@ -17,6 +17,7 @@ const EXPR_JA: Record<string, Expr> = {
   考え中: 'think',
   考え: 'think',
   照れ: 'shy',
+  素顔: 'bare',
 }
 
 export interface ScriptLine {

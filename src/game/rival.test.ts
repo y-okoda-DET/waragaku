@@ -4,7 +4,7 @@ import { createGame } from './engine'
 import { RIVAL_SCHEDULE, RIVAL_STORIES } from './rivalEvents'
 import { Rng } from './rng'
 
-const FACES = ['ふつう', '笑い', '爆笑', '驚き', '落ち込み', '怒り', '考え中', '照れ']
+const FACES = ['ふつう', '笑い', '爆笑', '驚き', '落ち込み', '怒り', '考え中', '照れ', '素顔']
 const LINE = /^(ナレーション：.+|[^（）「」]+（([^）]+)）「.+」)$/
 
 function base() {

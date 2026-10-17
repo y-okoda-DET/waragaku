@@ -7,7 +7,8 @@ const FILES = import.meta.glob('../assets/art/*.webp', { eager: true, import: 'd
 const ART: Record<string, string> = {}
 for (const [path, url] of Object.entries(FILES)) ART[path.slice(path.lastIndexOf('/') + 1, -'.webp'.length)] = url
 
-export type Expr = 'normal' | 'smile' | 'laugh' | 'surprise' | 'down' | 'angry' | 'think' | 'shy'
+// bare は真壁がキャップを取った顔（一度だけ使う）
+export type Expr = 'normal' | 'smile' | 'laugh' | 'surprise' | 'down' | 'angry' | 'think' | 'shy' | 'bare'
 
 // 名前 → 絵のキー。まだ絵がない人は出てこない（仮の似顔絵になる）
 const CHARA_BY_NAME: Record<string, string> = {

@@ -139,6 +139,8 @@ for (const [name, player] of Object.entries(POLICIES)) {
     const stat: Record<string, number> = {}
     let broke = 0
     let sk = 0
+    let bk = 0
+    let bkOld = 0
     let fail = 0
     const totals: number[] = []
     const grads: number[] = []
@@ -159,6 +161,8 @@ for (const [name, player] of Object.entries(POLICIES)) {
       }
       for (const k of STAT_KEYS) stat[k] = (stat[k] ?? 0) + s.stats[k] / N
       sk += s.skills.length / N
+      if (s.skills.includes('bakushou')) bk++
+      if (s.skills.includes('honban') && s.skills.includes('tsukami')) bkOld++
       if (s.money < 0) broke++
       if (s.flags.kyusai || (s.counters.rest ?? 0) >= 8) fail++
     }
@@ -166,7 +170,7 @@ for (const [name, player] of Object.entries(POLICIES)) {
     console.log(
       `${name}: 平均${Math.round(total / N)}点 ｜ ${order.map((k) => `${k}${ranks[k] ?? 0}`).join(' ')} ｜ ` +
         STAT_KEYS.map((k) => `${k}${Math.round(stat[k])}`).join(' ') +
-        ` ｜ 特殊能力${sk.toFixed(1)}個 ｜ 借金${broke} 出席不足${fail}`,
+        ` ｜ 特殊能力${sk.toFixed(1)}個 ｜ 爆笑請負人${bk}（旧条件${bkOld}）/${N} ｜ 借金${broke} 出席不足${fail}`,
       `\n   点の幅 ${pct(totals, 0.1)}〜${pct(totals, 0.5)}〜${pct(totals, 0.9)} ｜ 卒業大会の順位 ${pct(grads, 0.1)}〜${pct(grads, 0.5)}〜${pct(grads, 0.9)}位`,
       `\n   舞台の出来 スベり${lv[0]} まばら${lv[1]} ウケ${lv[2]} 爆笑${lv[3]} ｜ 賞レース1回戦通過 ${pass[1]}/${pass[0] + pass[1]}`,
       `\n   舞台の点（真ん中） ` + Object.entries(sc).map(([k, v]) => `${k}${pct(v, 0.5)}`).join(' '),

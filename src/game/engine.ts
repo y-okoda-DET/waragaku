@@ -113,7 +113,7 @@ export function createGame(raw: NewGameInput): GameState {
 
 // ---- 1週間の行動 ----
 
-// 自主練の中身。ワード力・表現力・体力・対応力のうち、いちばん低いものを練習する
+// 自主練の中身。プレイヤーが選ぶ。選ばなかったとき（テストなど）は、ワード力・表現力・体力・対応力のうちいちばん低いものを練習する
 const JISHUREN_STAT = { radio: 'word', hassei: 'expr', kintore: 'stamina', dance: 'adlib' } as const
 export function jishurenKind(s: GameState): keyof typeof JISHUREN_STAT {
   return (Object.keys(JISHUREN_STAT) as (keyof typeof JISHUREN_STAT)[]).reduce((x, y) => (s.stats[JISHUREN_STAT[y]] < s.stats[JISHUREN_STAT[x]] ? y : x))
@@ -165,8 +165,7 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
     }
     case 'jishuren': {
       s.condition = clamp(s.condition - 10)
-      // 苦手なところを鍛える。深夜ラジオ投稿＝ワード力、発声・滑舌＝表現力、筋トレ＝体力、ダンス＝対応力
-      // （どの能力も同じくらい伸ばせるように、4つのうちいちばん低い能力を練習する）
+      // 深夜ラジオ投稿＝ワード力、発声・滑舌＝表現力、筋トレ＝体力、ダンス＝対応力（どれも同じだけ伸びる）
       const kind = a.kind ?? jishurenKind(s)
       if (kind === 'radio') {
         gain(s, 'word', 3.5)
@@ -595,9 +594,7 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
         r.lines.push(
           rivalOf(s) === 'mido'
             ? '決勝は客席から観た。御堂のコンビは、台本にない一言で、その日いちばんの笑いを取っていた。'
-            : s.flags.makabe_promise
-              ? '決勝は客席から観た。真壁のコンビは、最後の一言で会場をひっくり返した。袖で待つ約束は、守れなかった。'
-              : '決勝は客席から観た。真壁のコンビが、ほとんどしゃべらないコントで一番笑いを取っていた。',
+            : `決勝は客席から観た。真壁は最後までしゃべらなかった。暗転の直前に、ひとことだけ「おはようございます」。夜の劇場に朝の挨拶が響いて、会場がひっくり返った。${s.flags.makabe_promise ? '袖で待つ約束は、守れなかった。' : ''}`,
         )
       }
       break
@@ -624,11 +621,11 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
         r.lines.push(
           rank === 1
             ? s.flags.makabe_promise
-              ? '準優勝は真壁のコンビ。最後の一言は、袖まではっきり届いた。真壁はキャップを取って、深く頭を下げた。'
-              : '準優勝は真壁のコンビ。真壁は袖で、メモ帳に何か書いていた。'
+              ? '準優勝は真壁のコンビ。最後の一言の「おはようございます」は、約束どおり袖まではっきり届いた。真壁はキャップを取って、深く頭を下げた。'
+              : '準優勝は真壁のコンビ。最後の一言は「おはようございます」だった。真壁は袖で、メモ帳に何か書いていた。'
             : s.flags.makabe_promise
-              ? '優勝は真壁のコンビだった。最後の一言は、袖で聞いた。インタビューで真壁は「……どうも」とだけ言った。会場がいちばん笑った。'
-              : '優勝は真壁のコンビだった。インタビューで真壁は「……どうも」とだけ言った。会場がいちばん笑った。',
+              ? '優勝は真壁のコンビだった。最後の一言の「おはようございます」は、袖で聞いた。インタビューで真壁は「……どうも」とだけ言った。会場がいちばん笑った。'
+              : '優勝は真壁のコンビだった。最後の一言は「おはようございます」。インタビューで真壁は「……どうも」とだけ言った。会場がいちばん笑った。',
         )
       if (rank === 1) s.fans += 30
       break
@@ -697,10 +694,11 @@ function checkSkills(s: GameState): void {
     addSkill(s, 'kurouto', '「学生お笑い臭」が化けて、芸風スキル「玄人殺し」になった。')
   }
   if (has(s, 'agari') && s.stats.guts >= 50) removeSkill(s, 'agari', '舞台に慣れて「あがり症」が消えた。')
-  if (has(s, 'honban') && has(s, 'tsukami')) addSkill(s, 'bakushou', '極み「爆笑請負人」に到達した。')
+  if (has(s, 'honban') && has(s, 'tsukami') && c('level3') >= 6 && s.stats.guts >= 65)
+    addSkill(s, 'bakushou', '本番に強く、最初の一言でつかめて、爆笑をとった舞台が6回を数えた。どこに出ても笑いを持って帰ってこられる。極み「爆笑請負人」に到達した。')
   const patron = s.seniors.find((x) => x.like >= 75 && x.respect >= 60)
   if (patron && !has(s, 'kumi')) {
-    addSkill(s, 'kumi', `極み「秘蔵っ子」に到達した。${patron.name}さんに引き上げてもらえる。`)
+    addSkill(s, 'kumi', `${patron.name}さんとすっかり仲良くなり、芸も認めてもらえた。この人が引き上げてくれる。極み「秘蔵っ子」に到達した。`)
     s.flags[`patron_${patron.id}`] = true
   }
 }
