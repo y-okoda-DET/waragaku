@@ -5,6 +5,7 @@ import type { StoryDef } from './events'
 import { KODAWARI, KODAWARI_KEYS, recall } from './kodawari'
 import { makePartner, nextPartnerBase } from './partner'
 import { scriptOf } from './partnerLines'
+import { gradLines, gradPartnerLine } from './careers'
 import type { GameState, Kodawari } from './types'
 
 // 1年間の流れ（scenario/1年間の流れ.md）のうち、あとから足した行事
@@ -759,8 +760,9 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
           'ナレーション：3月。卒業式は、入学式と同じ講堂だった。',
           `ナレーション：入学式で300人いた同期は、${s.classmates}人になった。空いた席の方が多い。`,
           '灰原（笑い）「ほら。両隣、見てみ」',
+          ...gradLines(s),
           p
-            ? `ナレーション：右隣には${p.name}が座っていた。${s.flags.reform ? '組み直して、まだひと月。' : '4月の相方見つけ会から、ずっと隣にいた。'}`
+            ? `ナレーション：右隣には${p.name}が座っていた。${s.flags.reform ? '組み直して、まだひと月。' : (gradPartnerLine(s) ?? '4月の相方見つけ会から、ずっと隣にいた。')}`
             : 'ナレーション：右隣の席は、空いていた。ピンで残ることを選んだ。',
           ...(p ? [scriptOf(s)?.grad ?? `${p.name}（笑い）「なんや、じろじろ見て」`] : []),
           left ? `ナレーション：左隣には${left}。最後まで、ここに残った。` : 'ナレーション：左隣も、空いていた。',

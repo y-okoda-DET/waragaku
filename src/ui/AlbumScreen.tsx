@@ -1,11 +1,12 @@
 import { KIND_ORDER, KIWAMI_HINT, RIVAL_ENDINGS, ROUTES, type Album } from '../game/album'
 import { SKILLS } from '../game/data/skills'
+import { CAREERS } from '../game/careers'
 import { SkillBadge } from './parts'
 
 // 卒業アルバム。見たもの・取ったものを周をまたいで並べ、まだのところは伏せて数だけ見せる
 export function AlbumScreen({ album, onBack }: { album: Album; onBack: () => void }) {
-  const total = SKILLS.length + ROUTES.length + RIVAL_ENDINGS.length
-  const have = album.skills.length + album.routes.length + album.rivals.length
+  const total = SKILLS.length + ROUTES.length + RIVAL_ENDINGS.length + CAREERS.length
+  const have = album.skills.length + album.routes.length + album.rivals.length + album.careers.length
   return (
     <div className="screen album">
       <section className="card">
@@ -23,6 +24,17 @@ export function AlbumScreen({ album, onBack }: { album: Album; onBack: () => voi
             {have} / {total}
           </dd>
         </dl>
+      </section>
+
+      <section className="card">
+        <h2>キャラクター</h2>
+        <ul className="album-list">
+          {CAREERS.map((c, i) => (
+            <li key={c.id} className={album.careers.includes(c.id) ? '' : 'locked'}>
+              {i > album.runs ? `？？？（あと${i - album.runs}回卒業すると）` : album.careers.includes(c.id) ? `${c.label}で卒業` : `${c.label}（まだ卒業していない）`}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="card">

@@ -67,6 +67,7 @@ export default function App() {
     if (creating)
       return (
         <CreateScreen
+          runs={loadAlbum().runs}
           onBack={() => setCreating(false)}
           onStart={(input: NewGameInput) => {
             setCreating(false)

@@ -2,6 +2,7 @@
 import { SKILLS, type SkillKind } from './data/skills'
 import { RANKS, buildEpilogue } from './epilogue'
 import { rivalOf } from './rivalEvents'
+import { CAREERS, careerLabel } from './careers'
 import type { GameState } from './types'
 
 export interface Album {
@@ -12,6 +13,8 @@ export interface Album {
   skills: string[]
   routes: string[]
   rivals: string[]
+  // 卒業したことのある経歴（選べる経歴は、卒業した回数で決まる）
+  careers: string[]
   // 同じ卒業を二度数えないための印（新しい順に少しだけ持つ）
   keys: string[]
 }
@@ -45,7 +48,7 @@ export const KIND_ORDER: { kind: SkillKind; label: string }[] = [
 ]
 
 const KEY = 'lough-academy-album-v1'
-const empty = (): Album => ({ runs: 0, skills: [], routes: [], rivals: [], keys: [] })
+const empty = (): Album => ({ runs: 0, skills: [], routes: [], rivals: [], careers: [], keys: [] })
 
 export function loadAlbum(): Album {
   try {
@@ -97,6 +100,7 @@ export function recordRun(s: GameState): { album: Album; fresh: string[] } {
   }
   if (s.gradRank && (!a.bestGrad || s.gradRank < a.bestGrad)) a.bestGrad = s.gradRank
   add(a.routes, e.route, `芸人1年目「${e.route}」`)
+  if (!a.careers.includes(s.player.background)) a.careers.push(s.player.background)
   for (const id of e.rivals) add(a.rivals, id, `同期の結末「${RIVAL_ENDINGS.find((x) => x.id === id)?.name}」`)
   // 特殊能力は数が多いので、1行にまとめる
   const newSkills = e.skills.filter((id) => !a.skills.includes(id))
@@ -105,7 +109,9 @@ export function recordRun(s: GameState): { album: Album; fresh: string[] } {
   a.runs += 1
   a.keys = [e.key, ...a.keys].slice(0, 20)
   saveAlbum(a)
-  const shown = a.runs === 1 ? ['はじめての卒業。この1年を、卒業アルバムに残した'] : fresh
+  // 卒業するたびに、次の経歴で入学できるようになる
+  const opened = CAREERS[a.runs] ? [`新しいキャラクター「${careerLabel(CAREERS[a.runs].id)}」で入学できるようになった`] : []
+  const shown = [...(a.runs === 1 ? ['はじめての卒業。この1年を、卒業アルバムに残した'] : fresh), ...opened]
   recorded.set(e.key, shown)
   return { album: a, fresh: shown }
 }

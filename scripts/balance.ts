@@ -127,7 +127,7 @@ function play(seed: number, p: Player) {
     }
     return s
   }
-  let s = endEvents(drain(createGame({ name: '山田', callName: 'ヤマダ', role: seed % 2 ? 'boke' : 'tsukkomi', style: seed % 3 ? 'manzai' : 'conte', seed })))
+  let s = endEvents(drain(createGame({ name: '山田', callName: 'ヤマダ', role: seed % 2 ? 'boke' : 'tsukkomi', style: seed % 3 ? 'manzai' : 'conte', seed, background: process.env.BG })))
   for (let w = 0; s.phase !== 'result' && w < 100; w++) {
     const [d, n] = policy(s, w, r)
     s = drain(endEvents(drain(runWeek(s, d, n))))

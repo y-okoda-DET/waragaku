@@ -4,6 +4,7 @@ import { PARTNER_STORIES } from './partnerLines'
 import { YEAR_STORIES } from './yearEvents'
 import { RIVAL_STORIES, rivalOf } from './rivalEvents'
 import { SENPAI_STORIES } from './senpaiEvents'
+import { CAREER_STORIES, nyugakuLines, ohayoReply } from './careers'
 import { CARDS } from './data/cards'
 import { PARTNER_CANDIDATES } from './data/people'
 import { clamp, count, gain, has, push, story, yen } from './core'
@@ -44,6 +45,7 @@ export const STORIES: Record<string, StoryDef> = {
       title: '入学式',
       lines: [
         `ナレーション：大笑芸能学院、入学式。同期は${s.classmates}人。スーツの人もいれば、さっき起きたばかりのスウェットの人もいる。`,
+        ...nyugakuLines(s),
         'ナレーション：壇上に1期上の「助手先輩」が並ぶ。真ん中の先輩がマイクを持った。',
         '灰原（ふつう）「助手の灰原です。最初に言うときます」',
         '灰原（ふつう）「今はたくさんいるけど、マジで今、自分の両隣にいる人、いなくなるから」',
@@ -51,7 +53,7 @@ export const STORIES: Record<string, StoryDef> = {
         '灰原（笑い）「挨拶は夜でも“おはようございます”。授業の20分前におらんかったら遅刻。恋愛禁止」',
         '灰原（ふつう）「あと、出席は全部数えてます。足りん人は、どんだけおもろくても卒業させません。以上です」',
       ],
-      choices: [{ reply: '灰原（笑い）「ええ声。その声、卒業まで出し続けや」', label: '「おはようございます！」と声を張る', hint: '度胸＋' }, { reply: '灰原（ふつう）「そこの見回してる人。両隣の顔、今のうちに覚えとき」', label: '黙って周りを見回す', hint: '発想力＋' }],
+      choices: [{ reply: ohayoReply(s), label: '「おはようございます！」と声を張る', hint: '度胸＋' }, { reply: '灰原（ふつう）「そこの見回してる人。両隣の顔、今のうちに覚えとき」', label: '黙って周りを見回す', hint: '発想力＋' }],
     }),
     resolve: (s, c) => {
       if (c === 0) {
@@ -625,7 +627,7 @@ export const STORIES: Record<string, StoryDef> = {
   },
 }
 
-Object.assign(STORIES, DEV_STORIES, YEAR_STORIES, PARTNER_STORIES, RIVAL_STORIES, SENPAI_STORIES)
+Object.assign(STORIES, DEV_STORIES, YEAR_STORIES, PARTNER_STORIES, RIVAL_STORIES, SENPAI_STORIES, CAREER_STORIES)
 
 export function storyView(s: GameState, key: string, params: Record<string, string | number> = {}): StoryView {
   const view = STORIES[key].view(s, params)

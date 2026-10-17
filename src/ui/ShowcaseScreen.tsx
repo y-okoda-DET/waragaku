@@ -84,7 +84,7 @@ const FACES: Record<ShowcaseGrade | 'wait', [Expr, Expr]> = {
 function Stage({ state, kind, mood = 'wait', blackout = false, children }: { state: GameState; kind: StageKind; mood?: ShowcaseGrade | 'wait'; blackout?: boolean; children: ReactNode }) {
   const bg = background(VENUE[kind])
   const [me, you] = FACES[mood]
-  const hero = portrait(heroKey(state.player.gender), me)
+  const hero = portrait(heroKey(state.player.gender, state.player.background), me)
   const partner = state.partner ? portrait(charaKey(state, state.partner.name), you) : undefined
   return (
     <div className={`studio sc-stage ${bg ? 'has-bg' : ''} ${blackout ? 'blackout' : ''}`} style={bg ? { backgroundImage: `url(${bg})` } : undefined}>

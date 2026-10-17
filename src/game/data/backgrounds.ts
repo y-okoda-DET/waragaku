@@ -25,7 +25,7 @@ export const BACKGROUNDS: Background[] = [
   {
     id: 'circle',
     name: '大学お笑いサークル出身',
-    blurb: '4年間、学生ライブで鍛えた。相方と組んだまま入学。仕上がってるけど、一般のお客さんは知らない。',
+    blurb: '22歳。大学のお笑いサークルで4年、相方の佐倉と学生ライブに出てきた。学生の大会は準決勝まで。佐倉と組んだまま入学する。仕上がってるけど、一般のお客さんは知らない。',
     stats: { idea: 34, word: 32, expr: 14, guts: 26, adlib: 24, stamina: 18 },
     money: 60000,
     skills: ['kotoba', 'gakusei', 'shiagari'],
@@ -71,10 +71,12 @@ export const BACKGROUNDS: Background[] = [
   {
     id: 'salaryman',
     name: '元会社員',
-    blurb: '会社を辞めて来た。貯金と社会性はある。理屈っぽいのが玉にキズ。',
+    blurb: '28歳。営業を6年やって、会社を辞めて来た。貯金と社会性はある。同期はほとんど年下で、つい敬語が出る。',
     stats: { idea: 18, word: 20, expr: 14, guts: 16, adlib: 22, stamina: 18 },
     money: 400000,
     skills: ['kawaigarare'],
+    // 自分で決めて辞めてきたぶん、伸びは素直（高校卒業との差を詰める）
+    growth: 1,
   },
   {
     id: 'band',

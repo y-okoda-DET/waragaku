@@ -5,9 +5,9 @@ import type { Gender, Role, Style } from '../game/types'
 import { outfitColor } from './looks'
 import { Avatar, HeroFace } from './parts'
 import { heroKey, portrait } from './art'
+import { CAREERS, unlockedCareers, type CareerId } from '../game/careers'
 
-// 主人公は「高校卒業・東京生まれで実家から通う」で固定。選ぶのは名前・性別・担当・やりたいネタだけ
-const FRESH = BACKGROUND_BY_ID['fresh']
+// 経歴は、卒業した回数だけ選べるようになる（1周目は高校卒業だけ）。ほかに選ぶのは名前・性別・担当・やりたいネタ
 
 // おまかせで使う名前。下の名前は、読んで性別を取り違えないものだけにする
 const SURNAMES: string[] = [
@@ -24,7 +24,10 @@ const FEMALE_NAMES: string[] = [
   '真由', '千尋', '優子', '麻衣', '理沙', '陽子', '香織', '桃子',
 ]
 
-export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInput) => void; onBack: () => void }) {
+export function CreateScreen({ runs, onStart, onBack }: { runs: number; onStart: (input: NewGameInput) => void; onBack: () => void }) {
+  const open = unlockedCareers(runs)
+  const [career, setCareer] = useState<CareerId>('fresh')
+  const bg = BACKGROUND_BY_ID[career]
   const [name, setName] = useState('')
   const [callName, setCallName] = useState('')
   const [gender, setGender] = useState<Gender>('male')
@@ -73,18 +76,34 @@ export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInpu
 
       <section className="card">
         <h2>2. キャラクター</h2>
+        {open.length > 1 && (
+          <div className="seg career-pick">
+            {CAREERS.map((c) =>
+              open.includes(c.id) ? (
+                <button key={c.id} className={career === c.id ? 'on' : ''} onClick={() => setCareer(c.id)} aria-pressed={career === c.id}>
+                  {c.label}
+                </button>
+              ) : (
+                <button key={c.id} disabled>
+                  ？？？
+                </button>
+              ),
+            )}
+          </div>
+        )}
         <div className="gender-pick">
           {(['male', 'female'] as Gender[]).map((g) => (
             <button key={g} className={gender === g ? 'on' : ''} onClick={() => setGender(g)} aria-pressed={gender === g} aria-label={g === 'male' ? '男性' : '女性'}>
-              {portrait(heroKey(g), 'normal') ? (
-                <HeroFace gender={g} size={64} />
+              {portrait(heroKey(g, career), 'normal') ? (
+                <HeroFace gender={g} career={career} size={64} />
               ) : (
                 <Avatar hair={PLAYER_LOOK[g].hairColor} outfit={outfitColor(PLAYER_LOOK[g].outfit)} size={64} long={g === 'female'} />
               )}
             </button>
           ))}
         </div>
-        <p className="note">{FRESH.blurb}</p>
+        <p className="note">{bg.blurb}</p>
+        {open.length < CAREERS.length && <p className="small">卒業すると、ほかの経歴でも入学できるようになります。</p>}
       </section>
 
       <section className="card">
@@ -107,7 +126,7 @@ export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInpu
         </div>
       </section>
 
-      <button className="primary big" disabled={!ready} onClick={() => onStart({ name: name.trim(), callName: callName.trim() || name.trim(), gender, role, style })}>
+      <button className="primary big" disabled={!ready} onClick={() => onStart({ name: name.trim(), callName: callName.trim() || name.trim(), gender, role, style, background: career })}>
         {ready ? '願書を出す' : '名前を入れてください'}
       </button>
     </div>

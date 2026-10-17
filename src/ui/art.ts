@@ -26,14 +26,18 @@ const CHARA_BY_NAME: Record<string, string> = {
   御堂: 'rival1',
   社員: 'shain',
   真壁: 'rival2',
+  佐倉: 'sakura',
 }
 
-export function heroKey(gender: Gender | undefined): string {
-  return gender === 'female' ? 'hero_f' : 'hero_m'
+// 主人公の絵は経歴ごと（hero_m_circle など）。その経歴の絵がまだなければ、高校卒業の絵を使う
+export function heroKey(gender: Gender | undefined, career?: string): string {
+  const base = gender === 'female' ? 'hero_f' : 'hero_m'
+  const k = career && career !== 'fresh' ? `${base}_${career}` : base
+  return ART[`${k}_normal`] ? k : base
 }
 
 export function charaKey(state: GameState, name: string): string | undefined {
-  if (name === state.player.callName) return heroKey(state.player.gender)
+  if (name === state.player.callName) return heroKey(state.player.gender, state.player.background)
   return CHARA_BY_NAME[name]
 }
 

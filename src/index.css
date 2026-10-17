@@ -326,6 +326,17 @@ p {
 .seg button {
   font-size: 13.5px;
 }
+.seg.career-pick {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.seg.career-pick button {
+  font-size: 12.5px;
+  padding: 8px 2px;
+  white-space: nowrap;
+}
+.seg.career-pick button:disabled {
+  color: var(--muted, #999);
+}
 
 /* 育成画面 */
 .week {

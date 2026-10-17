@@ -100,7 +100,7 @@ export async function drawShareCard(state: GameState, ep: ResultSummary): Promis
   const r = 'SABCDEFG'.indexOf(ep.rank)
   const expr = r <= 2 ? 'laugh' : r <= 4 ? 'smile' : 'think'
   const partnerKey = state.partner ? charaKey(state, state.partner.name) : undefined
-  const [hero, partner] = await Promise.all([loadImage(portrait(heroKey(state.player.gender), expr)), loadImage(portrait(partnerKey, 'smile'))])
+  const [hero, partner] = await Promise.all([loadImage(portrait(heroKey(state.player.gender, state.player.background), expr)), loadImage(portrait(partnerKey, 'smile'))])
 
   const canvas = document.createElement('canvas')
   canvas.width = W

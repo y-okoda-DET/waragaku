@@ -9,6 +9,7 @@ import { STORIES } from './events'
 import { flavor } from './data/flavor'
 import { LUCKY, LUCKY_CHANCE } from './data/lucky'
 import { RIVAL_SCHEDULE, rivalOf } from './rivalEvents'
+import { careerEvents } from './careers'
 import { Rng } from './rng'
 import { STAGES, performStage } from './stage'
 import type { ShowcaseGrade } from './showcase'
@@ -21,8 +22,9 @@ export interface NewGameInput {
   role: Role
   style: Style
   seed?: number
-  // ここから下は固定（高校卒業・東京の実家住まい・性別ごとの見た目）。テストと練習モードだけが変える
+  // 経歴（careers.ts）。卒業するたびに選べる経歴が増える
   background?: string
+  // ここから下は固定（東京の実家住まい・性別ごとの見た目）。テストだけが変える
   origin?: Origin
   hairColor?: string
   outfit?: string
@@ -93,8 +95,8 @@ export function createGame(raw: NewGameInput): GameState {
     gradRank: null,
     phase: 'event',
   }
-  // 4人に1人くらい、高校のお笑い大会で賞をとってから入ってくる（乱数の流れを変えないよう、種から別に決める）
-  if (new Rng((s.rng ^ 0x9e3779b9) >>> 0).chance(0.25)) {
+  // 高校卒業なら、4人に1人くらい、高校のお笑い大会で賞をとってから入ってくる（乱数の流れを変えないよう、種から別に決める）
+  if (input.background === 'fresh' && new Rng((s.rng ^ 0x9e3779b9) >>> 0).chance(0.25)) {
     s.skills.push('koukou_sho')
     s.stats.guts += 6
     s.stats.idea += 4
@@ -388,6 +390,8 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   if (month === 12 && week === 3) story(s, 'tozai_select')
   if (month === 1 && week === 2) story(s, 'audition')
   if (month === 2 && week === 2) story(s, 'grad_intro')
+  // その経歴だけの出来事（careers.ts）
+  for (const key of careerEvents(s, month, week)) story(s, key)
 
   // 発展イベントかランダムイベント（週に1つまで）。発展イベントが起きられるなら、そちらを優先しやすい
   const bonded = s.pending.length === 0 && rng.chance(0.7) && scheduleBondEvent(s, rng)

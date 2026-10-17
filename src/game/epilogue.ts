@@ -1,5 +1,6 @@
 import { SKILL_BY_ID } from './data/skills'
 import { rivalOf } from './rivalEvents'
+import { epilogueTail } from './careers'
 import { has } from './core'
 import { buildReview, type Review } from './review'
 import { Rng } from './rng'
@@ -165,9 +166,9 @@ export function buildEpilogue(s: GameState): ResultSummary {
   months.push({
     label: '3月',
     text:
-      s.money < 30000
+      (s.money < 30000
         ? '次の期が卒業して、初めて後輩ができた。奢る側に回った。財布が空になった。'
-        : '次の期が卒業して、初めて後輩ができた。「ごちそうさまです」と言われる側になった。',
+        : '次の期が卒業して、初めて後輩ができた。「ごちそうさまです」と言われる側になった。') + epilogueTail(s),
   })
 
   const route = so
