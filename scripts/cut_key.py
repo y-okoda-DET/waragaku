@@ -12,9 +12,11 @@ from scipy import ndimage
 
 EXPR = ['normal', 'smile', 'laugh', 'surprise', 'down', 'angry', 'think', 'shy']
 SIDE = [('normal',), ('smile', 'laugh'), ('surprise',)]
+# 服に紫が入っていて、マゼンタのにじみ取りを弱める人
+PURPLE = {'rival1'}
 
 
-def key(rgb):
+def key(rgb, purple=False):
     # マゼンタらしさ（赤と青の小さいほう − 緑）から透明度を決め、縁に混ざったマゼンタを差し引く
     c = rgb.astype(np.float32)
     k = np.median(c[np.minimum(c[..., 0], c[..., 2]) - c[..., 1] > 200], axis=0)
@@ -39,10 +41,12 @@ def key(rgb):
         near = c[idx[0], idx[1]]
         fg[edge] = near[edge]
     # 縁から10pxまでは、緑より赤と青が強い分（マゼンタのにじみ）を差し引く。肌や舌は緑の方が強いので変わらない
-    band = ndimage.binary_dilation(a < 0.95, iterations=10)
+    # 紫の服の人（purple）は、服の紫まで消さないよう縁の2pxだけにする
+    band = ndimage.binary_dilation(a < 0.95, iterations=2 if purple else 10)
     # 髪のすき間などに残った、赤と青がほぼ同じでマゼンタそのものに近い色は、縁から遠くても差し引く
     magentaish = (np.abs(fg[..., 0] - fg[..., 2]) < 30) & (np.minimum(fg[..., 0], fg[..., 2]) - fg[..., 1] > 60)
-    band |= magentaish
+    if not purple:
+        band |= magentaish
     spill = np.clip(np.minimum(fg[..., 0], fg[..., 2]) - fg[..., 1], 0, None) * band
     fg[..., 0] -= spill
     fg[..., 2] -= spill
@@ -92,7 +96,7 @@ def main():
         ch = os.path.basename(path)[3:-len('_sheet.png')]
         if only and ch not in only:
             continue
-        rgba = key(np.array(Image.open(path).convert('RGB')))
+        rgba = key(np.array(Image.open(path).convert('RGB')), ch in PURPLE)
         H, W = rgba.shape[:2]
         clear = rgba[..., 3] == 0
         rows = clear.mean(1)
@@ -116,7 +120,7 @@ def main():
             continue
         for old in glob.glob(f'{out}/{ch}_*.webp'):
             os.remove(old)
-        finish(key(np.array(Image.open(path).convert('RGB')))).save(f'{out}/{ch}_normal.webp', quality=82, method=6)
+        finish(key(np.array(Image.open(path).convert('RGB')), ch in PURPLE)).save(f'{out}/{ch}_normal.webp', quality=82, method=6)
         print(ch, 'stand')
 
 
