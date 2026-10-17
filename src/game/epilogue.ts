@@ -18,8 +18,8 @@ export interface ResultSummary {
 // 遊び方で評価が分かれるように置く（scripts/balance.ts の q で分位を見る）。
 // なんとなく遊ぶとE〜G、ふつうに遊ぶとD〜E、半分くらい考えて遊ぶとB〜C、考えて遊ぶとA〜B、見せ場もよく決めるとA。Sはその中の一握り
 export const RANKS: [number, string][] = [
-  [675, 'S'],
-  [635, 'A'],
+  [700, 'S'],
+  [650, 'A'],
   [595, 'B'],
   [545, 'C'],
   [495, 'D'],
