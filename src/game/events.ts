@@ -87,6 +87,7 @@ export const STORIES: Record<string, StoryDef> = {
           'ナレーション：自己紹介カードには「ボケ希望かツッコミ希望か」「ネタを書きたいか、書いてほしいか」。',
           '灰原（笑い）「この人と組んでみたい人、手ぇ挙げて！ 挙げへんかったら、ずっとひとりやで！」',
           ...ids.map((i) => `ナレーション：${PARTNER_CANDIDATES[i].name}。${PARTNER_CANDIDATES[i].blurb}`),
+          `ナレーション：${ids.map((i) => PARTNER_CANDIDATES[i].name).join('、')}。誰に手を挙げるか。`,
         ],
         choices: ids.map((i) => ({ reply: '灰原（笑い）「おっ、手ぇ挙がった！ あとは向こうが挙げるかどうかや」', label: `${PARTNER_CANDIDATES[i].name}に手を挙げる` })),
       }

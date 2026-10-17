@@ -345,8 +345,13 @@ p {
   font-size: 32px;
   line-height: 1;
 }
-.money {
+.week-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 6px;
+}
+.money {
   border: var(--stroke) solid var(--line);
   border-radius: 999px;
   background: var(--card);
@@ -1064,9 +1069,6 @@ p {
   background: var(--card);
   color: var(--ink);
 }
-.practice .tabs {
-  margin: 4px 0 8px;
-}
 .sc-read {
   display: flex;
   flex-direction: column;
@@ -1459,7 +1461,26 @@ p {
 }
 
 /* 会話：ログ */
+.adv-top-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.adv-top-left .studio-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.adv-date {
+  flex-shrink: 0;
+}
+.adv-log-btn.on {
+  background: var(--sun);
+}
 .adv-top-right {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1580,6 +1601,17 @@ p {
   padding-top: 8px;
   padding-bottom: 8px;
 }
+.input-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.input-card .chips {
+  gap: 8px;
+}
+.input-card .input-label {
+  margin: 0;
+}
 .input-label {
   font-weight: 900;
   font-size: 13px;
@@ -1595,7 +1627,7 @@ p {
   background: #141414;
   display: grid;
   place-items: center;
-  animation: curtain 1.7s ease forwards;
+  animation: curtain 2.3s ease forwards;
   cursor: pointer;
 }
 .week-card {
@@ -1607,7 +1639,7 @@ p {
   text-align: center;
   padding: 26px 12px 18px;
   transform-origin: top center;
-  animation: card-flip 1.5s 0.15s ease both;
+  animation: card-flip 2.1s 0.15s ease both;
   overflow: hidden;
 }
 .week-card::before {

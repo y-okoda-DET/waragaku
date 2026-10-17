@@ -41,10 +41,10 @@ const PARTNER_STAY: Record<string, string> = {
 
 // 面談で答えたあとの辻堂の返し
 const MENDAN_REPLY: Record<Kodawari, string[]> = {
-  jisaku: ['辻堂（ふつう）「ほな、毎週書いてこい。書いてこんかったら、その日からお前は“言うてただけの人”や」'],
-  aikata: ['辻堂（ふつう）「相方は？」', 'ナレーション：「外で待ってます」と答えた。', '辻堂（怒り）「呼んでこい言うてへん。面談は1人ずつや」'],
+  sainou: ['辻堂（ふつう）「試すんやったら、毎週書いてこい。書いてこんかったら、その日からお前は“言うてただけの人”や」'],
+  kane: ['辻堂（ふつう）「正直でええ」', '辻堂（笑い）「ほな、売れるまでの1年は金ないで。覚悟しとけ」'],
   kyaku: ['辻堂（ふつう）「審査員も客やぞ」', '辻堂（笑い）「顔、納得してへんな。それでええ」'],
-  nokoru: ['辻堂（考え中）「入学1か月で言うことちゃうな」', 'ナレーション：辻堂が、ほんの少しだけ笑った。'],
+  nantonaku: ['辻堂（考え中）「……なんとなく、か」', 'ナレーション：辻堂が、ほんの少しだけ笑った。', '辻堂（ふつう）「なんとなくで1年残ったら、それはもう理由や」'],
 }
 
 export const YEAR_STORIES: Record<string, StoryDef> = {
@@ -116,10 +116,10 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         'ナレーション：ここで言ったことは、たぶん1年間ついて回る。',
         `${me(s)}（考え中）「……」`,
       ],
-      choices: KODAWARI_KEYS.map((k) => ({ label: KODAWARI[k].answer, hint: 'これが譲れないものになる', reply: MENDAN_REPLY[k] })),
+      choices: KODAWARI_KEYS.map((k) => ({ label: KODAWARI[k].answer, reply: MENDAN_REPLY[k] })),
     }),
     resolve: (s, c) => {
-      s.kodawari = KODAWARI_KEYS[c] ?? 'nokoru'
+      s.kodawari = KODAWARI_KEYS[c] ?? 'nantonaku'
       tie(s, 'tsujido', 3)
     },
   },
@@ -405,10 +405,10 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
   // 選択肢は どれも「0＝曲げる／1＝守る」の並び（kodawari.ts の HOOKS.shiren）
   shiren: {
     view: (s) => {
-      const k = s.kodawari ?? 'nokoru'
+      const k = s.kodawari ?? 'nantonaku'
       const m = me(s)
       const v = {
-        jisaku: {
+        sainou: {
           title: '譲られたネタ',
           place: 'gakuya',
           lines: [
@@ -421,21 +421,6 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
           choices: [
             { reply: '大河内（笑い）「おう。スベったら俺のせいにしてええ。ウケたら自分の手柄にせえ」', label: 'ありがたく使わせてもらう', hint: 'ネタの完成度＋＋' },
             { reply: '大河内（笑い）「……生意気やな。俺も18年前、同じこと言うたわ」', label: '「自分で書いたやつで、勝ちたいです」', hint: '発想力＋' },
-          ],
-        },
-        aikata: {
-          title: 'ピンの枠',
-          place: 'jimusho',
-          lines: [
-            'ナレーション：事務所の小さな会議室。社員がスマホを見ながら言った。',
-            '社員（笑い）「来月の事務所ライブ、ピンの枠が1つ空いてるんです。あなたひとりで、どうです？」',
-            '社員（ふつう）「相方さんには、言わなくてもいいと思いますよ。1回だけですし」',
-            `${m}（考え中）「……」`,
-            ...recall(s),
-          ],
-          choices: [
-            { reply: '社員（笑い）「助かります。じゃあ、ネタ時間は3分で」', label: '「1回だけなら」と受ける', hint: '社員の評価＋・ファン＋' },
-            { reply: '社員（ふつう）「……分かりました。コンビの枠、空いたら声かけます」', label: '「2人で出られる枠、待ちます」', hint: '関係値＋' },
           ],
         },
         kyaku: {
@@ -453,14 +438,14 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
             { reply: 'ナレーション：構成作家は少し笑って、「じゃあ、後ろの客を見とくよ」と言った。', label: '客席の一番後ろが笑う方を取る', hint: 'ファン＋・表現力＋' },
           ],
         },
-        nokoru: {
+        kane: {
           title: '正社員の話',
           place: 'baito',
           lines: [
             'ナレーション：バイトの閉店後。店長が、珍しくまじめな顔で座った。',
             '店長（ふつう）「4月から、正社員にならへんか。給料も上がる。まかないは食べ放題や」',
             '店長（笑い）「ライブの日は……まあ、月1回くらいなら休んでええ」',
-            'ナレーション：同じ週、実家から「もう帰ってきたら」と電話があった。',
+            'ナレーション：通帳の残高を思い出した。正社員の給料なら、来年は家賃の心配をしなくていい。',
             ...recall(s),
           ],
           choices: [
@@ -468,24 +453,29 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
             { reply: '店長（爆笑）「言うたな！ ほな売れるまで、まかないはおかわり1回までや」', label: '「まかない食べ放題は、売れてからにします」', hint: 'やる気＋' },
           ],
         },
+        nantonaku: {
+          title: '辞める同期',
+          place: 'izakaya',
+          lines: [
+            'ナレーション：同期の飲み会の帰り。来月で辞めるという同期が、駅まで並んで歩いた。',
+            'ナレーション：「なあ、一緒に辞めへん？ 叔父さんの会社、もう1人ぐらいなら入れるって」',
+            'ナレーション：「面談で“なんとなく”って言うてたやん。俺もなんとなくで入って、なんとなく辞めるねん」',
+            `${m}（考え中）「……」`,
+            ...recall(s),
+          ],
+          choices: [
+            { reply: 'ナレーション：「ほな、連絡して」。同期は改札の向こうで手を振った。', label: '「……ちょっと考える」', hint: 'お金＋' },
+            { reply: 'ナレーション：同期は笑った。「なんやそれ。……ほな、売れたら自慢させてな」', label: '「なんとなく、まだ辞めへん」', hint: 'やる気＋' },
+          ],
+        },
       }[k]
       return { ...v, choices: v.choices }
     },
     resolve: (s, c) => {
-      const k = s.kodawari ?? 'nokoru'
-      if (k === 'jisaku') {
+      const k = s.kodawari ?? 'nantonaku'
+      if (k === 'sainou') {
         if (c === 0) s.neta.polish = clamp(s.neta.polish + 12)
         else gain(s, 'idea', 4)
-      } else if (k === 'aikata') {
-        if (c === 0) {
-          s.staffEval = clamp(s.staffEval + 10)
-          s.fans += 5
-          if (s.partner) s.partner.bond = clamp(s.partner.bond - 8)
-          s.weekLog.push('ピンの5分は、そこそこウケた。帰りの電車で、相方からのLINEに既読をつけられなかった。')
-        } else {
-          if (s.partner) s.partner.bond = clamp(s.partner.bond + 10)
-          s.weekLog.push('翌月、コンビの枠が空いた。社員は「お待たせしました」と笑ったが、目は笑っていなかった。')
-        }
       } else if (k === 'kyaku') {
         if (c === 0) {
           s.teacherEval = clamp(s.teacherEval + 6)
@@ -498,7 +488,7 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
         s.money += 20000
       } else {
         s.motivation = clamp(s.motivation + 10)
-        tie(s, 'tencho', 4)
+        if (k === 'kane') tie(s, 'tencho', 4)
       }
     },
   },

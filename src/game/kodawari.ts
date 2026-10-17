@@ -5,34 +5,30 @@ import type { GameState, Kodawari } from './types'
 // 守る選択をすると、やる気が上がる。曲げると下がる。卒業時に講師の寸評で触れられる
 
 export const KODAWARI: Record<Kodawari, { label: string; answer: string }> = {
-  jisaku: { label: '自分で書いたネタで笑わせる', answer: '「自分で書いたネタで、笑わせたいからです」' },
-  aikata: { label: '相方と2人で売れる', answer: '「相方と2人で、売れたいからです」' },
+  sainou: { label: '自分の才能を試す', answer: '「自分の才能を、試したいからです」' },
+  kane: { label: '売れて金持ちになる', answer: '「売れて、金持ちになりたいからです」' },
   kyaku: { label: '目の前のお客さんを笑わせる', answer: '「目の前のお客さんを、笑わせたいからです」' },
-  nokoru: { label: '最後まで残る', answer: '「……最後まで、残りたいからです」' },
+  nantonaku: { label: 'なんとなく', answer: '「……なんとなくです」' },
 }
 
-export const KODAWARI_KEYS: Kodawari[] = ['jisaku', 'aikata', 'kyaku', 'nokoru']
+export const KODAWARI_KEYS: Kodawari[] = ['sainou', 'kane', 'kyaku', 'nantonaku']
 
 // どのイベントの何番目の選択肢が、譲れないものを守る／曲げるか
 type Hook = Partial<Record<Kodawari, { keep?: number[]; bend?: number[] }>>
 const HOOKS: Record<string, Hook> = {
-  shiren: { jisaku: { keep: [1], bend: [0] }, aikata: { keep: [1], bend: [0] }, kyaku: { keep: [1], bend: [0] }, nokoru: { keep: [1], bend: [0] } },
-  jiko: { kyaku: { keep: [0, 1, 3], bend: [2] }, aikata: { keep: [0], bend: [3] } },
-  jiko_yoru: { aikata: { keep: [0], bend: [1] } },
-  ketsudan: { aikata: { keep: [0], bend: [1, 2] } },
-  kougyou: { jisaku: { keep: [2], bend: [1] }, kyaku: { keep: [1] } },
+  shiren: { sainou: { keep: [1], bend: [0] }, kane: { keep: [1], bend: [0] }, kyaku: { keep: [1], bend: [0] }, nantonaku: { keep: [1], bend: [0] } },
+  jiko: { kyaku: { keep: [0, 1, 3], bend: [2] } },
+  kougyou: { sainou: { keep: [2], bend: [1] }, kyaku: { keep: [1] } },
   gakuensai: { kyaku: { keep: [1] } },
   natsu_jugyo: { kyaku: { keep: [0] } },
-  dev_dojima_2: { jisaku: { bend: [1] } },
-  dev_mido_2: { jisaku: { bend: [1] } },
-  shinneta: { jisaku: { keep: [0] } },
-  late_partner: { aikata: { keep: [0] } },
-  naitei: { aikata: { keep: [0], bend: [1] } },
-  kaisan: { aikata: { keep: [0], bend: [1] }, nokoru: { keep: [0] } },
-  chokueigyou: { nokoru: { keep: [1], bend: [0] }, kyaku: { bend: [0] } },
+  dev_dojima_2: { sainou: { bend: [1] } },
+  dev_mido_2: { sainou: { bend: [1] } },
+  shinneta: { sainou: { keep: [0] } },
+  kaisan: { nantonaku: { keep: [0] } },
+  chokueigyou: { nantonaku: { keep: [1], bend: [0] }, kane: { bend: [0] }, kyaku: { bend: [0] } },
   debt: {},
-  ikitteta: { nokoru: { keep: [1] } },
-  tokushin: { nokoru: { keep: [0] } },
+  ikitteta: { nantonaku: { keep: [1] } },
+  tokushin: { nantonaku: { keep: [0] } },
 }
 
 export function kodawariOf(s: GameState, key: string, choice: number): 'keep' | 'bend' | undefined {

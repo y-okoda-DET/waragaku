@@ -132,14 +132,13 @@ export function buildEpilogue(s: GameState): ResultSummary {
   })
   if (s.kodawari) {
     const kept = (s.counters.kodawari_keep ?? 0) >= (s.counters.kodawari_bend ?? 0)
-    const p = s.partner?.name
     months.push({
       label: '2月',
       text: {
-        jisaku: kept ? 'ネタ帳は、この1年で3冊増えた。全部、自分の字だ。' : '人にもらったネタで、劇場の出番を1回増やした。ウケた。少しだけ、悔しかった。',
-        aikata: p ? (kept ? `${p}とは、まだ同じファミレスの同じ席でネタを合わせている。` : `${p}とは、劇場の楽屋でしか話さなくなった。ネタ合わせは、LINEの通話になった。`) : '「相方と2人で」と言った面談を、ときどき思い出す。今は、ひとりで舞台に立っている。',
+        sainou: kept ? 'ネタ帳は、この1年で3冊増えた。全部、自分の字だ。' : '人にもらったネタで、劇場の出番を1回増やした。ウケた。少しだけ、悔しかった。',
+        kane: kept ? 'バイトは週3のまま。舞台のギャラは、まだ交通費で消える。それでも、正社員の話は断った。' : 'バイトのシフトが週5になった。舞台の日より、厨房の日の方が多い。',
         kyaku: kept ? '劇場の出待ちが、2人になった。2人とも、名前を覚えてくれていた。' : '審査員ウケのネタで、予選をひとつ上がった。客席の後ろの方は、静かだった。',
-        nokoru: kept ? '同期は、また何人か辞めた。それでも、まだ残っている。' : 'バイトのシフトが週5になった。舞台の日より、厨房の日の方が多い。',
+        nantonaku: kept ? '同期は、また何人か辞めた。理由は今も「なんとなく」のまま。それでも、まだ残っている。' : '辞めた同期の送別会で、自分も辞めると言いかけた。言わなかったが、言いかけたことは覚えている。',
       }[s.kodawari],
     })
   }
@@ -171,8 +170,7 @@ export function buildEpilogue(s: GameState): ResultSummary {
     `【ワラガク！卒業】${s.player.name}${s.comboName ? `（${s.comboName}）` : ''}`,
     `称号：${review.title}`,
     `総合${rank}｜${review.gradeLine}`,
-    ...(review.kodawari ? [`譲れないもの：${review.kodawari}`] : []),
-    `卒業式の隣：${review.neighbor}｜同期300人→${s.classmates}人`,
+    `同期300人→${s.classmates}人`,
     `講師の寸評「${review.oneLine}」`,
     `芸人1年目：${route}`,
     '#ワラガク',

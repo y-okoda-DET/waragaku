@@ -3,6 +3,7 @@ import { TOTAL_TURNS, weekLabel } from '../game/data/calendar'
 import type { DayAction, NightAction } from '../game/engine'
 import { STAT_KEYS, STAT_LABEL, type GameState, type StatKey } from '../game/types'
 import { SKILL_BY_ID } from '../game/data/skills'
+import { LogPanel } from './Adv'
 import { NetaPanel } from './NetaPanel'
 import { Bar, Modal, PlayerAvatar, SkillBadge } from './parts'
 
@@ -13,10 +14,10 @@ const DAY_OPTIONS: { key: DayKey; label: string; hint: string }[] = [
   { key: 'neta', label: 'ネタ作り', hint: '発想力＋／新しいネタの種' },
   { key: 'awase', label: 'ネタ合わせ', hint: '完成度＋' },
   { key: 'jishuren', label: '自主練', hint: '何をやるかはその日しだい' },
-  { key: 'baito', label: 'バイト', hint: 'お金＋・体調−' },
-  { key: 'jishulive', label: '自主ライブに出る', hint: '−2,000円／度胸・対応力＋' },
-  { key: 'kangeki', label: 'ライブを観に行く', hint: '−1,500円／発想力・やる気＋' },
   { key: 'tetsudai', label: '先輩ライブの手伝い', hint: '先輩の認め・度胸＋' },
+  { key: 'jishulive', label: '自主ライブに出る', hint: '−2,000円／度胸・対応力＋' },
+  { key: 'kangeki', label: 'ライブを観に行く', hint: '−1,500円／発想力＋' },
+  { key: 'baito', label: 'バイト', hint: 'お金＋・体調−' },
   { key: 'rest', label: '休む', hint: '体調・やる気＋' },
 ]
 
@@ -33,7 +34,8 @@ type Sheet = 'neta' | 'people' | 'skills' | null
 
 type Props = {
   state: GameState
-  onRun: (d: DayAction, n: NightAction) => void
+  // label は会話画面の左上に出す、選んだ予定の名前
+  onRun: (d: DayAction, n: NightAction, label: string) => void
   onNeta: (s: GameState) => void
   // 週が変わって初めて開いたとき：暗転して日付カードをめくり、上がった能力を光らせる
   intro?: boolean
@@ -46,7 +48,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
   const [curtain, setCurtain] = useState(first.intro)
   useEffect(() => {
     if (!curtain) return
-    const t = setTimeout(() => setCurtain(false), 1700)
+    const t = setTimeout(() => setCurtain(false), 2300)
     return () => clearTimeout(t)
   }, [curtain])
   const need = weeklyNeed(state)
@@ -56,6 +58,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
   const [night, setNight] = useState<string>('sleep')
   const [tab, setTab] = useState<'day' | 'night'>('day')
   const [sheet, setSheet] = useState<Sheet>(null)
+  const [log, setLog] = useState(false)
 
   const p = state.player
   const dayLocked = (k: DayKey) => (mustWork && k !== 'baito' ? '生活費が足りない' : (DAY_COST[k] ?? 0) > state.money ? 'お金が足りない' : '')
@@ -93,7 +96,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
   const dayTag = (k: DayKey) => (k === 'awase' && state.partner ? `${state.partner.name}と！` : k === 'rest' && restLeft === 1 ? 'あと1回で出席不足' : '')
   // 選んでいるものをもう一度タップしたら、次へ進む
   const pickDay = (k: DayKey) => (k === curDay ? setTab('night') : setDay(k))
-  const pickNight = (k: string) => (k === curNight ? onRun(buildDay(), buildNight()) : setNight(k))
+  const pickNight = (k: string) => (k === curNight ? onRun(buildDay(), buildNight(), `${dayLabel}／${nightLabel}`) : setNight(k))
 
   return (
     <div className={`screen week ${first.intro ? 'week-enter' : ''} ${curtain ? 'behind' : ''}`}>
@@ -116,7 +119,12 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
             同期 {state.classmates}人{state.classRank !== 'none' && ` ／ ${CLASS_LABEL[state.classRank]}`}
           </div>
         </div>
-        <div className={`money ${state.money < 20000 ? 'low' : ''}`}>¥{state.money.toLocaleString()}</div>
+        <div className="week-head-right">
+          <button className="adv-log-btn" onClick={() => setLog(true)}>
+            ログ
+          </button>
+          <div className={`money ${state.money < 20000 ? 'low' : ''}`}>¥{state.money.toLocaleString()}</div>
+        </div>
       </header>
 
       <section className="card me">
@@ -126,7 +134,6 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
         <div className="me-body">
           <div className="me-name">
             {p.callName}
-            {state.comboName && <span className="combo">{state.comboName}</span>}
           </div>
           <Bar label="体調" value={state.condition} tone={state.condition < 30 ? 'warn' : undefined} />
           <Bar label="やる気" value={state.motivation} tone={state.motivation < 30 ? 'warn' : 'good'} />
@@ -199,7 +206,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
           <span className="go-sub">昼：{dayLabel} → 次は夜の予定</span>
         </button>
       ) : (
-        <button className="primary big sticky" onClick={() => onRun(buildDay(), buildNight())}>
+        <button className="primary big sticky" onClick={() => onRun(buildDay(), buildNight(), `${dayLabel}／${nightLabel}`)}>
           これでいく！
           <span className="go-sub">
             昼：{dayLabel} ／ 夜：{nightLabel}
@@ -207,6 +214,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
         </button>
       )}
 
+      {log && <LogPanel onClose={() => setLog(false)} />}
       {sheet === 'neta' && (
         <Modal title="ネタ帳" onNext={() => setSheet(null)} nextLabel="閉じる">
           <NetaPanel state={state} editable onChange={onNeta} />

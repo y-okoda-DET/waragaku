@@ -5,7 +5,6 @@ import { CreateScreen } from './ui/CreateScreen'
 import { StageIntro, StageResultView, StoryScreen } from './ui/EventScreens'
 import { AdvScreen } from './ui/Adv'
 import { ResultScreen } from './ui/ResultScreen'
-import { PracticeScreen } from './ui/PracticeScreen'
 import { ShowcaseScreen } from './ui/ShowcaseScreen'
 import { pickScenes, type Scene } from './game/showcase'
 import { WeekScreen } from './ui/WeekScreen'
@@ -15,7 +14,6 @@ type Popup = { title: string; lines: string[]; dayLines?: number } | null
 export default function App() {
   const [game, setGame] = useState<GameState | null>(null)
   const [creating, setCreating] = useState(false)
-  const [practice, setPractice] = useState(false)
   const [popup, setPopup] = useState<Popup>(null)
   const [stageShown, setStageShown] = useState(false)
   const [scenes, setScenes] = useState<Scene[] | null>(null)
@@ -37,8 +35,8 @@ export default function App() {
   }, [game?.turn, game?.pending.length, game?.phase])
 
   // エンジンの処理結果を反映し、ログがあればポップアップで見せる
-  const apply = (next: GameState, title: string) => {
-    if (next.weekLog.length) setPopup({ title, lines: next.weekLog, dayLines: title === '今週のできごと' ? next.dayLines : undefined })
+  const apply = (next: GameState, title: string, week = false) => {
+    if (next.weekLog.length) setPopup({ title, lines: next.weekLog, dayLines: week ? next.dayLines : undefined })
     if (!next.pending.length && next.phase === 'event' && !next.weekLog.length) {
       const after = endEvents(next)
       setGame(after)
@@ -58,7 +56,6 @@ export default function App() {
   }
 
   if (!game) {
-    if (practice) return <PracticeScreen onBack={() => setPractice(false)} />
     if (creating)
       return (
         <CreateScreen
@@ -78,7 +75,15 @@ export default function App() {
           ワラガク<span className="bang">！</span>
           <small>とあるお笑い養成所の一年</small>
         </h1>
-        <p className="title-lead">入学から卒業までの1年。同期は300人。卒業するころには、両隣はいなくなっている。</p>
+        <p className="title-lead">
+          入学から卒業までの1年。
+          <br />
+          同期は300人。
+          <br />
+          卒業するころには、
+          <br />
+          両隣はいなくなっている。
+        </p>
         <button className="primary big" onClick={() => setCreating(true)}>
           入学する
         </button>
@@ -87,9 +92,6 @@ export default function App() {
             続きから（{saved.player.callName}）
           </button>
         )}
-        <button className="big" onClick={() => setPractice(true)}>
-          ミニゲームだけ遊ぶ
-        </button>
         <p className="small center">登場する養成所・事務所・劇場・大会・人物はすべて架空です。</p>
       </div>
     )
@@ -137,7 +139,7 @@ export default function App() {
         intro={fresh}
         gains={gains}
         onNeta={setGame}
-        onRun={(d, n) => apply(runWeek(game, d, n), '今週のできごと')}
+        onRun={(d, n, label) => apply(runWeek(game, d, n), label, true)}
       />
     )
   }

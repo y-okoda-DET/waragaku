@@ -58,7 +58,7 @@ export function createGame(raw: NewGameInput): GameState {
   const bg = BACKGROUND_BY_ID[input.background]
   const base: Stats = { idea: 15, word: 15, expr: 15, guts: 15, adlib: 15, stamina: 15, ...bg.stats }
   const s: GameState = {
-    version: 2,
+    version: 3,
     rng: (input.seed ?? Math.floor(Math.random() * 2 ** 31)) >>> 0,
     player: { name: input.name, callName: input.callName, gender, background: input.background, origin: input.origin, role: input.role, style: input.style, hairColor: input.hairColor, outfit: input.outfit },
     stats: base,
@@ -161,18 +161,22 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
       if (kind === 'radio') {
         gain(s, 'word', 3)
         log.push(flavor('jishuren_radio', rng))
+        log.push('言葉を削る力、ワード力が少し鍛えられた気がする。')
       } else if (kind === 'hassei') {
         gain(s, 'expr', 3)
         count(s, 'hassei')
         tie(s, 'miyake', 3)
         tie(s, 'kishibe', 2)
         log.push(flavor('jishuren_hassei', rng))
+        log.push('声が前に出るようになって、表現力が上がった気がする。')
       } else if (kind === 'kintore') {
         gain(s, 'stamina', 3)
         log.push(flavor('jishuren_kintore', rng))
+        log.push('体が軽い。体力が付いてきた気がする。')
       } else {
         gain(s, 'adlib', 3)
         log.push(flavor('jishuren_dance', rng))
+        log.push('体が勝手に動くようになって、対応力が上がった気がする。')
       }
       break
     }
@@ -393,7 +397,8 @@ function lucky(s: GameState, key: string, rng: Rng): void {
   if (!list || !rng.chance(LUCKY_CHANCE)) return
   const l = rng.pick(list)
   gain(s, l.stat, l.amount)
-  s.weekLog.push(`${l.line}（${STAT_LABEL[l.stat]}＋${l.amount}）`)
+  s.weekLog.push(l.line)
+  s.weekLog.push(`${STAT_LABEL[l.stat]}が${l.amount >= 3 ? 'ぐっと' : '少し'}上がった気がする。`)
 }
 
 export function runWeek(prev: GameState, day: DayAction, night: NightAction): GameState {
@@ -655,7 +660,7 @@ export function load(): GameState | null {
     const raw = localStorage.getItem(SAVE_KEY)
     if (!raw) return null
     const s = JSON.parse(raw) as GameState
-    return s.version === 2 ? s : null
+    return s.version === 3 ? s : null
   } catch {
     return null
   }

@@ -41,14 +41,14 @@ describe('1年間の流れ', () => {
       expect(seen).toContain(key)
   })
 
-  it('面談で譲れないものが決まり、山場で守ると寸評とシェア文に出る', () => {
-    // 面談で「相方と2人で売れる」（2番目）を選ぶ。ほかは最初の選択肢
-    const { s, seen } = play(5, (key) => (key === 'mendan' ? 1 : 0))
-    expect(s.kodawari).toBe('aikata')
+  it('面談で譲れないものが決まり、山場で守ると寸評に出る', () => {
+    // 面談で「売れて、金持ちになりたい」（2番目）を選び、12月の試練では守る方（2番目）を選ぶ。ほかは最初の選択肢
+    const { s, seen } = play(5, (key) => (key === 'mendan' || key === 'shiren' ? 1 : 0))
+    expect(s.kodawari).toBe('kane')
     expect(s.counters.kodawari_keep ?? 0).toBeGreaterThan(0)
     expect(seen.filter((k) => k === 'aikata_scene').length).toBe(3)
     const r = buildReview(s, 'B')
-    expect(r.comment).toContain('相方と2人で売れる')
+    expect(r.comment).toContain('売れて金持ちになる')
     expect(r.kodawari).toContain('守り通した')
   })
 

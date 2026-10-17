@@ -9,6 +9,21 @@ import { heroKey, portrait } from './art'
 // 主人公は「高校卒業・東京生まれで実家から通う」で固定。選ぶのは名前・性別・担当・やりたいネタだけ
 const FRESH = BACKGROUND_BY_ID['fresh']
 
+// おまかせで使う名前。下の名前は、読んで性別を取り違えないものだけにする
+const SURNAMES: string[] = [
+  '山田', '戸田', '小野寺', '黒川', '佐々木', '森', '高橋', '松本',
+  '井上', '石川', '中村', '藤田', '岡本', '坂口', '今井', '野口',
+  '横山', '西村', '原田', '大野', '菅原', '平野', '宮本', '金子',
+]
+const MALE_NAMES: string[] = [
+  '一平', '健太', '大輔', '翔太', '拓也', '雄一', '浩二', '大樹',
+  '亮介', '剛', '俊介', '正人', '達也', '勇気', '慎吾', '康平',
+]
+const FEMALE_NAMES: string[] = [
+  'しずく', 'あかり', '美咲', '彩花', '由美', '恵子', 'さくら', '奈々',
+  '真由', '千尋', '優子', '麻衣', '理沙', '陽子', '香織', '桃子',
+]
+
 export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInput) => void; onBack: () => void }) {
   const [name, setName] = useState('')
   const [callName, setCallName] = useState('')
@@ -21,10 +36,13 @@ export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInpu
   const randomize = () => {
     const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)]
     const g = pick(['male', 'female'] as Gender[])
-    const [n, c] = pick(g === 'male' ? [['山田 一平', 'ヤマちゃん'], ['戸田 健太', 'トダケン'], ['小野寺 陽', 'てらっち']] : [['黒川 しずく', 'しずく'], ['佐々木 まこと', 'ササキ'], ['森 あかり', 'モリ']])
+    const sei = pick(SURNAMES)
+    const mei = pick(g === 'male' ? MALE_NAMES : FEMALE_NAMES)
+    // 呼ばれ方は、下の名前・名字・名字＋ちゃんなどから選ぶ
+    const call = pick([mei, sei, `${sei}ちゃん`, g === 'male' ? `${sei}くん` : `${mei}ちゃん`])
     setGender(g)
-    setName(n)
-    setCallName(c)
+    setName(`${sei} ${mei}`)
+    setCallName(call)
     setRole(pick(['boke', 'tsukkomi'] as Role[]))
     setStyle(pick(['manzai', 'conte'] as Style[]))
   }

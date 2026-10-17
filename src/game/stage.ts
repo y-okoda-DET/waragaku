@@ -257,7 +257,7 @@ function summarize(state: GameState, spec: StageSpec, t: Tally, rank: number | n
   if (t.tobashi) parts.push(`ネタ飛ばし ${t.tobashi}回`)
   const head = rank && field ? `${spec.title}は ${field}組中 ${rank}位。` : `${spec.title}が終わった。`
   const tail = t.dokudan ? '最後は独壇場だった。' : ''
-  return `${head}${who}は ${parts.join('、')}。${tail}俺は 噛み ${t.kami}回 でした。`
+  return `${head}${who}は ${parts.join('、')}。${tail}${state.player.gender === 'female' ? '私' : '俺'}は 噛み ${t.kami}回 でした。`
 }
 
 export function performStage(state: GameState, kind: StageKind, rng: Rng, showcase: Grade[] = []): StageResult {

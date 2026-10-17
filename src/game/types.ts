@@ -16,7 +16,7 @@ export type Style = 'manzai' | 'conte'
 export type Origin = 'local' | 'tokyo'
 export type Gender = 'male' | 'female'
 // 主人公の譲れないもの（5月の面談で決まる）
-export type Kodawari = 'jisaku' | 'aikata' | 'kyaku' | 'nokoru'
+export type Kodawari = 'sainou' | 'kane' | 'kyaku' | 'nantonaku'
 export type ClassRank = 'none' | 'ume' | 'take' | 'matsu'
 export type CardSlot = 'tsukami' | 'tenkai' | 'ochi'
 
@@ -97,7 +97,7 @@ export type PendingEvent =
   | { type: 'stage'; kind: StageKind }
 
 export interface GameState {
-  version: 2
+  version: 3
   rng: number
   player: PlayerProfile
   stats: Stats

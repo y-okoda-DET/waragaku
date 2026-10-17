@@ -15,8 +15,11 @@ import { Avatar, PlayerAvatar } from './parts'
 // 1文字ずつ出す速さ。句読点では少し止まる。タップすると一気に全部出る
 const TYPE_MS = 48
 const PAUSE_MS: Record<string, number> = { '、': 140, '。': 260, '！': 220, '？': 220, '…': 120, '」': 120 }
+// スキップ中は2倍の速さで文字を出し、読み終えた行は自動で次へ送る（選択肢の前では止まる）。画面をまたいでも続く
+let skipping = false
+const AUTO_MS = 700
 
-function LogPanel({ onClose }: { onClose: () => void }) {
+export function LogPanel({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     ref.current?.scrollTo({ top: ref.current.scrollHeight })
@@ -92,12 +95,16 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
   const p = state.player
 
   const [log, setLog] = useState(false)
+  const [skip, setSkip] = useState(skipping)
+  // 最後の行を読み終えてから、もう一度タップして選択肢を出す
+  const [choices, setChoices] = useState(false)
+  const speed = skip ? 0.5 : 1
 
   useEffect(() => {
     if (!typing || log) return
-    const t = setTimeout(() => setShown((v) => v + 1), shown === 0 ? 160 : TYPE_MS + (PAUSE_MS[line[shown - 1]] ?? 0))
+    const t = setTimeout(() => setShown((v) => v + 1), (shown === 0 ? 160 : TYPE_MS + (PAUSE_MS[line[shown - 1]] ?? 0)) * speed)
     return () => clearTimeout(t)
-  }, [shown, typing, line, log])
+  }, [shown, typing, line, log, speed])
 
   // 表示した行をログに残す
   useEffect(() => {
@@ -109,10 +116,18 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
     if (!last) {
       setIndex(index + 1)
       setShown(0)
-    } else if (!after && onEnd) onEnd()
+    } else if (after) setChoices(true)
+    else if (onEnd) onEnd()
   }
 
-  const done = last && !typing
+  // スキップ中は、読み終えた行を少し待って自動で送る
+  useEffect(() => {
+    if (!skip || typing || log || (last && after)) return
+    const t = setTimeout(advance, AUTO_MS)
+    return () => clearTimeout(t)
+  })
+
+  const done = last && !typing && choices
   const talking = line.trimStart().startsWith('「')
   const focus = shot.speaker ?? (shot.cast.length === 1 ? shot.cast[0] : undefined)
   const exprFor = (n: string): Expr => (n !== focus ? 'normal' : n === cur?.speaker && cur.expr ? cur.expr : exprOf(line))
@@ -129,7 +144,10 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
           </>
         )}
         <div className="adv-top">
-          <span className="studio-title">{title}</span>
+          <span className="adv-top-left">
+            <span className="studio-title">{title}</span>
+            <span className="adv-date">{weekLabel(Math.min(state.turn, 41))}</span>
+          </span>
           <span className="adv-top-right">
             <button
               className="adv-log-btn"
@@ -140,7 +158,17 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
             >
               ログ
             </button>
-            <span className="adv-date">{weekLabel(Math.min(state.turn, 41))}</span>
+            <button
+              className={`adv-log-btn ${skip ? 'on' : ''}`}
+              aria-pressed={skip}
+              onClick={(e) => {
+                e.stopPropagation()
+                skipping = !skip
+                setSkip(!skip)
+              }}
+            >
+              {skip ? 'スキップ中' : 'スキップ'}
+            </button>
           </span>
         </div>
         <div className={`adv-cast ${focus && shot.cast.length > 1 ? 'has-focus' : ''}`}>
@@ -158,7 +186,7 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
             {line.slice(shown)}
           </span>
         </span>
-        {!typing && !(last && after) && <span className="adv-next" aria-hidden="true">▼</span>}
+        {!typing && !done && <span className="adv-next" aria-hidden="true">▼</span>}
       </button>
       {done && after && (
         <div className="adv-after" onClick={(e) => e.stopPropagation()}>

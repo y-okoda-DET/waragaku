@@ -27,7 +27,7 @@ export function StoryScreen({ state, eventKey, params, onChoose }: { state: Game
     return <AdvScreen key="reply" state={state} title={view.title} lines={[...said, ...reply]} place={view.place} onEnd={() => onChoose(picked)} />
   }
   const after = view.input ? (
-    <div className="card">
+    <div className="card input-card">
       <p className="input-label">自分で考える（候補から選んでもいい）</p>
       <input value={text} onChange={(e) => setText(e.target.value)} placeholder={view.input.placeholder} maxLength={14} />
       <div className="chips">
