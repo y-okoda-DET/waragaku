@@ -53,6 +53,15 @@ export const STAGES: Record<StageKind, StageSpec> = {
     big: false,
     intro: ['参加料は1人1,000円。売れっ子でも受付で払う。', 'ネタは2分。審査員は主に作家。結果は今夜、公式サイトに出る。'],
   },
+  gasshuku: {
+    kind: 'gasshuku',
+    title: '強化合宿 最終発表会',
+    venue: '合宿所の大広間',
+    audience: 'teacher',
+    difficulty: 58,
+    big: false,
+    intro: ['昨日、30秒で止められたネタ。', '一晩で直したものを、同じ講師の前でもう一度やる。同期全員が見ている。'],
+  },
   tozai: {
     kind: 'tozai',
     title: '東西寄席合戦',

@@ -368,6 +368,7 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   // 賞レースは、やりたいネタの大会だけに出る（コントならコント頂、漫才なら漫才天下一）
   if (month === 7 && week === 3 && s.player.style === 'conte') story(s, 'contest_entry', { kind: 'contest_conte' })
   if (month === 8 && week === 3 && s.player.style === 'manzai') story(s, 'contest_entry', { kind: 'contest_manzai' })
+  if (month === 9 && week === 1) s.weekLog.push(`もうすぐ9月2週の強化合宿。参加費4万円は、出発の朝に現金で払う。財布の中は${yen(s.money)}。`)
   if (month === 9 && week === 2) story(s, 'gasshuku')
   if (month === 12 && week === 1 && s.player.background === 'circle' && !s.flags.naitei_done) {
     s.flags.naitei_done = true
@@ -537,6 +538,28 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       story(s, r.kind === 'contest_conte' ? 'rival_onaji_kumi' : 'rival_kekka_page')
       break
     }
+    case 'gasshuku':
+      // 前の晩に止められたネタで、どこまで取り返せたか
+      if (r.level >= 2) {
+        r.lines.push('辻堂は、昨日と同じ席で腕を組んだまま、一回だけ頷いた。')
+        r.lines.push('閉校式で、合宿MVPに名前を呼ばれた。「MVPは必ず売れる」というジンクスがあるらしい。')
+        s.motivation = clamp(s.motivation + 15)
+        s.staffEval = clamp(s.staffEval + 10)
+        s.teacherEval = clamp(s.teacherEval + 6)
+        tie(s, 'tsujido', 6)
+        count(s, 'mvp')
+      } else if (r.level === 1) {
+        r.lines.push('辻堂「……昨日よりはマシや。マシなだけや」')
+        r.lines.push('帰りのバスは、一番前ではなかった。それだけで、少しほっとした。')
+        s.motivation = clamp(s.motivation + 5)
+        tie(s, 'tsujido', 3)
+      } else {
+        r.lines.push('辻堂は、何も言わずに次の組を呼んだ。')
+        r.lines.push('帰りのバスは一番前、辻堂の隣だった。高速を降りるまで、ひとことも話さなかった。')
+        tie(s, 'tsujido', 2)
+        gain(s, 'guts', 2)
+      }
+      break
     case 'tozai':
       s.staffEval = clamp(s.staffEval + r.level * 4)
       s.fans += r.level * 4

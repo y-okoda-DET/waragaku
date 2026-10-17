@@ -11,6 +11,8 @@ import { makePartner, splitUp } from './partner'
 import type { Rng } from './rng'
 import type { GameState } from './types'
 
+const me = (s: GameState) => s.player.callName
+
 export interface Choice {
   label: string
   reply?: string | string[] // 選んだあとの相手の反応（台本形式）
@@ -197,12 +199,14 @@ export const STORIES: Record<string, StoryDef> = {
     view: (s) => ({
       title: '夏の強化合宿',
       lines: [
-        'ナレーション：夏の強化合宿。東西合同、2泊3日。参加費は4万円で自由参加。',
+        'ナレーション：夏の強化合宿。東西合同、2泊3日。自由参加。',
+        'ナレーション：参加費4万円は、出発の朝に集合場所で現金で払う。払えなければ、バスには乗れない。',
+        `ナレーション：財布の中は${yen(s.money)}。`,
         '灰原（ふつう）「行きのバスの席順な、秋のクラス替えと関係あるって噂。……噂やで。毎年当たってるけど」',
       ],
-      choices: [{ reply: '灰原（笑い）「バスの席、一番前だけはやめとき。講師の隣やで」', label: '行く', hint: '40,000円', locked: s.money < 40000 ? 'お金が足りない' : undefined }, { reply: '灰原（ふつう）「4万あったら家賃やもんな。合宿のネタ、あとで動画見せたるわ」', label: 'お金がないので行かない' }],
+      choices: [{ reply: '灰原（笑い）「バスの席、一番前だけはやめとき。講師の隣やで」', label: '払って行く', hint: '−40,000円', locked: s.money < 40000 ? 'お金が足りない' : undefined }, { reply: '灰原（ふつう）「4万あったら家賃やもんな。合宿のネタ、あとで動画見せたるわ」', label: 'お金がないので行かない' }],
     }),
-    resolve: (s, c, rng) => {
+    resolve: (s, c) => {
       if (c === 1 || s.money < 40000) {
         s.weekLog.push('合宿に行かなかった。SNSに流れてくる合宿の写真を、バイト先の休憩室で見た。')
         return
@@ -216,13 +220,46 @@ export const STORIES: Record<string, StoryDef> = {
           ? '行きのバスの隣は、ネタ見せでいつも上位の組ばかりだった。'
           : '行きのバスは、名前もよく知らない同期ばかりの最後尾だった。',
       )
-      const avg = (s.stats.idea + s.stats.expr + s.stats.adlib + s.stats.guts) / 4
-      if (avg + rng.int(0, 20) >= 55) {
-        s.weekLog.push('最終日、合宿MVPに選ばれた。「MVPは必ず売れる」というジンクスがあるらしい。')
-        s.motivation = clamp(s.motivation + 15)
-        s.staffEval = clamp(s.staffEval + 10)
-        count(s, 'mvp')
+      story(s, 'gasshuku_dame')
+    },
+  },
+  // 合宿2日目の中間発表で止められ、その夜に直して、最終日にもう一度やる【合宿の山場】
+  gasshuku_dame: {
+    view: (s) => {
+      const p = s.partner?.name
+      return {
+        title: '合宿2日目 中間発表',
+        place: 'kyoushitsu',
+        lines: [
+          'ナレーション：2日目の夜。大広間に座布団が並び、1組ずつネタを見せる。',
+          `ナレーション：${s.comboName ?? s.player.callName}の番。ツカミが終わったところで、辻堂が手を上げた。`,
+          '辻堂（怒り）「……やめ。もうええ」',
+          '辻堂（怒り）「合宿に何しに来たんや。いつものネタを、いつもどおりやっただけやろ。2泊3日、何を持って帰るつもりや」',
+          '辻堂（ふつう）「明日の最終発表で同じもん持ってきたら、帰りのバスは一番前や。俺の隣でな」',
+          'ナレーション：大広間が静かになった。同期の視線が、背中に刺さる。',
+          p ? `${p}（落ち込み）「……部屋、戻ろか」` : 'ナレーション：ひとりで、部屋に戻った。',
+          'ナレーション：消灯まであと2時間。最終発表は、明日の朝10時。',
+        ],
+        choices: [
+          { reply: p ? `${p}（考え中）「頭からか。……ええよ。寝るのは帰りのバスでええ」` : `${me(s)}（考え中）「頭から書く。寝るのは帰りのバスでいい」`, label: '一晩で、頭から書き直す', hint: '発想力＋・体調−' },
+          { reply: p ? `${p}（笑い）「ほな廊下でやろ。自販機の前、明るいし」` : `${me(s)}（考え中）「廊下の自販機の前なら、明るい」`, label: '朝まで、今のネタを合わせ込む', hint: 'ネタの完成度＋・体調−' },
+          { reply: p ? `${p}（ふつう）「止められたとこだけ、か。……それで足りるかな」` : `${me(s)}（ふつう）「止められたところだけ。それで足りるか」`, label: '止められたところだけ直して、寝る', hint: '体調はそのまま' },
+        ],
       }
+    },
+    resolve: (s, c) => {
+      if (c === 0) {
+        gain(s, 'idea', 3)
+        s.neta.polish = Math.max(0, s.neta.polish - 5)
+        s.condition = clamp(s.condition - 12)
+      }
+      if (c === 1) {
+        s.neta.polish = Math.min(100, s.neta.polish + 15)
+        s.condition = clamp(s.condition - 12)
+      }
+      if (c === 2) s.neta.polish = Math.min(100, s.neta.polish + 5)
+      s.flags[`gasshuku_${c}`] = true
+      push(s, { type: 'stage', kind: 'gasshuku' })
     },
   },
   class_change: {

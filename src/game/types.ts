@@ -64,7 +64,7 @@ export interface PlayerProfile {
   outfit: string
 }
 
-export type StageKind = 'netamise' | 'live' | 'contest_conte' | 'contest_manzai' | 'tozai' | 'grad_prelim' | 'grad_final'
+export type StageKind = 'netamise' | 'live' | 'contest_conte' | 'contest_manzai' | 'gasshuku' | 'tozai' | 'grad_prelim' | 'grad_final'
 
 export interface StageResult {
   kind: StageKind
