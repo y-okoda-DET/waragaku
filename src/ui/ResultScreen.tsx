@@ -87,7 +87,6 @@ export function ResultScreen({ state, onRestart }: { state: GameState; onRestart
         <div className="result-title">
           <span className="small">称号</span>
           <strong>{rv.title}</strong>
-          <span className="nickname">二つ名：{rv.nickname}</span>
         </div>
         <dl className="score-parts" aria-label="総合評価の内訳">
           {parts.map((p) => (

@@ -3,7 +3,6 @@
 // 遊び方は3通り。「ふつう」は、体調とお金を見ながら満遍なくやる人のつもり
 import { createGame, doStage, endEvents, resolveStory, runWeek, type DayAction, type NightAction } from '../src/game/engine'
 import { buildEpilogue } from '../src/game/epilogue'
-import { nicknameOf } from '../src/game/review'
 import { STORIES } from '../src/game/events'
 import { showcaseCount } from '../src/game/showcase'
 import { TUNING, gainWatch } from '../src/game/core'
@@ -210,14 +209,3 @@ if (process.argv[3] === 'sources') {
   }
 }
 
-// 二つ名の出方。npx vite-node scripts/balance.ts 100 nick
-if (process.argv[3] === 'nick') {
-  for (const [name, player] of Object.entries(POLICIES)) {
-    const c: Record<string, number> = {}
-    for (let i = 1; i <= N; i++) {
-      const n = nicknameOf(play(i, player).stats)
-      c[n] = (c[n] ?? 0) + 1
-    }
-    console.log(name, Object.entries(c).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}${v}`).join(' '))
-  }
-}

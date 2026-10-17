@@ -94,7 +94,7 @@ export async function drawShareCard(state: GameState, ep: ResultSummary): Promis
   const facts = `同期300人 → ${state.classmates}人\u3000卒業大会 ${ep.gradText}`
   await Promise.all(
     [`40px ${MINCHO}`, `40px ${DISPLAY}`, `900 40px ${ROUND}`, `700 40px ${ROUND}`].map((f) =>
-      document.fonts.load(f, `ワラガク！${rv.title}${name}${combo}${facts}${rv.oneLine}${rv.nickname}${ep.rank}SABCDEFG卒業称号二つ名講師の寸評#`).catch(() => []),
+      document.fonts.load(f, `ワラガク！${rv.title}${name}${combo}${facts}${rv.oneLine}${ep.rank}SABCDEFG卒業称号講師の寸評#`).catch(() => []),
     ),
   )
   const r = 'SABCDEFG'.indexOf(ep.rank)
@@ -166,15 +166,6 @@ export async function drawShareCard(state: GameState, ep: ResultSummary): Promis
   ctx.font = `900 18px ${ROUND}`
   ctx.fillStyle = CORAL
   ctx.fillText('称号', 84, 272)
-  // 二つ名（能力のバランスで決まる）は札の右上にコーラルの帯で
-  ctx.font = `900 22px ${ROUND}`
-  const nick = `二つ名\u3000${rv.nickname}`
-  const nw = ctx.measureText(nick).width + 36
-  roundRect(ctx, 700 - nw, 252, nw, 34, 17)
-  ctx.fillStyle = CORAL
-  ctx.fill()
-  ctx.fillStyle = '#fff'
-  ctx.fillText(nick, 700 - nw + 18, 277)
   fitFont(ctx, rv.title, MINCHO, '400', 58, 610)
   ctx.fillStyle = INK
   ctx.fillText(rv.title, 84, 342)
