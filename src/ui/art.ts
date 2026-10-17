@@ -48,7 +48,7 @@ const PLACE_BY_TITLE: Record<string, string> = {
   相方見つけ会: 'kyoushitsu',
   コンビ名を決める: 'famires',
   ネタ見せの順番: 'rouka',
-  ごちそうさまでした: 'izakaya',
+  ごちそうさまでした: 'heya',
   コント頂のエントリー: 'livehouse',
   漫才天下一のエントリー: 'livehouse',
   夏の強化合宿: 'rouka',

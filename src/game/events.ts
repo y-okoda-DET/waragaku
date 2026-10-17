@@ -2,7 +2,7 @@ import { DEV_STORIES, affinity, classmatesOf, tie } from './bonds'
 import { kodawariOf } from './kodawari'
 import { PARTNER_STORIES } from './partnerLines'
 import { YEAR_STORIES } from './yearEvents'
-import { RIVAL_STORIES } from './rivalEvents'
+import { RIVAL_STORIES, rivalOf } from './rivalEvents'
 import { SENPAI_STORIES } from './senpaiEvents'
 import { CARDS } from './data/cards'
 import { PARTNER_CANDIDATES } from './data/people'
@@ -276,8 +276,7 @@ export const STORIES: Record<string, StoryDef> = {
       lines: [
         `ナレーション：2月。同期${s.classmates}人、全組が1分ネタで競う卒業大会。`,
         'ナレーション：勝ち上がった数組がもう1本やり、優勝すると卒業総代になる。',
-        ...(affinity(s, 'mido') >= 25 ? ['御堂（笑い）「1分なら、フリとオチだけで足りる。……君らの名前、予選の3つ後ろだね」'] : []),
-        ...(affinity(s, 'makabe') >= 25 ? ['真壁（ふつう）「……決勝で」'] : []),
+        rivalOf(s) === 'mido' ? '御堂（笑い）「1分なら、フリとオチだけで足りる。……君らの名前、予選の3つ後ろだね」' : '真壁（ふつう）「……決勝で」',
       ],
       choices: [],
     }),

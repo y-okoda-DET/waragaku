@@ -19,11 +19,15 @@ describe('ライバルのイベント', () => {
       expect(r.key.startsWith('rival_')).toBe(true)
       expect(RIVAL_STORIES[r.key]).toBeDefined()
     }
-    expect(Object.keys(RIVAL_STORIES).length).toBe(RIVAL_SCHEDULE.length)
+    // 予定にないのは、賞レースの夜に起きる2つだけ
+    const scheduled = new Set(RIVAL_SCHEDULE.map((r) => r.key))
+    expect(Object.keys(RIVAL_STORIES).filter((k) => !scheduled.has(k)).sort()).toEqual(['rival_kekka_page', 'rival_onaji_kumi'])
   })
 
   it('台本の形で書かれ、選択肢にはすべて reply がある', () => {
-    const variants = [base(), Object.assign(base(), { gradRank: 1, flags: { mido_rival: true, mido_open: true, makabe_judge: true, makabe_seen: true, makabe_rival: true, jiko_saved: true, tokushin: true } })]
+    const flags = { mido_rival: true, mido_open: true, mido_promise: true, makabe_judge: true, makabe_seen: true, makabe_rival: true, makabe_promise: true, jiko_saved: true, tokushin: true }
+    const conte = () => Object.assign(base(), { player: { ...base().player, style: 'conte' as const } })
+    const variants = [base(), Object.assign(base(), { gradRank: 1, flags }), conte(), Object.assign(conte(), { gradRank: 3, flags })]
     for (const s of variants) {
       for (const [key, def] of Object.entries(RIVAL_STORIES)) {
         const v = def.view(s, {})

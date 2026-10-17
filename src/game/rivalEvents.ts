@@ -4,6 +4,7 @@ import type { StoryDef } from './events'
 import type { GameState } from './types'
 
 // ライバル（御堂・真壁）が1年の本筋に絡む場面
+// 漫才を選ぶと御堂、コントを選ぶと真壁がライバルになり、その人の場面だけが起きる（合宿前のバスと打ち上げは2人とも出る）
 // bonds.ts の発展イベント（友好度で起きる3段）とは別に、決まった週に起きる
 // 御堂：標準語の自信家、学生お笑いの用語が多い。秋に「仕上がってる」が剥がれ、主人公を恨みつつ認めていく
 // 真壁：キャップで目が見えない。ほぼ単語。観察が得意。しゃべらないコントで一番ウケる
@@ -15,8 +16,12 @@ import type { GameState } from './types'
 // ・makabe_judge：真壁に「どっちが早い？」と審査を頼んだ（5月）
 // ・makabe_seen：真壁の出番を袖から観た（6月）
 // ・makabe_rival：真壁に「次は勝つ」と言った（7月）
+// ・mido_promise／makabe_promise：門出の前の夜に、決勝での約束をした（2月）
 
 const me = (s: GameState) => s.player.callName
+
+// この1年のライバル。漫才なら御堂、コントなら真壁
+export const rivalOf = (s: GameState): 'mido' | 'makabe' => (s.player.style === 'conte' ? 'makabe' : 'mido')
 const combo = (s: GameState) => s.comboName || '自分たち'
 
 function contestPassed(s: GameState, name: string): boolean | undefined {
@@ -25,38 +30,68 @@ function contestPassed(s: GameState, name: string): boolean | undefined {
 }
 
 export const RIVAL_STORIES: Record<string, StoryDef> = {
-  // 5月：夜の公園の街灯は、ネタ合わせの一等地
+  // 5月：夜の公園の街灯は、ネタ合わせの一等地。ライバルとちゃんと話すのは、これが最初
   rival_kouen: {
-    view: () => ({
-      title: '街灯の下',
-      place: 'kouen',
-      lines: [
-        'ナレーション：夜の公園。街灯の下は、ネタ合わせの一等地だ。今夜は先客がいた。御堂のコンビだった。',
-        '御堂（ふつう）「ごめん、ここ21時から押さえてるんだよね。表情の確認、暗いとできないから」',
-        '御堂（笑い）「あと、さっき通りがかりに聞こえた。ボケのあとのツッコミ、0.5秒早い。“間”は大事だよ」',
-        'ナレーション：ベンチの暗がりに、キャップを目深にかぶった同期が座っている。真壁だ。さっきから、両方を見ている。',
-        '真壁（ふつう）「……どっちも、早い」',
-      ],
-      choices: [
-        { reply: '御堂（笑い）「声量で勝負するの、学生の1回戦までだよ」', label: '「隣の街灯でやるわ。声はこっちがデカいけどな」', hint: '度胸＋・尖り＋' },
-        { reply: '御堂（驚き）「……体感だよ。体感で分かるくらいには、やってきたから」', label: '「0.5秒って、何で測ったん」', hint: '対応力＋' },
-        { reply: ['真壁（考え中）「……あっち。0.6」', '御堂（怒り）「……測ってたの？」'], label: '真壁に「どっちが早い？」と聞く', hint: '発想力＋' },
-      ],
-    }),
+    view: (s) =>
+      rivalOf(s) === 'mido'
+        ? {
+            title: '街灯の下',
+            place: 'kouen',
+            lines: [
+              'ナレーション：夜の公園。街灯の下は、ネタ合わせの一等地だ。今夜は先客がいた。御堂のコンビだった。',
+              'ナレーション：御堂。学生お笑いの全国大会で準優勝したコンビのツッコミ。入学式の日から、ひとりだけ「経験者」の顔をしていた。授業で講師に褒められるのも、いつも御堂だ。',
+              'ナレーション：正直、苦手なタイプだと思っていた。向こうも、こっちの名前は覚えていないだろうと思っていた。',
+              `御堂（ふつう）「${me(s)}くんだよね。ごめん、ここ21時から押さえてるんだ。表情の確認、暗いとできないから」`,
+              '御堂（笑い）「あと、さっき通りがかりに聞こえた。ボケのあとのツッコミ、0.5秒早い。“間”は大事だよ」',
+            ],
+            choices: [
+              { reply: '御堂（笑い）「声量で勝負するの、学生の1回戦までだよ」', label: '「隣の街灯でやるわ。声はこっちがデカいけどな」', hint: '度胸＋・尖り＋' },
+              { reply: '御堂（驚き）「……体感だよ。体感で分かるくらいには、やってきたから」', label: '「0.5秒って、何で測ったん」', hint: '対応力＋' },
+              { reply: ['御堂（驚き）「……え。素直だね」', '御堂（照れ）「……1回だけね。僕の相方、こういうの嫌がるから」'], label: '「その0.5秒、教えてくれ」と頭を下げる', hint: '表現力＋' },
+            ],
+          }
+        : {
+            title: '街灯の下',
+            place: 'kouen',
+            lines: [
+              'ナレーション：夜の公園。街灯の下は、ネタ合わせの一等地だ。今夜は先客がいた。真壁のコンビだった。',
+              'ナレーション：真壁。入学式の自己紹介は「真壁。……コント」だけだった。キャップを目深にかぶっていて、目が見えない。何を考えているか分からない同期、と思っていた。',
+              'ナレーション：相方がセリフを言い、真壁は黙ってベンチに座り直す。それだけなのに、なぜか可笑しい。気づいたら、植え込みの陰から見ていた。',
+              '真壁（ふつう）「……見てた？」',
+              `${me(s)}（驚き）「……バレてた」`,
+              '真壁（ふつう）「……ずっと。コント、するの？」',
+            ],
+            choices: [
+              { reply: '真壁（笑い）「……うるさい。……いい」', label: '「隣の街灯でやるわ。声はこっちがデカいけどな」', hint: '度胸＋・尖り＋' },
+              { reply: '真壁（考え中）「……座る前に、客が座る。頭の中で」', label: '「座り直すだけで、なんでウケるん」', hint: '発想力＋' },
+              { reply: ['真壁（ふつう）「……うん」', 'ナレーション：ネタを1本やった。真壁は最後まで表情を変えなかった。', '真壁（笑い）「……2か所。笑った」'], label: '「こっちのコントも見てや」', hint: '表現力＋' },
+            ],
+          },
     resolve: (s, c) => {
-      if (c === 0) {
-        s.flags.mido_rival = true
-        tie(s, 'mido', 5)
+      if (rivalOf(s) === 'mido') {
+        if (c === 0) {
+          s.flags.mido_rival = true
+          tie(s, 'mido', 5)
+          gain(s, 'guts', 2)
+          s.edge += 2
+        } else if (c === 1) {
+          tie(s, 'mido', 4)
+          gain(s, 'adlib', 2)
+        } else {
+          tie(s, 'mido', 6)
+          gain(s, 'expr', 2)
+        }
+      } else if (c === 0) {
+        tie(s, 'makabe', 5)
         gain(s, 'guts', 2)
         s.edge += 2
       } else if (c === 1) {
-        tie(s, 'mido', 4)
-        gain(s, 'adlib', 2)
+        tie(s, 'makabe', 5)
+        gain(s, 'idea', 2)
       } else {
         s.flags.makabe_judge = true
         tie(s, 'makabe', 6)
-        tie(s, 'mido', 2)
-        gain(s, 'idea', 2)
+        gain(s, 'expr', 2)
       }
     },
   },
@@ -69,7 +104,7 @@ export const RIVAL_STORIES: Record<string, StoryDef> = {
       lines: [
         'ナレーション：月イチ寄席「ほやほや」。袖は、人がすれ違えないほど狭い。',
         'ナレーション：前の出番は真壁のコンビ。真壁は客席ではなく、出番を待つ芸人の顔を順番に見ている。',
-        ...(s.flags.makabe_judge ? ['真壁（ふつう）「……0.6。直った？」'] : []),
+        ...(s.flags.makabe_judge ? ['真壁（ふつう）「……2か所。増えた？」'] : []),
         '真壁（ふつう）「……手」',
         `${me(s)}（驚き）「手？」`,
         '真壁（笑い）「ずっと、グー」',
@@ -91,6 +126,40 @@ export const RIVAL_STORIES: Record<string, StoryDef> = {
       } else {
         s.flags.makabe_seen = true
         tie(s, 'makabe', 3)
+        gain(s, 'expr', 3)
+        s.motivation = clamp(s.motivation - 3)
+      }
+    },
+  },
+
+  // 6月：ほやほや初回の袖。御堂は台本を閉じない（漫才のとき）
+  rival_sode_mido: {
+    view: (s) => ({
+      title: '台本の余白',
+      place: 'butai',
+      lines: [
+        'ナレーション：月イチ寄席「ほやほや」。袖は、人がすれ違えないほど狭い。',
+        'ナレーション：前の出番は御堂のコンビ。御堂は台本を開いたまま目を閉じて、唇だけを動かしている。',
+        'ナレーション：台本の余白に、秒数がびっしり書いてあった。「0.5」「0.4」「0.6」「0.5」。',
+        '御堂（ふつう）「……ごめん、話しかけないで。今、3周目」',
+        `${me(s)}（驚き）「本番前に、まだ見てんの？」`,
+      ],
+      choices: [
+        { reply: '御堂（怒り）「知ってるよ。……知ってるから、見てるんだよ」', label: '「本番は台本、持って出られへんで」', hint: '度胸＋' },
+        { reply: '御堂（笑い）「……君らのネタ、聞こえてる。口、動いてるよ」', label: '同じように目を閉じて、自分たちのネタを頭で流す', hint: 'ネタの完成度＋' },
+        { reply: 'ナレーション：御堂のコンビは、台本どおりに、きっちり笑いを取った。秒数どおりの笑いだった。なぜか、少しだけ怖かった。', label: '御堂の出番を袖から観る', hint: '表現力＋・やる気−' },
+      ],
+    }),
+    resolve: (s, c) => {
+      if (c === 0) {
+        tie(s, 'mido', 5)
+        gain(s, 'guts', 2)
+      } else if (c === 1) {
+        tie(s, 'mido', 4)
+        s.neta.polish = clamp(s.neta.polish + 4)
+      } else {
+        s.flags.mido_seen = true
+        tie(s, 'mido', 3)
         gain(s, 'expr', 3)
         s.motivation = clamp(s.motivation - 3)
       }
@@ -208,42 +277,63 @@ export const RIVAL_STORIES: Record<string, StoryDef> = {
     },
   },
 
-  // 11月：三校対抗戦の選考の前。御堂は候補から外れ、真壁と枠を争う
+  // 11月：三校対抗戦の選考の前。ライバルと最後の1枠を争う
   rival_waku: {
     view: (s) => {
       const listed = s.classRank === 'matsu' || !!s.flags.tokushin
+      if (rivalOf(s) === 'mido')
+        return {
+          title: '最後の枠',
+          place: 'rouka',
+          lines: [
+            'ナレーション：廊下に三校対抗戦の告知が貼られた。候補は松組と特進から。漫才の枠は1つ。',
+            listed
+              ? `ナレーション：候補の欄に${combo(s)}の名前があった。その隣に、御堂のコンビ。`
+              : `ナレーション：候補の欄に御堂のコンビの名前があった。${combo(s)}の名前は、その下の「補欠」の欄の、さらに下にあった。`,
+            '御堂（ふつう）「夏までは“仕上がってる”って言われてた。秋からは“仕上がってる扱い”。……扱い、って何だろうね」',
+            s.flags.mido_rival
+              ? '御堂（怒り）「張り合うって言ったの、そっちだからね。……手加減したら、一生恨む」'
+              : '御堂（笑い）「枠は取りに行くから。君らがどうでも」',
+          ],
+          choices: [
+            { reply: '御堂（考え中）「……全部、正しかった。フリもボケも天丼も。正しいだけだった」', label: '「御堂のネタ、何があかんの」', hint: '発想力＋' },
+            { reply: '御堂（考え中）「……恨むよ。恨むけど、ちゃんと観る」', label: '「どっちが選ばれても、恨みっこなしや」', hint: 'やる気＋' },
+            { reply: '御堂（笑い）「……いいね。それ、去年の僕のセリフ」', label: '「応援されへんでも、勝つわ」', hint: 'やる気＋・尖り＋' },
+          ],
+        }
       return {
         title: '最後の枠',
         place: 'rouka',
         lines: [
-          'ナレーション：廊下に三校対抗戦の告知が貼られた。候補は松組と特進から。',
+          'ナレーション：廊下に三校対抗戦の告知が貼られた。候補は松組と特進から。コントの枠は1つ。',
           listed
-            ? `ナレーション：候補の欄に${combo(s)}の名前があった。その隣に、真壁のコンビ。残る枠は、たぶんどちらか1つ。`
+            ? `ナレーション：候補の欄に${combo(s)}の名前があった。その隣に、真壁のコンビ。`
             : `ナレーション：候補の欄に真壁のコンビの名前があった。${combo(s)}の名前は、その下の「補欠」の欄の、さらに下にあった。`,
-          '御堂（落ち込み）「……僕らは補欠にもいない。夏まで“仕上がってる”って言われてたのにね」',
-          s.flags.mido_rival
-            ? '御堂（怒り）「張り合ってた相手が先に上に行くの、いちばん腹立つんだよ。……応援はしないから」'
-            : '御堂（笑い）「真壁と君ら、どっちが出ても応援しないから。それだけ」',
+          'ナレーション：告知の前で、真壁がずっと立っている。キャップのつばで、どこを見ているのか分からない。',
           s.flags.makabe_rival ? '真壁（ふつう）「……同じ組。待ってた」' : '真壁（ふつう）「……どうぞ」',
         ],
         choices: [
-          { reply: '御堂（考え中）「……全部、正しかった。フリもボケも天丼も。正しいだけだった」', label: '「御堂のネタ、何があかんかったん」', hint: '発想力＋' },
-          { reply: '真壁（笑い）「……ない」', label: '真壁に「枠、譲る気ある？」と聞く', hint: '度胸＋・ネタの完成度＋' },
-          { reply: '御堂（笑い）「……いいね。それ、去年の僕のセリフ」', label: '「応援されへんでも、勝つわ」', hint: 'やる気＋・尖り＋' },
+          { reply: '真壁（考え中）「……しゃべると、嘘になる。だから、しゃべらない」', label: '「真壁のコント、なんでしゃべらへんの」', hint: '発想力＋' },
+          { reply: '真壁（笑い）「……ない」', label: '「枠、譲る気ある？」と聞く', hint: '度胸＋・ネタの完成度＋' },
+          { reply: '真壁（笑い）「……知ってる」', label: '「選ばれへんでも、勝つわ」', hint: 'やる気＋・尖り＋' },
         ],
       }
     },
     resolve: (s, c) => {
+      const r = rivalOf(s)
       if (c === 0) {
-        s.flags.mido_open = true
-        tie(s, 'mido', 7)
+        s.flags[r === 'mido' ? 'mido_open' : 'makabe_open'] = true
+        tie(s, r, 7)
         gain(s, 'idea', 2)
       } else if (c === 1) {
-        tie(s, 'makabe', 5)
-        gain(s, 'guts', 2)
-        s.neta.polish = clamp(s.neta.polish + 4)
+        tie(s, r, 5)
+        if (r === 'mido') s.motivation = clamp(s.motivation + 5)
+        else {
+          gain(s, 'guts', 2)
+          s.neta.polish = clamp(s.neta.polish + 4)
+        }
       } else {
-        tie(s, 'mido', 4)
+        tie(s, r, 4)
         s.motivation = clamp(s.motivation + 6)
         s.edge += 2
       }
@@ -286,6 +376,100 @@ export const RIVAL_STORIES: Record<string, StoryDef> = {
     },
   },
 
+  // 1月：ほやほやの楽屋。12月の事故を、真壁は袖から見ていた（コントのとき）
+  rival_jiko_ato_makabe: {
+    view: (s) => ({
+      title: '袖のメモ',
+      place: 'gakuya',
+      lines: [
+        'ナレーション：年明けのほやほや。楽屋で出番を待っていると、真壁がメモ帳を1枚破って、黙って置いていった。',
+        'ナレーション：「12月　3秒　とまる　客　前のめり」',
+        s.flags.jiko_saved ? '真壁（ふつう）「……あの3秒。いちばん、見てた。客」' : '真壁（ふつう）「……3秒。長かった。でも、客、帰らなかった」',
+        `${me(s)}（驚き）「……」`,
+      ],
+      choices: [
+        { reply: '真壁（照れ）「……全部、ある。4月から」', label: '「このメモ、もらってええの」', hint: 'やる気＋' },
+        { reply: ['真壁（ふつう）「……毎回」', '真壁（笑い）「しゃべらないから、ばれない」'], label: '「真壁も、止まったことある？」', hint: '度胸＋' },
+        { reply: '真壁（怒り）「……同情、しない。メモ」', label: '「同情はいらん」', hint: '尖り＋' },
+      ],
+    }),
+    resolve: (s, c) => {
+      if (c === 0) {
+        s.flags.makabe_open = true
+        tie(s, 'makabe', 8)
+        s.motivation = clamp(s.motivation + 6)
+      } else if (c === 1) {
+        tie(s, 'makabe', 6)
+        gain(s, 'guts', 3)
+      } else {
+        tie(s, 'makabe', 5)
+        s.edge += 3
+      }
+    },
+  },
+
+  // 2月：門出の前の週。ライバルが、1年でいちばん本音を話す夜
+  rival_yoru: {
+    view: (s) =>
+      rivalOf(s) === 'mido'
+        ? {
+            title: '終電のホーム',
+            place: 'ekimae',
+            lines: [
+              'ナレーション：門出の前の週。終電のホームで、御堂がひとりでベンチに座っていた。',
+              '御堂（ふつう）「相方、門出で優勝できなかったら辞めるって。就職、決まってるんだ。そういう約束で、親に入学させてもらったらしい」',
+              '御堂（考え中）「学生の決勝で負けたとき、審査員に言われたんだ。“君らの漫才は正しい。正しいだけで、おもろない”って」',
+              '御堂（落ち込み）「だから1年、正しくないやつを探した。……見つからなかった」',
+              `御堂（笑い）「君らの漫才は、ずっと正しくない。4月から。……褒めてるんだよ、たぶん」`,
+              'ナレーション：終電が入ってきた。御堂は立ち上がらなかった。',
+            ],
+            choices: [
+              { reply: ['御堂（笑い）「……それ、聞きたかった」', 'ナレーション：ドアが閉まる直前、御堂は電車に飛び乗った。窓の向こうで、親指を立てていた。'], label: '「門出、手加減せえへんで」', hint: 'やる気＋' },
+              { reply: ['御堂（照れ）「……何を」', `${me(s)}（ふつう）「お前とやるのがおもろい、って」`, '御堂（照れ）「……言えるわけないだろ。……言うけど」'], label: '「相方に、一回ちゃんと言うたら」', hint: '同期の結束＋' },
+              { reply: ['ナレーション：隣に座った。終電が出ていった。2人とも、何もしゃべらなかった。', 'ナレーション：タクシー代は、御堂が「半分出す」と言って、きっちり半分出した。'], label: '黙って隣に座る', hint: '体調−・お金−' },
+            ],
+          }
+        : {
+            title: 'いちばんしゃべった夜',
+            place: 'kouen',
+            lines: [
+              'ナレーション：門出の前の週。ネタ合わせの帰り、公園の街灯の下に、真壁がひとりで立っていた。5月に先客だった、あの街灯だ。',
+              '真壁（ふつう）「……小学生のとき、しゃべれなかった。教室で、一言も」',
+              '真壁（考え中）「だから、ずっと見てた。人が笑う前。息を、吸うところ」',
+              '真壁（ふつう）「コントなら、しゃべらなくていい。……でも、門出のネタ。最後に一言だけ、しゃべる。そう決めた」',
+              '真壁（照れ）「……練習、付き合って。お前の前なら、言える。気がする」',
+              'ナレーション：真壁が、こんなに長くしゃべるのを初めて聞いた。',
+            ],
+            choices: [
+              { reply: ['ナレーション：日付が変わるまで、街灯の下で同じ一言を30回聞いた。', 'ナレーション：31回目、真壁は噛まなかった。キャップのつばが、少しだけ上がっていた。'], label: '相手役をやって、練習に付き合う', hint: '表現力＋・体調−' },
+              { reply: '真壁（笑い）「……袖、近い。……がんばる」', label: '「決勝で、その一言を聞かせてくれ。袖で待ってる」', hint: 'やる気＋' },
+              { reply: ['ナレーション：真壁も座った。しばらくして、真壁が小さく「……ありがと」と言った。', 'ナレーション：聞き返さなかった。聞き返したら、もう二度と言わない気がした。'], label: '何も言わずに、ベンチに座る', hint: '同期の結束＋' },
+            ],
+          },
+    resolve: (s, c) => {
+      const r = rivalOf(s)
+      tie(s, r, 10)
+      if (c === 0) {
+        if (r === 'mido') {
+          s.flags.mido_promise = true
+          s.motivation = clamp(s.motivation + 8)
+        } else {
+          gain(s, 'expr', 3)
+          s.condition = clamp(s.condition - 8)
+        }
+      } else if (c === 1) {
+        if (r === 'mido') s.dokiBond = clamp(s.dokiBond + 6)
+        else {
+          s.flags.makabe_promise = true
+          s.motivation = clamp(s.motivation + 8)
+        }
+      } else if (r === 'mido') {
+        s.condition = clamp(s.condition - 6)
+        s.money -= 2000
+      } else s.dokiBond = clamp(s.dokiBond + 6)
+    },
+  },
+
   // 2月：卒業大会「門出」の打ち上げ。ライバル2人と最後に並ぶ
   rival_kadode_ato: {
     view: (s) => {
@@ -300,10 +484,19 @@ export const RIVAL_STORIES: Record<string, StoryDef> = {
             : r && r <= 8
               ? `ナレーション：決勝${r}位。悔しいのか嬉しいのか、まだ分からない。`
               : 'ナレーション：決勝は、客席から観た。',
-          s.flags.mido_open
-            ? '御堂（笑い）「1年でいちばん伸びたの、君らだったね。……学生の決勝で飛ばした話、誰にも言わないでよ」'
-            : '御堂（笑い）「1年でいちばん伸びたの、君らだったね。4月は“天丼”も知らなかったのに」',
-          '真壁（ふつう）「……メモ。最後のページ」',
+          ...(rivalOf(s) === 'mido'
+            ? [
+                s.flags.mido_open
+                  ? '御堂（笑い）「1年でいちばん伸びたの、君らだったね。……学生の決勝で飛ばした話、誰にも言わないでよ」'
+                  : '御堂（笑い）「1年でいちばん伸びたの、君らだったね。4月は“天丼”も知らなかったのに」',
+                r === 1 ? '御堂（照れ）「相方、もう1年やるって。準優勝で十分だって。……十分なわけ、ないのにね」' : '御堂（照れ）「相方、もう1年やるって。……優勝したら、言いだしにくいだろうと思ってたけど」',
+                '真壁（ふつう）「……メモ。最後のページ」',
+              ]
+            : [
+                '真壁（ふつう）「……メモ。最後のページ」',
+                ...(s.flags.makabe_promise ? ['真壁（笑い）「……一言。言えた。袖、近かった」'] : []),
+                '御堂（笑い）「真壁、今日だけで1年分しゃべってるよ」',
+              ]),
           'ナレーション：真壁が、メモ帳を1枚破って差し出した。「4月：うるさい。2月：うるさい。おもろい」',
         ],
         choices: [
@@ -331,13 +524,15 @@ export const RIVAL_STORIES: Record<string, StoryDef> = {
 
 // どの週に起きるか。固定イベントのない週を選んでいる
 // 6/4・1/4 は月イチ寄席（live）の週。ストーリーはステージの前後どちらに出ても読めるようにしてある
-export const RIVAL_SCHEDULE: { month: number; week: number; key: string; when?: (s: GameState) => boolean }[] = [
+// コントのとき「同じ組」、漫才のとき「41回目の更新」は、その大会に出た週のうちに起きる（engine.ts）
+export const RIVAL_SCHEDULE: { month: number; week: number; key: string; style?: 'manzai' | 'conte'; when?: (s: GameState) => boolean }[] = [
   { month: 5, week: 4, key: 'rival_kouen' },
-  { month: 6, week: 4, key: 'rival_sode' },
-  { month: 7, week: 4, key: 'rival_onaji_kumi', when: (s) => contestPassed(s, 'コント頂') !== undefined },
-  { month: 8, week: 4, key: 'rival_kekka_page', when: (s) => contestPassed(s, '漫才天下一') !== undefined },
+  { month: 6, week: 4, key: 'rival_sode', style: 'conte' },
+  { month: 6, week: 4, key: 'rival_sode_mido', style: 'manzai' },
   { month: 9, week: 1, key: 'rival_bus' },
   { month: 11, week: 1, key: 'rival_waku' },
-  { month: 1, week: 4, key: 'rival_jiko_ato', when: (s) => (s.counters.jiko ?? 0) > 0 },
+  { month: 1, week: 4, key: 'rival_jiko_ato', style: 'manzai', when: (s) => (s.counters.jiko ?? 0) > 0 },
+  { month: 1, week: 4, key: 'rival_jiko_ato_makabe', style: 'conte', when: (s) => (s.counters.jiko ?? 0) > 0 },
+  { month: 2, week: 1, key: 'rival_yoru' },
   { month: 2, week: 3, key: 'rival_kadode_ato', when: (s) => s.gradRank !== null },
 ]

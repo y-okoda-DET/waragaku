@@ -2,13 +2,13 @@ import { BACKGROUND_BY_ID, PLAYER_LOOK } from './data/backgrounds'
 import { CARDS, STARTER_CARDS } from './data/cards'
 import { TOTAL_TURNS, expectedClassmates, turnOf, weekInfo } from './data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from './data/people'
-import { DEV_STORIES, affinity, classmatesOf, scheduleBondEvent, tie } from './bonds'
+import { DEV_STORIES, classmatesOf, scheduleBondEvent, tie } from './bonds'
 import { applyKodawari } from './kodawari'
 import { TUNING, addSkill, clamp, count, gain, has, push, removeSkill, story, withGainScale, yen } from './core'
 import { STORIES } from './events'
 import { flavor } from './data/flavor'
 import { LUCKY, LUCKY_CHANCE } from './data/lucky'
-import { RIVAL_SCHEDULE } from './rivalEvents'
+import { RIVAL_SCHEDULE, rivalOf } from './rivalEvents'
 import { Rng } from './rng'
 import { STAGES, performStage } from './stage'
 import type { ShowcaseGrade } from './showcase'
@@ -330,7 +330,7 @@ function scheduleEvents(s: GameState, rng: Rng): void {
     push(s, { type: 'stage', kind: 'netamise' })
   }
   // ライバル（御堂・真壁）の場面。ライブの週は出番の前に起きる
-  for (const r of RIVAL_SCHEDULE) if (r.month === month && r.week === week && (!r.when || r.when(s))) story(s, r.key)
+  for (const r of RIVAL_SCHEDULE) if (r.month === month && r.week === week && (!r.style || r.style === s.player.style) && (!r.when || r.when(s))) story(s, r.key)
   if (week === 4 && [6, 9, 11, 1].includes(month)) push(s, { type: 'stage', kind: 'live' })
   // 1年間の流れ（scenario/1年間の流れ.md）で足した行事
   // 相方の場面（相方ごとに中身が違う）
@@ -355,13 +355,14 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   if (month === 12 && week === 1 && s.kodawari) story(s, 'shiren')
   if (month === 12 && week === 4 && s.partner) story(s, 'jiko')
   if (month === 1 && week === 1) {
-    story(s, 'tozai_home')
     story(s, 'gaisen')
+    story(s, 'tozai_home')
   }
   if (month === 1 && week === 3) story(s, 'kougyou')
   if (month === 2 && week === 4) story(s, 'ketsudan')
-  if (month === 7 && week === 3) story(s, 'contest_entry', { kind: 'contest_conte' })
-  if (month === 8 && week === 3) story(s, 'contest_entry', { kind: 'contest_manzai' })
+  // 賞レースは、やりたいネタの大会だけに出る（コントならコント頂、漫才なら漫才天下一）
+  if (month === 7 && week === 3 && s.player.style === 'conte') story(s, 'contest_entry', { kind: 'contest_conte' })
+  if (month === 8 && week === 3 && s.player.style === 'manzai') story(s, 'contest_entry', { kind: 'contest_manzai' })
   if (month === 9 && week === 2) story(s, 'gasshuku')
   if (month === 12 && week === 1 && s.player.background === 'circle' && !s.flags.naitei_done) {
     s.flags.naitei_done = true
@@ -525,6 +526,8 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
         s.staffEval = clamp(s.staffEval + 8)
         count(s, 'contestPass')
       }
+      // 同じ大会に出ていたライバルの場面は、結果が出たその夜に起きる
+      story(s, r.kind === 'contest_conte' ? 'rival_onaji_kumi' : 'rival_kekka_page')
       break
     }
     case 'tozai':
@@ -539,11 +542,17 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       r.lines.push(`予選の順位は${groups}組中${rank}位。`)
       if (rank <= 8) {
         r.lines.push('決勝進出。2本目をやる。')
-        if (affinity(s, 'mido') >= 25) r.lines.push('決勝の名簿に、御堂のコンビの名前もあった。')
+        r.lines.push(rivalOf(s) === 'mido' ? '決勝の名簿に、御堂のコンビの名前もあった。' : '決勝の名簿に、真壁のコンビの名前もあった。')
         push(s, { type: 'stage', kind: 'grad_final' })
       } else {
         s.gradRank = rank
-        r.lines.push(affinity(s, 'makabe') >= 25 ? '決勝は客席から観た。真壁のコンビが、一言もしゃべらないコントで一番笑いを取っていた。' : '決勝は客席から観た。')
+        r.lines.push(
+          rivalOf(s) === 'mido'
+            ? '決勝は客席から観た。御堂のコンビは、台本にない一言で、その日いちばんの笑いを取っていた。'
+            : s.flags.makabe_promise
+              ? '決勝は客席から観た。真壁のコンビは、最後の一言で会場をひっくり返した。袖で待つ約束は、守れなかった。'
+              : '決勝は客席から観た。真壁のコンビが、ほとんどしゃべらないコントで一番笑いを取っていた。',
+        )
       }
       break
     }
@@ -554,9 +563,26 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       s.gradRank = rank
       r.lines.push(rank === 1 ? '優勝。卒業総代に選ばれた。' : `決勝${rank}位。`)
       // ライバルの結果【物語の回収】
-      if (affinity(s, 'mido') >= 25)
-        r.lines.push(rank === 1 ? '準優勝は御堂のコンビ。袖で、御堂が拍手していた。目は笑っていなかった。' : rank <= 3 ? '優勝は御堂のコンビだった。「天丼、覚えた？」と言われた。' : '御堂のコンビは、自分たちより1つ上だった。')
-      else if (affinity(s, 'makabe') >= 25 && rank !== 1) r.lines.push('優勝は真壁のコンビだった。インタビューで真壁は「……どうも」とだけ言った。会場がいちばん笑った。')
+      if (rivalOf(s) === 'mido')
+        r.lines.push(
+          rank === 1
+            ? s.flags.mido_promise
+              ? '準優勝は御堂のコンビ。袖ですれ違ったとき、御堂は「手加減、しなかったね」とだけ言った。目が赤かった。'
+              : '準優勝は御堂のコンビ。袖で、御堂が拍手していた。目は笑っていなかった。'
+            : rank <= 3
+              ? '優勝は御堂のコンビだった。最後のツッコミは、0.5秒遅かった。台本にない間だった。'
+              : '御堂のコンビは、自分たちより1つ上だった。',
+        )
+      else
+        r.lines.push(
+          rank === 1
+            ? s.flags.makabe_promise
+              ? '準優勝は真壁のコンビ。最後の一言は、袖まではっきり届いた。真壁はキャップを取って、深く頭を下げた。'
+              : '準優勝は真壁のコンビ。真壁は袖で、メモ帳に何か書いていた。'
+            : s.flags.makabe_promise
+              ? '優勝は真壁のコンビだった。最後の一言は、袖で聞いた。インタビューで真壁は「……どうも」とだけ言った。会場がいちばん笑った。'
+              : '優勝は真壁のコンビだった。インタビューで真壁は「……どうも」とだけ言った。会場がいちばん笑った。',
+        )
       if (rank === 1) s.fans += 30
       break
     }

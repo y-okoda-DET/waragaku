@@ -11,5 +11,6 @@ describe('台本の読み取り', () => {
   it('古い書き方の地の文や、途中にカギ括弧がある文はそのまま', () => {
     expect(parseLine('前に出た人に、司会が「手を挙げて！」と聞く').speaker).toBeUndefined()
     expect(parseLine('「おはようございます」').speaker).toBeUndefined()
+    expect(parseLine('レシートの裏に「ツカミ」と書いた。大事にしよう。').speaker).toBeUndefined()
   })
 })

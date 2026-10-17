@@ -36,5 +36,7 @@ export function parseLine(raw: string): ScriptLine {
   const m = SPEECH.exec(raw)
   if (!m) return { text: raw, stage: raw }
   const [, speaker, ex, speech] = m
+  // 表情のない書き方で、カギ括弧のあとに文が続くもの（「レシートの裏に「…」と書いた。」など）は地の文
+  if (!ex && !speech.endsWith('」')) return { text: raw, stage: raw }
   return { text: speech, speaker, expr: ex ? EXPR_JA[ex] : undefined, stage: speaker + speech }
 }

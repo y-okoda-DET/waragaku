@@ -4,7 +4,7 @@ import { STORIES } from './events'
 import { buildReview } from './review'
 import type { GameState } from './types'
 
-function play(seed: number, pick: (key: string, n: number) => number) {
+function play(seed: number, pick: (key: string, n: number) => number, style: 'manzai' | 'conte' = 'manzai') {
   const seen: string[] = []
   const drain = (s: GameState) => {
     let g = 0
@@ -19,7 +19,7 @@ function play(seed: number, pick: (key: string, n: number) => number) {
     }
     return s
   }
-  let s = endEvents(drain(createGame({ name: '山田', callName: 'ヤマダ', role: 'boke', style: 'manzai', seed })))
+  let s = endEvents(drain(createGame({ name: '山田', callName: 'ヤマダ', role: 'boke', style, seed })))
   for (let i = 0; s.phase !== 'result' && i < 100; i++) {
     s = runWeek(s, s.money < 20000 ? { type: 'baito', kind: 'izakaya' } : { type: 'awase', place: 'family' }, { type: 'douki' })
     s = drain(endEvents(drain(s)))
@@ -35,10 +35,13 @@ describe('1年間の流れ', () => {
       expect(seen).toContain(key)
   })
 
-  it('ライバル（御堂・真壁）の場面が1年のうちに起きる', () => {
-    const { seen } = play(5, () => 0)
-    for (const key of ['rival_kouen', 'rival_sode', 'rival_onaji_kumi', 'rival_kekka_page', 'rival_bus', 'rival_waku', 'rival_jiko_ato', 'rival_kadode_ato'])
-      expect(seen).toContain(key)
+  it('漫才なら御堂、コントなら真壁の場面が1年のうちに起きる', () => {
+    const manzai = play(5, () => 0).seen
+    for (const key of ['rival_kouen', 'rival_sode_mido', 'rival_kekka_page', 'rival_bus', 'rival_waku', 'rival_jiko_ato', 'rival_yoru', 'rival_kadode_ato']) expect(manzai).toContain(key)
+    for (const key of ['rival_sode', 'rival_onaji_kumi', 'rival_jiko_ato_makabe']) expect(manzai).not.toContain(key)
+    const conte = play(5, () => 0, 'conte').seen
+    for (const key of ['rival_kouen', 'rival_sode', 'rival_onaji_kumi', 'rival_bus', 'rival_waku', 'rival_jiko_ato_makabe', 'rival_yoru', 'rival_kadode_ato']) expect(conte).toContain(key)
+    for (const key of ['rival_sode_mido', 'rival_kekka_page', 'rival_jiko_ato']) expect(conte).not.toContain(key)
   })
 
   it('面談で譲れないものが決まり、山場で守ると寸評に出る', () => {
