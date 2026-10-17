@@ -75,8 +75,6 @@ export const BACKGROUNDS: Background[] = [
     stats: { idea: 18, word: 20, expr: 14, guts: 16, adlib: 22, stamina: 18 },
     money: 400000,
     skills: ['kawaigarare'],
-    // 自分で決めて辞めてきたぶん、伸びは素直（高校卒業との差を詰める）
-    growth: 1,
   },
   {
     id: 'band',
