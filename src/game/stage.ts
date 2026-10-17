@@ -288,7 +288,7 @@ function explain(state: GameState, b: Breakdown, showcase: Grade[], accident: bo
   rows.push({ label: '体調', text: accident ? `${cond}。本番で事故が起き、笑いが1段下がった` : cond })
   const etc = Math.round(b.luck + b.mods)
   rows.push({ label: '本番のブレ・相性', text: `${signed(etc)}点（度胸・特殊能力・客層との相性・出番の順番）` })
-  rows.push({ label: '合計', text: `${Math.round(b.cards + b.stats + b.polish + b.partner + b.luck + b.cond + b.mods) + showcaseBonus(showcase)}点（ウケるライン ${line + 12}点・爆笑ライン ${line + 26}点）` })
+  rows.push({ label: '合計', text: `${Math.round(b.cards + b.stats + b.polish + b.partner + b.luck + b.cond + b.mods) + showcaseBonus(showcase)}点（スベらない${line}・ウケる${line + 12}・爆笑${line + 26}点）` })
   return rows
 }
 

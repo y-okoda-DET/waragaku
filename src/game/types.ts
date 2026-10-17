@@ -80,6 +80,8 @@ export interface StageResult {
   tally?: Tally
   summary?: string
   why?: { label: string; text: string }[]
+  // 大会の合否や順位。結果画面で大きく出す
+  verdict?: { head: string; text: string; good: boolean }
 }
 
 // 結果文で数えるもの

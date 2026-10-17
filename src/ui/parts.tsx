@@ -33,13 +33,15 @@ export function PlayerAvatar({ player, size }: { player: PlayerProfile; size?: n
   return <Avatar hair={player.hairColor} outfit={outfitColor(player.outfit)} size={size} long={player.gender === 'female'} />
 }
 
-export function Bar({ label, value, max = 100, tone }: { label: string; value: number; max?: number; tone?: 'warn' | 'good' }) {
+// tone="level" は値で色が変わる（〜24 赤、〜49 黄、〜74 緑、75〜 青）。人間関係のゲージに使う
+export function Bar({ label, value, max = 100, tone }: { label: string; value: number; max?: number; tone?: 'warn' | 'good' | 'level' }) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100))
+  const cls = tone === 'level' ? `lv${Math.min(3, Math.floor(pct / 25))}` : (tone ?? '')
   return (
     <div className="bar">
       <span className="bar-label">{label}</span>
       <span className="bar-track">
-        <span className={`bar-fill ${tone ?? ''}`} style={{ width: `${pct}%` }} />
+        <span className={`bar-fill ${cls}`} style={{ width: `${pct}%` }} />
       </span>
       <span className="bar-value">{Math.round(value)}</span>
     </div>

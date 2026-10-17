@@ -113,10 +113,9 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
 
       <header className="week-head">
         <div>
-          <div className="week-left">のこり{TOTAL_TURNS - state.turn}週</div>
           <div className="date">{weekLabel(state.turn)}</div>
           <div className="week-sub">
-            同期 {state.classmates}人{state.classRank !== 'none' && ` ／ ${CLASS_LABEL[state.classRank]}`}
+            のこり{TOTAL_TURNS - state.turn}週 ／ 同期 {state.classmates}人{state.classRank !== 'none' && ` ／ ${CLASS_LABEL[state.classRank]}`}
           </div>
         </div>
         <div className="week-head-right">
@@ -129,7 +128,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
 
       <section className="card me">
         <div className="me-face">
-          <PlayerAvatar player={p} size={78} />
+          <PlayerAvatar player={p} size={60} />
         </div>
         <div className="me-body">
           <div className="me-name">
@@ -228,7 +227,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
                 相方：<b>{state.partner.name}</b>
                 <span className="small">（{state.partner.role === 'boke' ? 'ボケ' : 'ツッコミ'}）</span>
               </div>
-              <Bar label="関係" value={state.partner.bond} tone={state.partner.bond < 25 ? 'warn' : 'good'} />
+              <Bar label="関係" value={state.partner.bond} tone="level" />
             </div>
           ) : (
             <p className="small">相方はまだいない。</p>
@@ -238,10 +237,11 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
               <div>
                 <b>{sr.name}</b> <span className="small">{sr.title}</span>
               </div>
-              <Bar label="仲" value={sr.like} />
-              <Bar label="認め" value={sr.respect} />
+              <Bar label="仲" value={sr.like} tone="level" />
+              <Bar label="認め" value={sr.respect} tone="level" />
             </div>
           ))}
+          <p className="small">ゲージの色は 赤＝冷えている、黄＝ふつう、緑＝良い、青＝とても良い。</p>
           <p className="small">先輩は、仲が良いだけでは仕事に呼んでくれない。ウケたところを見せると「認め」が上がる。</p>
         </Modal>
       )}

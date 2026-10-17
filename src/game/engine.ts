@@ -266,7 +266,7 @@ function applyNight(s: GameState, a: NightAction, rng: Rng): void {
       if (has(s, 'orei')) {
         senior.like = clamp(senior.like + 3)
         count(s, 'orei')
-      } else story(s, 'orei', { senior: senior.id })
+      } else story(s, 'orei', { senior: senior.id, v: count(s, 'orei_ev') - 1 })
       break
     }
     case 'douki':
@@ -529,6 +529,7 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       s.contestResults.push({ name, result: passed ? '1回戦通過（2回戦敗退）' : '1回戦敗退' })
       r.lines.push('夜、公式サイトの結果ページを何度も更新した。')
       r.lines.push(passed ? `${s.comboName}の名前があった。` : `${s.comboName}の名前は、なかった。`)
+      r.verdict = { head: `${name} 1回戦`, text: passed ? '通過！' : '敗退', good: passed }
       if (passed) {
         s.teacherEval = clamp(s.teacherEval + 10)
         s.staffEval = clamp(s.staffEval + 8)
@@ -541,6 +542,7 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
     case 'gasshuku':
       // 前の晩に止められたネタで、どこまで取り返せたか
       if (r.level >= 2) {
+        r.verdict = { head: '強化合宿', text: 'MVP！', good: true }
         r.lines.push('辻堂は、昨日と同じ席で腕を組んだまま、一回だけ頷いた。')
         r.lines.push('閉校式で、合宿MVPに名前を呼ばれた。「MVPは必ず売れる」というジンクスがあるらしい。')
         s.motivation = clamp(s.motivation + 15)
@@ -570,6 +572,7 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       const rank = Math.max(1, Math.min(groups, Math.round((1 - p) * groups) + rng.int(0, 2)))
       r.rank = rank
       r.lines.push(`予選の順位は${groups}組中${rank}位。`)
+      r.verdict = { head: `予選 ${groups}組中`, text: rank <= 8 ? `${rank}位 決勝進出！` : `${rank}位`, good: rank <= 8 }
       if (rank <= 8) {
         r.lines.push('決勝進出。2本目をやる。')
         r.lines.push(rivalOf(s) === 'mido' ? '決勝の名簿に、御堂のコンビの名前もあった。' : '決勝の名簿に、真壁のコンビの名前もあった。')
@@ -592,6 +595,7 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       r.rank = rank
       s.gradRank = rank
       r.lines.push(rank === 1 ? '優勝。卒業総代に選ばれた。' : `決勝${rank}位。`)
+      r.verdict = { head: '卒業大会「門出」決勝', text: rank === 1 ? '優勝！' : `${rank}位`, good: rank <= 3 }
       // ライバルの結果【物語の回収】
       if (rivalOf(s) === 'mido')
         r.lines.push(

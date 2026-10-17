@@ -91,8 +91,10 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
   const last = index >= lines.length - 1
   // 台本形式で書かれたイベントは名前をはっきり書くので、「相方」を相方の名前に読み替えない（「私の元相方」などがあるため）
   const scripted = script.some((l) => l.startsWith('ナレーション：')) || parsed.some((l) => l.speaker)
-  const shot = shotsOf(parsed.map((l) => l.stage), namesOf(state), state.partner && !scripted ? { 相方: state.partner.name } : {})[index] ?? { cast: [] }
   const p = state.player
+  const found = shotsOf(parsed.map((l) => l.stage), namesOf(state), state.partner && !scripted ? { 相方: state.partner.name } : {})[index] ?? { cast: [] }
+  // 誰の名前も出ない行（主人公の目線のナレーション）は、背景の下半分が空かないよう主人公を立たせる
+  const shot = found.cast.length ? found : { cast: [p.callName] }
 
   const [log, setLog] = useState(false)
   const [skip, setSkip] = useState(skipping)

@@ -234,8 +234,10 @@ function TsukkomiGame({ state, kind, scene, partner, nextLabel, onDone }: { stat
 }
 
 const BEAT_NAME = ['設定に入る', '役を演じ切る', '暗転前のオチ']
-const ROLE_TAIL_MS = 900
-const ROLE_GRACE_MS = 500
+// 役の山は、相方のセリフをゆっくり出して、ゲージを保つ時間を作る
+const ROLE_TYPE_MS = 80
+const ROLE_TAIL_MS = 1000
+const ROLE_GRACE_MS = 600
 
 // コントの見せ場。入り（3択）→ 役（ゲージを帯に保つ）→ オチ（暗転のきっかけ）の順に遊ぶ
 function ConteGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { state: GameState; kind: StageKind; seed: number; scene: ConteScene; partner: string; nextLabel: string; onDone: (p: ShowcasePick) => void }) {
@@ -371,18 +373,18 @@ function ConteOpen({ state, kind, seed, scene, result, onPick }: { state: GameSt
 
 function ConteRole({ state, kind, scene, partner, result, onEnd }: { state: GameState; kind: StageKind; scene: ConteScene; partner: string; result?: { grade: ShowcaseGrade; label: string }; onEnd: (r: { grade: ShowcaseGrade; label: string }) => void }) {
   const [shown, setShown] = useState(0)
-  const [level, setLevel] = useState(0.15)
+  const [level, setLevel] = useState(0.3)
   const holding = useRef(false)
   const band = roleBand(state, kind)
   const drift = roleDrift(state, kind)
-  const total = scene.role.length * TYPE_MS + ROLE_TAIL_MS
+  const total = scene.role.length * ROLE_TYPE_MS + ROLE_TAIL_MS
 
   useEffect(() => {
     if (result) return
     let raf = 0
     let last: number | null = null
     let start: number | null = null
-    let p = 0.15
+    let p = 0.3
     const time = { inside: 0, low: 0, high: 0 }
     const phase = Math.random() * 6
     const tick = (now: number) => {
@@ -399,7 +401,7 @@ function ConteRole({ state, kind, scene, partner, result, onEnd }: { state: Game
         else time.inside += dt
       }
       setLevel(p)
-      setShown(Math.min(scene.role.length, Math.floor(el / TYPE_MS)))
+      setShown(Math.min(scene.role.length, Math.floor(el / ROLE_TYPE_MS)))
       if (el >= total) {
         const sum = time.inside + time.low + time.high || 1
         onEnd(gradeRole(time.inside / sum, time.low / sum, time.high / sum))

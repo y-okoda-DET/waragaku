@@ -99,6 +99,12 @@ export function StageResultView({ result }: { result: StageResult }) {
         <span className="dokkan" aria-hidden="true">
           {LEVEL_SOUND[result.level]}
         </span>
+        {result.verdict && (
+          <div className={`verdict ${result.verdict.good ? 'good' : 'bad'}`}>
+            <small>{result.verdict.head}</small>
+            <b>{result.verdict.text}</b>
+          </div>
+        )}
         <div className="telop">
           <span className="telop-tag">講師・客席</span>
           <span className="telop-text">{result.comment}</span>
