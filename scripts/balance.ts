@@ -3,9 +3,10 @@
 // 遊び方は3通り。「ふつう」は、体調とお金を見ながら満遍なくやる人のつもり
 import { createGame, doStage, endEvents, resolveStory, runWeek, type DayAction, type NightAction } from '../src/game/engine'
 import { buildEpilogue } from '../src/game/epilogue'
+import { nicknameOf } from '../src/game/review'
 import { STORIES } from '../src/game/events'
 import { showcaseCount } from '../src/game/showcase'
-import { TUNING } from '../src/game/core'
+import { TUNING, gainWatch } from '../src/game/core'
 import { STAT_KEYS, STAT_LABEL, type GameState } from '../src/game/types'
 
 type Grade = 'great' | 'good' | 'miss'
@@ -189,4 +190,34 @@ if (process.argv[3] === 'detail') {
   }
   parts.skills = parts.skills - parts.stats - parts.grad - parts.fans - parts.staff
   console.log(Object.fromEntries(Object.entries(parts).map(([k, v]) => [k, Math.round(v * 10) / 10])))
+}
+
+// 能力がどこで伸びたか（ふつう・うまい）。npx vite-node scripts/balance.ts 40 sources
+if (process.argv[3] === 'sources') {
+  for (const name of ['ふつう', 'うまい'] as const) {
+    const by: Record<string, Record<string, number>> = {}
+    gainWatch.on = (key, amount) => {
+      const frame = (new Error().stack ?? '').split('\n').slice(2).find((l) => !l.includes('core.ts')) ?? ''
+      const m = frame.match(/src\/game\/(\w+)\.ts/)
+      const fn = frame.match(/at (\w+)/)?.[1] ?? '?'
+      const src = m ? `${m[1]}${m[1] === 'engine' ? '.' + fn : ''}` : 'other'
+      ;((by[src] ??= {})[key] = (by[src][key] ?? 0) + amount / N)
+    }
+    for (let i = 1; i <= N; i++) play(i, POLICIES[name])
+    gainWatch.on = undefined
+    console.log(`\n${name}：伸びた量の出どころ（1周あたり）`)
+    for (const [src, v] of Object.entries(by).sort()) console.log(`  ${src.padEnd(22)} ` + STAT_KEYS.map((k) => `${k}${(v[k] ?? 0).toFixed(1).padStart(6)}`).join(' '))
+  }
+}
+
+// 二つ名の出方。npx vite-node scripts/balance.ts 100 nick
+if (process.argv[3] === 'nick') {
+  for (const [name, player] of Object.entries(POLICIES)) {
+    const c: Record<string, number> = {}
+    for (let i = 1; i <= N; i++) {
+      const n = nicknameOf(play(i, player).stats)
+      c[n] = (c[n] ?? 0) + 1
+    }
+    console.log(name, Object.entries(c).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}${v}`).join(' '))
+  }
 }

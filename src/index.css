@@ -807,6 +807,21 @@ p {
 .result-row > div:nth-child(2) {
   flex: 1;
 }
+.share-card {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1200 / 675;
+  border: var(--stroke) solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.share-card.loading {
+  display: grid;
+  place-items: center;
+  background: var(--soft);
+  font-weight: 800;
+  color: var(--sub);
+}
 .rank {
   font-family: var(--display);
   font-size: 64px;
@@ -1358,6 +1373,16 @@ p {
   font-weight: 400;
   font-size: 20px;
   line-height: 1.3;
+}
+.result-title .nickname {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--coral);
+  color: #fff;
+  font-weight: 900;
+  font-size: 13px;
 }
 .grades {
   display: grid;

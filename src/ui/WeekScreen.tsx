@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { TOTAL_TURNS, weekLabel } from '../game/data/calendar'
-import type { DayAction, NightAction } from '../game/engine'
+import { jishurenStat, type DayAction, type NightAction } from '../game/engine'
 import { STAT_KEYS, STAT_LABEL, type GameState, type StatKey } from '../game/types'
 import { SKILL_BY_ID } from '../game/data/skills'
 import { LogPanel } from './Adv'
@@ -13,10 +13,10 @@ type DayKey = DayAction['type']
 const DAY_OPTIONS: { key: DayKey; label: string; hint: string }[] = [
   { key: 'neta', label: 'ネタ作り', hint: '発想力＋／新しいネタの種' },
   { key: 'awase', label: 'ネタ合わせ', hint: '完成度＋' },
-  { key: 'jishuren', label: '自主練', hint: '何をやるかはその日しだい' },
+  { key: 'jishuren', label: '自主練', hint: '苦手なところを鍛える' },
   { key: 'tetsudai', label: '先輩ライブの手伝い', hint: '先輩の認め・度胸＋' },
   { key: 'jishulive', label: '自主ライブに出る', hint: '−2,000円／度胸・対応力＋' },
-  { key: 'kangeki', label: 'ライブを観に行く', hint: '−1,500円／発想力＋' },
+  { key: 'kangeki', label: 'ライブを観に行く', hint: '−1,500円／ワード力＋' },
   { key: 'baito', label: 'バイト', hint: 'お金＋・体調−' },
   { key: 'rest', label: '休む', hint: '体調・やる気＋' },
 ]
@@ -84,7 +84,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
       tag: '',
     })),
     { k: 'douki', label: '同期と飲む', hint: '−3,000円／結束・やる気＋', tag: '' },
-    { k: 'netacho', label: 'ネタ帳を書く', hint: '完成度＋', tag: '' },
+    { k: 'netacho', label: 'ネタ帳を書く', hint: '完成度・ワード力＋', tag: '' },
     { k: 'egosa', label: 'エゴサする', hint: 'やる気が上下する', tag: '' },
     { k: 'jikka', label: '実家に電話', hint: 'やる気＋', tag: '' },
     { k: 'sleep', label: '早く寝る', hint: '体調＋', tag: '' },
@@ -179,7 +179,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
               >
                 {dayLocked(o.key) ? <span className="tile-tag lock">{dayLocked(o.key)}</span> : dayTag(o.key) && <span className="tile-tag">{dayTag(o.key)}</span>}
                 <span className="tile-name">{o.label}</span>
-                <span className="tile-hint">{o.hint}</span>
+                <span className="tile-hint">{o.key === 'jishuren' ? `苦手を鍛える（今は${STAT_LABEL[jishurenStat(state)]}）` : o.hint}</span>
               </button>
             ))}
           </div>

@@ -403,7 +403,7 @@ const CHAINS: Record<string, DevEvent[]> = {
         `${me}（ふつう）「灰原さんも、並んでたんですね」`,
       ],
       choices: [
-        { reply: '灰原（笑い）「始発な。……寝てたら起こしたるわ」', label: '「来週、始発で並びます」', hint: '度胸＋', apply: (s) => (tie(s, 'haibara', 8), gain(s, 'guts', 2)) },
+        { reply: '灰原（笑い）「始発な。……寝てたら起こしたるわ」', label: '「来週、始発で並びます」', hint: '体力＋', apply: (s) => (tie(s, 'haibara', 8), gain(s, 'stamina', 2)) },
         { reply: '灰原（ふつう）「ええ心がけや。……私の分まで飲まんでええで」', label: 'ウーロンハイを2杯目まで付き合う', hint: '体調−', apply: (s) => (tie(s, 'haibara', 5), (s.condition = clamp(s.condition - 5))) },
         { reply: '灰原（怒り）「それ聞いてどないすんねん。……チクるのは、私の仕事や」', label: '「割り込んでる人、誰ですか」', apply: (s) => tie(s, 'haibara', 1) },
       ],
@@ -452,7 +452,7 @@ const CHAINS: Record<string, DevEvent[]> = {
         'ナレーション：座敷の隅で寝ていた先輩が、その声で起きた。',
       ],
       choices: [
-        { reply: '大河内（笑い）「それや。夜でも朝が来たように言え」', label: 'もう一度、腹から言い直す', hint: '度胸＋', apply: (s) => (tie(s, 'ookouchi', 8), gain(s, 'guts', 2)) },
+        { reply: '大河内（笑い）「それや。夜でも朝が来たように言え」', label: 'もう一度、腹から言い直す', hint: '表現力＋', apply: (s) => (tie(s, 'ookouchi', 8), gain(s, 'expr', 2)) },
         { reply: 'ナレーション：起きた先輩は「……おはようございます」と返して、また寝た。大河内が少し笑った。', label: '起きた先輩にも「おはようございます」', hint: '対応力＋', apply: (s) => (tie(s, 'ookouchi', 6), gain(s, 'adlib', 2)) },
         { reply: '大河内（ふつう）「謝らんでええ。次、声出せ」', label: '「すみません」と頭を下げる', apply: (s) => tie(s, 'ookouchi', 4) },
       ],

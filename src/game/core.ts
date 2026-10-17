@@ -22,7 +22,7 @@ export function removeSkill(state: GameState, skill: string, log: string): void 
 // 能力の伸びの倍率。バランス調整用（scripts/balance.ts で探る）
 // action：昼夜の行動、event：決まった行事の選択肢、bond：人間関係の発展イベント、stage：舞台
 // 自分で選んだ行動で伸びるほど、遊び方で差がつく
-export const TUNING = { action: 1, event: 1, bond: 1, stage: 1 }
+export const TUNING = { action: 0.85, event: 1, bond: 1, stage: 1 }
 
 let gainScale = 1
 export function withGainScale<T>(k: number, f: () => T): T {
@@ -43,6 +43,9 @@ export function growthMultiplier(state: GameState): number {
   return m
 }
 
+// バランス調整用：能力がどこでどれだけ伸びたかを数える（scripts/balance.ts）
+export const gainWatch: { on?: (key: StatKey, amount: number) => void } = {}
+
 export function gain(state: GameState, key: StatKey, base: number): number {
   const before = state.stats[key]
   let amount = base * gainScale * growthMultiplier(state)
@@ -52,6 +55,7 @@ export function gain(state: GameState, key: StatKey, base: number): number {
   const growth = BACKGROUND_BY_ID[state.player.background]?.growth ?? 0
   amount += growth * 0.3
   state.stats[key] = clamp(Math.round((before + amount) * 10) / 10)
+  gainWatch.on?.(key, state.stats[key] - before)
   return state.stats[key] - before
 }
 

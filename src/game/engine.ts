@@ -113,11 +113,20 @@ export function createGame(raw: NewGameInput): GameState {
 
 // ---- 1週間の行動 ----
 
+// 自主練の中身。ワード力・表現力・体力・対応力のうち、いちばん低いものを練習する
+const JISHUREN_STAT = { radio: 'word', hassei: 'expr', kintore: 'stamina', dance: 'adlib' } as const
+export function jishurenKind(s: GameState): keyof typeof JISHUREN_STAT {
+  return (Object.keys(JISHUREN_STAT) as (keyof typeof JISHUREN_STAT)[]).reduce((x, y) => (s.stats[JISHUREN_STAT[y]] < s.stats[JISHUREN_STAT[x]] ? y : x))
+}
+export function jishurenStat(s: GameState): StatKey {
+  return JISHUREN_STAT[jishurenKind(s)]
+}
+
 function applyDay(s: GameState, a: DayAction, rng: Rng): void {
   const log = s.weekLog
   switch (a.type) {
     case 'neta': {
-      gain(s, 'idea', has(s, 'ryousan') ? 4.5 : 3.5)
+      gain(s, 'idea', has(s, 'ryousan') ? 3.5 : 2.5)
       s.condition = clamp(s.condition - 8)
       count(s, 'neta')
       log.push(flavor('netazukuri', rng))
@@ -156,25 +165,26 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
     }
     case 'jishuren': {
       s.condition = clamp(s.condition - 10)
-      // 何をやるかは選べない。深夜ラジオ投稿＝ワード力、発声・滑舌＝表現力、筋トレ＝体力、ダンス＝対応力
-      const kind = a.kind ?? rng.pick(['radio', 'hassei', 'kintore', 'dance'] as const)
+      // 苦手なところを鍛える。深夜ラジオ投稿＝ワード力、発声・滑舌＝表現力、筋トレ＝体力、ダンス＝対応力
+      // （どの能力も同じくらい伸ばせるように、4つのうちいちばん低い能力を練習する）
+      const kind = a.kind ?? jishurenKind(s)
       if (kind === 'radio') {
-        gain(s, 'word', 3)
+        gain(s, 'word', 3.5)
         log.push(flavor('jishuren_radio', rng))
         log.push('言葉を削る力、ワード力が少し鍛えられた気がする。')
       } else if (kind === 'hassei') {
-        gain(s, 'expr', 3)
+        gain(s, 'expr', 3.5)
         count(s, 'hassei')
         tie(s, 'miyake', 3)
         tie(s, 'kishibe', 2)
         log.push(flavor('jishuren_hassei', rng))
         log.push('声が前に出るようになって、表現力が上がった気がする。')
       } else if (kind === 'kintore') {
-        gain(s, 'stamina', 3)
+        gain(s, 'stamina', 3.5)
         log.push(flavor('jishuren_kintore', rng))
         log.push('体が軽い。体力が付いてきた気がする。')
       } else {
-        gain(s, 'adlib', 3)
+        gain(s, 'adlib', 3.5)
         log.push(flavor('jishuren_dance', rng))
         log.push('体が勝手に動くようになって、対応力が上がった気がする。')
       }
@@ -198,8 +208,8 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
     case 'jishulive': {
       s.money -= 2000
       s.condition = clamp(s.condition - 6)
-      gain(s, 'guts', 3)
-      gain(s, 'adlib', 1)
+      gain(s, 'guts', 2)
+      gain(s, 'adlib', 1.5)
       s.outsideRep = clamp(s.outsideRep + (has(s, 'chika') ? 6 : 3))
       count(s, 'jishulive')
       tie(s, 'nakaji', 3)
@@ -215,8 +225,8 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
     }
     case 'kangeki': {
       s.money -= 1500
-      gain(s, 'idea', 2)
-      gain(s, 'word', 1.5)
+      gain(s, 'word', 2.5)
+      gain(s, 'idea', 1)
       s.motivation = clamp(s.motivation + 6)
       tie(s, 'shihainin', 6)
       log.push(flavor('kangeki', rng))
@@ -225,7 +235,8 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
     case 'tetsudai': {
       // 先輩ライブの裏方。タダ。袖から見られて、知っている先輩には顔を覚えてもらえる
       s.condition = clamp(s.condition - 6)
-      gain(s, 'guts', 1.5)
+      gain(s, 'guts', 1)
+      gain(s, 'stamina', 1)
       // 認めは少しだけ。知っている先輩がいれば、袖での受け答えで上がったり下がったりする
       for (const sr of s.seniors) if (s.flags[`met_${sr.id}`]) sr.respect = clamp(sr.respect + 1)
       if (s.flags.met_nakaji) tie(s, 'nakaji', 2)
@@ -279,7 +290,7 @@ function applyNight(s: GameState, a: NightAction, rng: Rng): void {
       break
     case 'netacho':
       s.neta.polish = clamp(s.neta.polish + 4)
-      gain(s, 'idea', 1)
+      gain(s, 'word', 1)
       s.condition = clamp(s.condition - 3)
       log.push(flavor('netacho', rng))
       break
@@ -490,7 +501,9 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
   // やる気
   if (r.level === 0) s.motivation = clamp(s.motivation - (has(s, 'hagane') || has(s, 'homerare') ? 3 : 8))
   if (r.level >= 2) s.motivation = clamp(s.motivation + 5)
-  gain(s, 'guts', 0.5 + r.level * 0.3)
+  // 舞台に立つたびに、度胸と対応力が少し付く
+  gain(s, 'guts', 0.1 + r.level * 0.1)
+  gain(s, 'adlib', 0.2 + r.level * 0.1)
   applyShowcaseGains(s, r)
 
   // 見ていた人の評価（認められ度は、ウケたときだけ上がる）

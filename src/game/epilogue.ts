@@ -167,6 +167,7 @@ export function buildEpilogue(s: GameState): ResultSummary {
   const shareText = [
     `【ワラガク！卒業】${s.player.name}${s.comboName ? `（${s.comboName}）` : ''}`,
     `称号：${review.title}`,
+    `二つ名：${review.nickname}`,
     `総合${rank}｜${review.gradeLine}`,
     `同期300人→${s.classmates}人`,
     `講師の寸評「${review.oneLine}」`,

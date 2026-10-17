@@ -312,7 +312,7 @@ export function maDuration(kind: StageKind): number {
 
 // 針のブレ幅。大きい舞台で度胸が低いほど大きい
 export function needleShake(state: GameState, kind: StageKind): number {
-  return stagePressure(kind) * Math.max(0, 60 - state.stats.guts) * 0.0006
+  return stagePressure(kind) * Math.max(0, 80 - state.stats.guts) * 0.00036
 }
 
 // 発想力が高いと、一番いいボケが「ピンとくる」
@@ -336,7 +336,7 @@ export function roleBand(state: GameState, kind: StageKind): { from: number; to:
 }
 
 export function roleDrift(state: GameState, kind: StageKind): number {
-  return 0.04 + stagePressure(kind) * 0.05 + Math.max(0, 60 - state.stats.guts) * 0.002
+  return 0.04 + stagePressure(kind) * 0.05 + Math.max(0, 80 - state.stats.guts) * 0.0012
 }
 
 // 帯の中にいた割合と、外れたときにどちらへ外れていたか

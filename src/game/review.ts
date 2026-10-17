@@ -174,9 +174,40 @@ function pickBy<T>(items: readonly T[], seed: string): T {
   return items[hashOf(seed) % items.length]
 }
 
+// 能力のバランスで決まる二つ名。上位2つの組み合わせが基本で、形が極端なときは特別な名前
+const PAIR_NAME: Record<string, string> = {
+  'idea+word': '言葉の魔術師',
+  'idea+expr': '憑依する空想家',
+  'idea+guts': '怖いもの知らずの変人',
+  'idea+adlib': '予測不能',
+  'idea+stamina': '眠らないネタ製造機',
+  'word+expr': '声で刺す',
+  'word+guts': '毒舌の鉄砲玉',
+  'word+adlib': '返しの鬼',
+  'word+stamina': '止まらない口',
+  'expr+guts': '舞台の怪物',
+  'expr+adlib': 'カメレオン',
+  'expr+stamina': '全身芸人',
+  'guts+adlib': '修羅場の住人',
+  'guts+stamina': '不死身',
+  'adlib+stamina': '現場の叩き上げ',
+}
+export function nicknameOf(stats: Record<StatKey, number>): string {
+  const sorted = [...STAT_KEYS].sort((a, b) => stats[b] - stats[a])
+  const vals = sorted.map((k) => stats[k])
+  const [hi, second, lo] = [vals[0], vals[1], vals[vals.length - 1]]
+  if (lo >= 80) return '完全無欠'
+  if (hi < 40) return '伸びしろの塊'
+  if (hi - lo <= 10) return '器用貧乏'
+  if (hi - second >= 15) return `${SHORT[sorted[0]]}一本槍`
+  const pair = STAT_KEYS.filter((k) => k === sorted[0] || k === sorted[1]).join('+')
+  return PAIR_NAME[pair]
+}
+
 export interface Review {
   grades: { key: StatKey; label: string; value: number; grade: Grade }[]
   title: string
+  nickname: string // 能力のバランスで決まる二つ名
   comment: string // 寸評（2〜3文）
   oneLine: string // シェア用の一言
   neighbor: string // 卒業式で隣にいた人
@@ -230,5 +261,5 @@ export function buildReview(s: GameState, rank: string): Review {
 
   const gradeLine = grades.map((g) => `${SHORT[g.key]}${g.grade}`).join(' ')
 
-  return { grades, title, comment, oneLine: close, neighbor, gifts, gradeLine, kodawari: k ? `${k}（${keep >= bend ? '守り通した' : '何度か曲げた'}）` : undefined }
+  return { grades, title, nickname: nicknameOf(s.stats), comment, oneLine: close, neighbor, gifts, gradeLine, kodawari: k ? `${k}（${keep >= bend ? '守り通した' : '何度か曲げた'}）` : undefined }
 }
