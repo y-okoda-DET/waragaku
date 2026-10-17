@@ -15,7 +15,7 @@ export function AlbumScreen({ album, onBack }: { album: Album; onBack: () => voi
           <dt>卒業した回数</dt>
           <dd>{album.runs}回</dd>
           <dt>いちばん良い評価</dt>
-          <dd>{album.bestRank ?? '-'}</dd>
+          <dd>{album.bestRank ? `${album.bestRank}${album.bestScore !== undefined ? `（${album.bestScore}点）` : ''}` : '-'}</dd>
           <dt>卒業大会</dt>
           <dd>{album.bestGrad ? (album.bestGrad === 1 ? '優勝（卒業総代）' : `${album.bestGrad}位`) : '-'}</dd>
           <dt>うめた数</dt>

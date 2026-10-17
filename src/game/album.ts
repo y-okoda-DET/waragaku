@@ -7,6 +7,7 @@ import type { GameState } from './types'
 export interface Album {
   runs: number
   bestRank?: string
+  bestScore?: number
   bestGrad?: number
   skills: string[]
   routes: string[]
@@ -71,7 +72,7 @@ export function runEntries(s: GameState) {
   const got = SKILLS.filter((d) => s.skills.includes(d.id) || s.counters[`got_${d.id}`]).map((d) => d.id)
   const r = rivalOf(s)
   const rivals = RIVAL_ENDINGS.filter((e) => e.rival === r && (e.id.endsWith('_win') ? s.gradRank === 1 : s.flags[e.id])).map((e) => e.id)
-  return { key: `${s.player.name}|${s.rng}|${ep.total}`, rank: ep.rank, route: ep.route, skills: got, rivals }
+  return { key: `${s.player.name}|${s.rng}|${ep.total}`, rank: ep.rank, total: ep.total, route: ep.route, skills: got, rivals }
 }
 
 // 卒業を書き込む。新しく増えたものを返す（もう書いた卒業なら何も足さない）
@@ -87,9 +88,12 @@ export function recordRun(s: GameState): { album: Album; fresh: string[] } {
     list.push(v)
     fresh.push(label)
   }
-  if (rankIndex(e.rank) < rankIndex(a.bestRank)) {
-    if (a.bestRank) fresh.push(`いちばん良い評価：${e.rank}`)
+  // 点数を持っていない古い記録は、評価だけで比べる
+  const better = a.bestScore !== undefined ? e.total > a.bestScore : rankIndex(e.rank) <= rankIndex(a.bestRank)
+  if (better) {
+    if (a.bestRank) fresh.push(`いちばん良い評価：${e.rank}（${e.total}点）`)
     a.bestRank = e.rank
+    a.bestScore = e.total
   }
   if (s.gradRank && (!a.bestGrad || s.gradRank < a.bestGrad)) a.bestGrad = s.gradRank
   add(a.routes, e.route, `芸人1年目「${e.route}」`)
