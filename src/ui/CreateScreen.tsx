@@ -75,13 +75,12 @@ export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInpu
         <h2>2. 性別</h2>
         <div className="gender-pick">
           {(['male', 'female'] as Gender[]).map((g) => (
-            <button key={g} className={gender === g ? 'on' : ''} onClick={() => setGender(g)} aria-pressed={gender === g}>
+            <button key={g} className={gender === g ? 'on' : ''} onClick={() => setGender(g)} aria-pressed={gender === g} aria-label={g === 'male' ? '男性' : '女性'}>
               {portrait(heroKey(g), 'normal') ? (
                 <HeroFace gender={g} size={64} />
               ) : (
                 <Avatar hair={PLAYER_LOOK[g].hairColor} outfit={outfitColor(PLAYER_LOOK[g].outfit)} size={64} long={g === 'female'} />
               )}
-              <span>{g === 'male' ? '男性' : '女性'}</span>
             </button>
           ))}
         </div>
