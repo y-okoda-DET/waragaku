@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AUDIENCE_TASTE, LEAN_LABEL, gradeBlackout, gradeConte, gradeRole, gradeTsukkomi, gradeWord, roleBand, roleDrift, maDuration, needleShake, playerLean, rememberPicks, shuffledOptions, tsukkomiZones, wordHint, type ConteScene, type ConteSetting, type Scene, type ShowcaseGrade, type ShowcasePick, type TsukkomiScene, type WordScene } from '../game/showcase'
 import { STAGES, conditionWarning } from '../game/stage'
 import type { GameState, StageKind } from '../game/types'
+import { background, charaKey, heroKey, portrait, type Expr } from './art'
 
 const GRADE_SOUND: Record<ShowcaseGrade, string> = { great: 'ドッ', good: 'クスッ', miss: 'シーン…' }
 
@@ -63,6 +64,40 @@ function ConteLabel({ conte }: { conte: ConteSetting }) {
   )
 }
 
+// 舞台の絵。会場の背景に、主人公と相方を並べる。ウケたら笑い、スベったら落ち込む
+const VENUE: Record<StageKind, string> = {
+  netamise: 'kyoushitsu',
+  live: 'koudou',
+  contest_conte: 'livehouse',
+  contest_manzai: 'livehouse',
+  gasshuku: 'koudou',
+  tozai: 'butai',
+  grad_prelim: 'butai',
+  grad_final: 'butai',
+}
+const FACES: Record<ShowcaseGrade | 'wait', [Expr, Expr]> = {
+  wait: ['normal', 'normal'],
+  great: ['laugh', 'laugh'],
+  good: ['smile', 'smile'],
+  miss: ['surprise', 'down'],
+}
+function Stage({ state, kind, mood = 'wait', blackout = false, children }: { state: GameState; kind: StageKind; mood?: ShowcaseGrade | 'wait'; blackout?: boolean; children: ReactNode }) {
+  const bg = background(VENUE[kind])
+  const [me, you] = FACES[mood]
+  const hero = portrait(heroKey(state.player.gender), me)
+  const partner = state.partner ? portrait(charaKey(state, state.partner.name), you) : undefined
+  return (
+    <div className={`studio sc-stage ${bg ? 'has-bg' : ''} ${blackout ? 'blackout' : ''}`} style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
+      {!bg && <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />}
+      <div className="sc-people" aria-hidden="true">
+        {hero && <img src={hero} alt="" draggable={false} />}
+        {partner && <img src={partner} alt="" draggable={false} />}
+      </div>
+      <div className="sc-layer">{children}</div>
+    </div>
+  )
+}
+
 // 吹き出しの名札。コントのときは役名を添える
 function speaker(partner: string, conte?: ConteSetting): string {
   return conte ? `${partner}（${conte.you}）` : partner
@@ -111,8 +146,7 @@ function WordGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { st
 
   return (
     <>
-      <div className="studio sc-stage">
-        <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
+      <Stage state={state} kind={kind} mood={done ? grade : 'wait'}>
         <div className="sc-bubble">
           <span className="telop-tag">{speaker(partner, scene.conte)}</span>
           <span className="sc-line">「{scene.furi}」</span>
@@ -124,7 +158,7 @@ function WordGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { st
             {opt.react}
           </div>
         )}
-      </div>
+      </Stage>
       {!done ? (
         <>
           <div className="sc-timer" aria-label={`残り${left}秒`}>
@@ -201,14 +235,13 @@ function TsukkomiGame({ state, kind, scene, partner, nextLabel, onDone }: { stat
 
   return (
     <>
-      <div className="studio sc-stage">
-        <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
+      <Stage state={state} kind={kind} mood={result ? result.grade : 'wait'}>
         <div className="sc-bubble">
           <span className="telop-tag">{speaker(partner, scene.conte)}</span>
           <span className="sc-line">「{scene.boke.slice(0, shown)}」</span>
         </div>
         {result && <div className={`sc-answer ${result.grade === 'miss' ? 'off' : ''}`}>{result.label === 'ツッコミ忘れ' ? '（……ツッコミそびれた）' : `「${scene.tsukkomi}」`}</div>}
-      </div>
+      </Stage>
       {!result ? (
         <>
           <div className="sc-ma" aria-hidden="true">
@@ -260,6 +293,9 @@ function ConteGame({ state, kind, seed, scene, partner, nextLabel, onDone }: { s
     const grade = gradeConte(beats.map((b) => b.grade))
     return (
       <>
+        <Stage state={state} kind={kind} mood={grade}>
+          {null}
+        </Stage>
         <div className="sc-read conte-beats">
           {beats.map((b, i) => (
             <span key={i} className={`grade-${b.grade}`}>
@@ -332,13 +368,12 @@ function ConteOpen({ state, kind, seed, scene, result, onPick }: { state: GameSt
 
   return (
     <>
-      <div className="studio sc-stage">
-        <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
+      <Stage state={state} kind={kind} mood={result ? result.grade : 'wait'}>
         <div className="sc-bubble">
           <span className="telop-tag">明転</span>
           <span className="sc-line">{result ? (picked !== null ? options[picked].text : '（……第一声が出ない）') : `${scene.conte.place}。${scene.conte.me}として、最初に何をする？`}</span>
         </div>
-      </div>
+      </Stage>
       {!result ? (
         <>
           <div className="sc-timer" aria-label={`残り${left}秒`}>
@@ -416,14 +451,13 @@ function ConteRole({ state, kind, scene, partner, result, onEnd }: { state: Game
 
   return (
     <>
-      <div className="studio sc-stage">
-        <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
+      <Stage state={state} kind={kind} mood={result ? result.grade : 'wait'}>
         <div className="sc-bubble">
           <span className="telop-tag">{speaker(partner, scene.conte)}</span>
           <span className="sc-line">「{result ? scene.role : scene.role.slice(0, shown)}」</span>
         </div>
         {result && <div className={`sc-answer ${result.grade === 'miss' ? 'off' : ''}`}>「{scene.uke}」</div>}
-      </div>
+      </Stage>
       {!result ? (
         <>
           <div className="sc-ma role-meter" aria-hidden="true">
@@ -483,13 +517,12 @@ function ConteOchi({ state, kind, scene, partner, result, onEnd }: { state: Game
 
   return (
     <>
-      <div className={`studio sc-stage ${result ? 'blackout' : ''}`}>
-        <span className="blob" style={{ right: -70, top: -50, width: 220, height: 220, background: '#ffb52e' }} />
+      <Stage state={state} kind={kind} mood={result ? result.grade : 'wait'} blackout={!!result}>
         <div className="sc-bubble">
           <span className="telop-tag">{speaker(partner, scene.conte)}</span>
           <span className="sc-line">「{scene.ochi.slice(0, shown)}」</span>
         </div>
-      </div>
+      </Stage>
       {!result ? (
         <>
           <div className="sc-ma" aria-hidden="true">

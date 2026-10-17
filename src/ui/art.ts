@@ -41,6 +41,10 @@ export function portrait(key: string | undefined, expr: Expr): string | undefine
   return ART[`${key}_${expr}`] ?? ART[`${key}_normal`]
 }
 
+export function background(place: string): string | undefined {
+  return ART[`bg_${place}`]
+}
+
 // イベント名 → 場所。背景がまだない場所は従来の色背景のまま
 const PLACE_BY_TITLE: Record<string, string> = {
   入学式: 'koudou',
