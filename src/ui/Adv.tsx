@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { weekLabel } from '../game/data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from '../game/data/people'
 import type { GameState } from '../game/types'
 import { backgrounds, charaKey, exprOf, portrait, type Expr } from './art'
 import { shotsOf } from './scene'
 import { LOG, pushLog } from './log'
+import { isSeen, lineKey, markSeen } from './seen'
 import { parseLine } from './script'
 import { HAIR, OUTFITS } from './looks'
 import { Avatar, PlayerAvatar } from './parts'
@@ -15,9 +16,15 @@ import { Avatar, PlayerAvatar } from './parts'
 // 1文字ずつ出す速さ。句読点では少し止まる。タップすると一気に全部出る
 const TYPE_MS = 48
 const PAUSE_MS: Record<string, number> = { '、': 140, '。': 260, '！': 220, '？': 220, '…': 120, '」': 120 }
-// スキップ中は2倍の速さで文字を出し、読み終えた行は自動で次へ送る（選択肢の前では止まる）。画面をまたいでも続く
-let skipping = false
+// スキップはボタンを押すたびに「既読スキップ → 全部スキップ → 止める」と切り替わる
+// 既読スキップ：前の周回までに読んだ行を一瞬で飛ばし、まだ読んでいない行は2倍の速さで出して自動で送る
+// 全部スキップ：読んでいない行も一瞬で飛ばす。どちらも選択肢の前では止まり、画面をまたいでも続く
+type SkipMode = 'off' | 'read' | 'all'
+const SKIP_NEXT: Record<SkipMode, SkipMode> = { off: 'read', read: 'all', all: 'off' }
+const SKIP_LABEL: Record<SkipMode, string> = { off: 'スキップ', read: '既読スキップ中', all: '全部スキップ中' }
+let skipping: SkipMode = 'off'
 const AUTO_MS = 700
+const SEEN_MS = 90
 
 export function LogPanel({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -95,20 +102,29 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
   const shot = shotsOf(parsed.map((l) => l.stage), namesOf(state), state.partner && !scripted ? { 相方: state.partner.name } : {})[index] ?? { cast: [] }
 
   const [log, setLog] = useState(false)
-  const [skip, setSkip] = useState(skipping)
+  const [skipMode, setSkipMode] = useState(skipping)
+  const skip = skipMode !== 'off'
   // 最後の行を読み終えてから、もう一度タップして選択肢を出す
   const [choices, setChoices] = useState(false)
   const speed = skip ? 0.5 : 1
+  const names = [p.name, p.callName, state.partner?.name ?? '', state.comboName ?? ''].sort((a, b) => b.length - a.length)
+  const key = lineKey(line, names)
+  // この行を開いた時点で、前に読んだことがあるか（読んだ印をつける前に見ておく）
+  const read = useMemo(() => isSeen(key), [key])
+  const fast = skipMode === 'all' || (skipMode === 'read' && read)
 
   useEffect(() => {
     if (!typing || log) return
+    if (fast) return setShown(line.length)
     const t = setTimeout(() => setShown((v) => v + 1), (shown === 0 ? 160 : TYPE_MS + (PAUSE_MS[line[shown - 1]] ?? 0)) * speed)
     return () => clearTimeout(t)
-  }, [shown, typing, line, log, speed])
+  }, [shown, typing, line, log, speed, fast])
 
   // 表示した行をログに残す
   useEffect(() => {
-    if (line) pushLog({ speaker: cur?.speaker, text: line })
+    if (!line) return
+    pushLog({ speaker: cur?.speaker, text: line })
+    markSeen(key)
   }, [index]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const advance = () => {
@@ -123,7 +139,7 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
   // スキップ中は、読み終えた行を少し待って自動で送る
   useEffect(() => {
     if (!skip || typing || log || (last && after)) return
-    const t = setTimeout(advance, AUTO_MS)
+    const t = setTimeout(advance, fast ? SEEN_MS : AUTO_MS)
     return () => clearTimeout(t)
   })
 
@@ -163,11 +179,11 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
               aria-pressed={skip}
               onClick={(e) => {
                 e.stopPropagation()
-                skipping = !skip
-                setSkip(!skip)
+                skipping = SKIP_NEXT[skipMode]
+                setSkipMode(skipping)
               }}
             >
-              {skip ? 'スキップ中' : 'スキップ'}
+              {SKIP_LABEL[skipMode]}
             </button>
           </span>
         </div>

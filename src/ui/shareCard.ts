@@ -1,5 +1,6 @@
 import type { ResultSummary } from '../game/epilogue'
 import type { GameState } from '../game/types'
+import { careerLabel } from '../game/careers'
 import { charaKey, heroKey, portrait } from './art'
 
 // 卒業の結果を、Xに貼れる横長の画像（1200×675）にする
@@ -151,6 +152,15 @@ export async function drawShareCard(state: GameState, ep: ResultSummary): Promis
   ctx.fill()
   ctx.fillStyle = '#fff'
   ctx.fillText('大笑芸能学院 卒業', 78, 69)
+  // 経歴（高校卒業以外のときだけ）
+  const bgId = state.player.background
+  const career = bgId === 'circle' ? `${careerLabel(bgId)}出身` : bgId && bgId !== 'fresh' ? careerLabel(bgId) : ''
+  if (career) {
+    const cw = ctx.measureText(career).width + 36
+    card(ctx, 272, 44, cw, 36, '#fff', 18)
+    ctx.fillStyle = INK
+    ctx.fillText(career, 290, 69)
+  }
   ctx.font = `64px ${MINCHO}`
   boldText(ctx, 'ワラガク', 60, 152, CORAL, 4, 5)
   const lw = ctx.measureText('ワラガク').width
@@ -179,9 +189,9 @@ export async function drawShareCard(state: GameState, ep: ResultSummary): Promis
     ctx.textAlign = 'center'
     ctx.fillStyle = fg
     ctx.font = `44px ${DISPLAY}`
-    ctx.fillText(g.grade, x + tw / 2, 448)
-    ctx.font = `900 16px ${ROUND}`
-    ctx.fillText(g.label, x + tw / 2, 474)
+    ctx.fillText(g.grade, x + tw / 2, 442)
+    ctx.font = `900 15px ${ROUND}`
+    ctx.fillText(`${g.label} ${g.value}`, x + tw / 2, 472)
     ctx.textAlign = 'left'
   })
 
