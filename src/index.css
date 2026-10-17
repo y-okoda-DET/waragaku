@@ -1204,8 +1204,8 @@ p {
 
 /* 会話画面 */
 .adv {
-  min-height: 100dvh;
-  padding-bottom: 24px;
+  min-height: 100svh;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
 }
 .adv-scene {
   position: relative;
@@ -1213,7 +1213,8 @@ p {
   isolation: isolate;
   /* 絵の枠は場面の途中で大きさを変えない（人の有無や選択肢の表示で伸び縮みさせない）。
      svh はスマホのツールバーの出し入れで変わらない */
-  --scene-h: clamp(230px, 40svh, 360px);
+  /* 縦長のスマホでも下が空かないように、文章の箱（140px）と余白を除いた高さを全部使う */
+  --scene-h: clamp(230px, calc(100svh - 200px), 760px);
   height: var(--scene-h);
   flex-shrink: 0;
   background: var(--sun-light);
@@ -1284,7 +1285,7 @@ p {
   display: block;
   max-width: 100%;
   height: auto;
-  max-height: clamp(150px, 30svh, 250px);
+  max-height: calc(var(--scene-h) * 0.8);
   object-fit: contain;
   object-position: bottom;
   transform-origin: bottom center;
@@ -1319,7 +1320,7 @@ p {
   position: relative;
   display: block;
   width: 100%;
-  min-height: 112px;
+  min-height: 140px;
   background: var(--card);
   border: var(--stroke) solid var(--line);
   border-radius: 16px;
@@ -1364,6 +1365,13 @@ p {
   }
 }
 .adv-after {
+  position: absolute;
+  z-index: 2;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  max-height: calc(100% - 56px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1679,9 +1687,6 @@ p {
 }
 .adv.has-after {
   cursor: default;
-}
-.adv.has-after .adv-box {
-  min-height: 0;
 }
 .adv-after .option {
   padding-top: 8px;

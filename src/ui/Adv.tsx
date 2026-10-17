@@ -16,15 +16,10 @@ import { Avatar, PlayerAvatar } from './parts'
 // 1文字ずつ出す速さ。句読点では少し止まる。タップすると一気に全部出る
 const TYPE_MS = 48
 const PAUSE_MS: Record<string, number> = { '、': 140, '。': 260, '！': 220, '？': 220, '…': 120, '」': 120 }
-// スキップはボタンを押すたびに「既読スキップ → 全部スキップ → 止める」と切り替わる
-// 既読スキップ：前の周回までに読んだ行を一瞬で飛ばし、まだ読んでいない行は2倍の速さで出して自動で送る
-// 全部スキップ：読んでいない行も一瞬で飛ばす。どちらも選択肢の前では止まり、画面をまたいでも続く
-type SkipMode = 'off' | 'read' | 'all'
-const SKIP_NEXT: Record<SkipMode, SkipMode> = { off: 'read', read: 'all', all: 'off' }
-const SKIP_LABEL: Record<SkipMode, string> = { off: 'スキップ', read: '既読スキップ中', all: '全部スキップ中' }
-let skipping: SkipMode = 'off'
-const AUTO_MS = 700
-const SEEN_MS = 90
+// パワプロ式の既読スキップ。前の周回までに読んだ行を早送りで飛ばし、まだ読んでいない行に来たら止まる
+// 選択肢の前でも止まるが、スキップ自体は切れずに、選んだあとも続く。画面をまたいでも続く
+let skipping = false
+const SKIP_MS = 40
 
 export function LogPanel({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -102,23 +97,25 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
   const shot = shotsOf(parsed.map((l) => l.stage), namesOf(state), state.partner && !scripted ? { 相方: state.partner.name } : {})[index] ?? { cast: [] }
 
   const [log, setLog] = useState(false)
-  const [skipMode, setSkipMode] = useState(skipping)
-  const skip = skipMode !== 'off'
+  const [skip, setSkipState] = useState(skipping)
+  const setSkip = (v: boolean) => {
+    skipping = v
+    setSkipState(v)
+  }
   // 最後の行を読み終えてから、もう一度タップして選択肢を出す
   const [choices, setChoices] = useState(false)
-  const speed = skip ? 0.5 : 1
   const names = [p.name, p.callName, state.partner?.name ?? '', state.comboName ?? ''].sort((a, b) => b.length - a.length)
   const key = lineKey(line, names)
   // この行を開いた時点で、前に読んだことがあるか（読んだ印をつける前に見ておく）
   const read = useMemo(() => isSeen(key), [key])
-  const fast = skipMode === 'all' || (skipMode === 'read' && read)
+  const fast = skip && read
 
   useEffect(() => {
     if (!typing || log) return
     if (fast) return setShown(line.length)
-    const t = setTimeout(() => setShown((v) => v + 1), (shown === 0 ? 160 : TYPE_MS + (PAUSE_MS[line[shown - 1]] ?? 0)) * speed)
+    const t = setTimeout(() => setShown((v) => v + 1), shown === 0 ? 160 : TYPE_MS + (PAUSE_MS[line[shown - 1]] ?? 0))
     return () => clearTimeout(t)
-  }, [shown, typing, line, log, speed, fast])
+  }, [shown, typing, line, log, fast])
 
   // 表示した行をログに残す
   useEffect(() => {
@@ -136,10 +133,23 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
     else if (onEnd) onEnd()
   }
 
-  // スキップ中は、読み終えた行を少し待って自動で送る
+  // まだ読んでいない行に来たら、スキップを止めて普通に読ませる（ボタンに少しのあいだ「未読」と出す）
+  const [unreadNote, setUnreadNote] = useState(false)
   useEffect(() => {
-    if (!skip || typing || log || (last && after)) return
-    const t = setTimeout(advance, fast ? SEEN_MS : AUTO_MS)
+    if (!skip || read || !line) return
+    setSkip(false)
+    setUnreadNote(true)
+  }, [skip, read, line])
+  useEffect(() => {
+    if (!unreadNote) return
+    const t = setTimeout(() => setUnreadNote(false), 1200)
+    return () => clearTimeout(t)
+  }, [unreadNote])
+
+  // スキップ中は、読んだことのある行をすぐ送る
+  useEffect(() => {
+    if (!fast || typing || log || (last && after)) return
+    const t = setTimeout(advance, SKIP_MS)
     return () => clearTimeout(t)
   })
 
@@ -176,14 +186,14 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
             </button>
             <button
               className={`adv-log-btn ${skip ? 'on' : ''}`}
+              title="前に読んだ場面を早送りします。まだ読んでいない行で止まります"
               aria-pressed={skip}
               onClick={(e) => {
                 e.stopPropagation()
-                skipping = SKIP_NEXT[skipMode]
-                setSkipMode(skipping)
+                setSkip(!skip)
               }}
             >
-              {SKIP_LABEL[skipMode]}
+              {skip ? 'スキップ中' : unreadNote ? '未読です' : 'スキップ'}
             </button>
           </span>
         </div>
@@ -192,6 +202,12 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
             <Chara key={n} state={state} name={n} expr={exprFor(n)} focus={focus === n} me={n === p.callName} />
           ))}
         </div>
+        {/* 選択肢は絵の上に重ねて出す（パワプロと同じ。文章の箱は画面の下に置いたまま） */}
+        {done && after && (
+          <div className="adv-after" onClick={(e) => e.stopPropagation()}>
+            {after}
+          </div>
+        )}
       </div>
       <button className={`adv-box ${talking ? 'talk' : ''}`} aria-label="次へ進む">
         {cur?.speaker && <span className="adv-name">{cur.speaker}</span>}
@@ -204,11 +220,6 @@ export function AdvScreen({ state, title, lines: script, place, onEnd, after, da
         </span>
         {!typing && !done && <span className="adv-next" aria-hidden="true">▼</span>}
       </button>
-      {done && after && (
-        <div className="adv-after" onClick={(e) => e.stopPropagation()}>
-          {after}
-        </div>
-      )}
       {log && <LogPanel onClose={() => setLog(false)} />}
     </div>
   )
