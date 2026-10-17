@@ -79,9 +79,24 @@ export function classmatesOf(s: GameState): string[] {
   return BOND_CHARS.filter((c) => (c.group === 'douki' || c.group === 'rival') && !isPartner(s, c.id)).map((c) => c.id)
 }
 
+// 先輩の特殊能力は、仲（like）と認め（respect）が両方とも基準を超えていないともらえない。足りなければ、次の飲みでもう一度その話になる
+export const GIFT_LIKE = 55
+export const GIFT_RESPECT = 35
+const GIFT_MISS: Record<string, { like: string; respect: string }> = {
+  haibara: { like: '灰原は戻ってくるなりノートを閉じて、「……今のは見んかったことにして」と言った。まだ、そこまでの仲ではないらしい。', respect: '灰原はノートを取り返して、「まだ早いわ。ネタ見せで一回ウケてから、もう一回見せたる」と笑った。' },
+  ookouchi: { like: '大河内は「……ええネタや。けど、まだお前のこと、よう知らん」と言って、ジョッキを空けた。', respect: '大河内はネタを最後まで見て、「……まだや。舞台でウケたとこ見せてから、もう一回持ってこい」と言った。' },
+  nakaji: { like: 'ナカジは「……気持ちだけ、もらっとくね」と笑った。まだ、全部を任せるほどの仲ではないらしい。', respect: 'ナカジは「ありがとう。でも先に、事務所のライブでウケてるとこ見せて。そしたら照明も任せる」と言った。' },
+}
+
 function inherit(s: GameState, id: string): void {
   const c = BOND_BY_ID[id]
   if (has(s, c.skill)) return
+  const sr = c.group === 'senior' ? s.seniors.find((x) => x.id === id) : undefined
+  if (sr && (sr.like < GIFT_LIKE || sr.respect < GIFT_RESPECT)) {
+    s.weekLog.push(GIFT_MISS[id][sr.respect < GIFT_RESPECT ? 'respect' : 'like'])
+    s.counters[`dev_${id}`] = Math.max(0, (s.counters[`dev_${id}`] ?? 1) - 1)
+    return
+  }
   addSkill(s, c.skill, `特殊能力「${SKILL_BY_ID[c.skill].name}」を${c.name}から受け継いだ。`)
   s.gifts ??= {}
   s.gifts[c.skill] = c.name
@@ -96,7 +111,7 @@ export function scheduleBondEvent(s: GameState, rng: Rng): boolean {
     const chain = CHAINS[c.id]
     if (step >= chain.length) return false
     if (c.group === 'douki' && s.turn < 2) return false // 相方見つけ会のあとから
-    if (c.group === 'senior' && !s.flags[`met_${c.id}`]) return false // 出会う前の先輩とは起きない
+    if (c.group === 'senior') return false // 先輩の話は、飲みに行ったときに進む（seniorDrama）
     if (s.turn < STEP_FROM[step]) return false
     if (s.turn - (s.counters[`devAt_${c.id}`] ?? -99) < GAP) return false
     return affinity(s, c.id) >= STEP_NEED[step]
@@ -117,6 +132,18 @@ export function scheduleBondEvent(s: GameState, rng: Rng): boolean {
   s.counters[`dev_${pick.id}`] = step + 1
   s.counters[`devAt_${pick.id}`] = s.turn
   story(s, `dev_${pick.id}_${step}`)
+  return true
+}
+
+// 先輩と飲みに行ったとき、その先輩の話が1つ進む。仲が足りなければ、ただの飲みで終わる
+const SENIOR_NEED = [15, 30, 45]
+export function seniorDrama(s: GameState, id: string): boolean {
+  const chain = CHAINS[id]
+  const step = stepOf(s, id)
+  if (!chain || step >= chain.length || affinity(s, id) < SENIOR_NEED[step]) return false
+  s.counters[`dev_${id}`] = step + 1
+  s.counters[`devAt_${id}`] = s.turn
+  story(s, `dev_${id}_${step}`)
   return true
 }
 
@@ -367,26 +394,25 @@ const CHAINS: Record<string, DevEvent[]> = {
   // 灰原：関西弁。1期上の助手先輩。入学式で「両隣いなくなる」と言った人【research/02 助手先輩】
   haibara: [
     {
-      title: '朝6時の廊下',
-      place: 'rouka',
+      title: '1杯だけ',
+      place: 'izakaya',
       lines: (_s, me) => [
-        'ナレーション：ネタ見せの日の朝6時。階段の下に、もう列ができている。',
-        'ナレーション：列を整理しているのは、助手先輩の灰原だった。',
-        '灰原（ふつう）「おはようございます。順番は並んだ順。割り込みは見たら全部言うから」',
-        '灰原（笑い）「私も去年は並ぶ側やった。始発で来て、ここで台本読んでた。……ここ、日当たりええねん。寝てまうで」',
-        `${me}（ふつう）「おはようございます！」`,
+        'ナレーション：灰原と、駅前の安い居酒屋。灰原はウーロンハイを1杯だけ頼んで、ずっとそれを持っている。',
+        '灰原（ふつう）「助手の仕事な、ネタ見せの朝6時に列を整理すんねん。割り込みは、上から全部見えてる」',
+        '灰原（笑い）「私も去年は並ぶ側やった。始発で来て、階段の下で台本読んでた。……あそこ、日当たりええねん。寝てまうで」',
+        `${me}（ふつう）「灰原さんも、並んでたんですね」`,
       ],
       choices: [
-        { reply: '灰原（笑い）「助手の仕事取らんといて。……でも助かるわ」', label: '列の整理を手伝う', hint: '体調−', apply: (s) => (tie(s, 'haibara', 8), (s.condition = clamp(s.condition - 5))) },
-        { reply: '灰原（ふつう）「ええ心がけや。私もそこで読んでた」', label: '列に並んで台本を読む', hint: 'ワード力＋', apply: (s) => (tie(s, 'haibara', 3), gain(s, 'word', 2)) },
-        { reply: '灰原（爆笑）「寝てもうたら、順番飛ばすで！」', label: '日当たりのいい場所で寝る', hint: '体調＋', apply: (s) => (tie(s, 'haibara', 5), (s.condition = clamp(s.condition + 8))) },
+        { reply: '灰原（笑い）「始発な。……寝てたら起こしたるわ」', label: '「来週、始発で並びます」', hint: '度胸＋', apply: (s) => (tie(s, 'haibara', 8), gain(s, 'guts', 2)) },
+        { reply: '灰原（ふつう）「ええ心がけや。……私の分まで飲まんでええで」', label: 'ウーロンハイを2杯目まで付き合う', hint: '体調−', apply: (s) => (tie(s, 'haibara', 5), (s.condition = clamp(s.condition - 5))) },
+        { reply: '灰原（怒り）「それ聞いてどないすんねん。……チクるのは、私の仕事や」', label: '「割り込んでる人、誰ですか」', apply: (s) => tie(s, 'haibara', 1) },
       ],
     },
     {
       title: '両隣の話',
       place: 'izakaya',
       lines: (_s, me) => [
-        'ナレーション：灰原に誘われて、安い居酒屋。灰原はウーロンハイを1杯だけ頼んだ。',
+        'ナレーション：2回目は、灰原から誘ってきた。ウーロンハイは、やっぱり1杯だけ。',
         '灰原（ふつう）「入学式の“両隣いなくなる”。あれ、私が入学したときに言われたことを、そのまま言うてん」',
         '灰原（落ち込み）「私の両隣も、ほんまにおらんくなった。1人は夏に辞めて、もう1人は私の元相方」',
         `${me}（考え中）「灰原さんは、何で残れたんですか」`,
@@ -399,13 +425,13 @@ const CHAINS: Record<string, DevEvent[]> = {
     },
     {
       title: '助手のノート',
-      place: 'rouka',
+      place: 'izakaya',
       lines: (_s, me) => [
-        'ナレーション：授業のあと、灰原が助手用のノートを閉じた。',
+        'ナレーション：3回目の飲み。灰原が、カバンから助手用のノートを出してテーブルに置いた。',
         '灰原（ふつう）「助手やってたら、辻堂さんが誰を上げて誰を落とすか、だいたい見えてくる」',
         '灰原（考え中）「ネタの出来より、“前回言われたことを、次に直してきたか”を見てる。同じダメ出しを2回されたら、もう名前覚えてもらわれへん」',
         `${me}（驚き）「それ、言っていいんですか」`,
-        '灰原（笑い）「あかんよ。せやから、このノートは今日たまたまここに置き忘れる」',
+        '灰原（笑い）「あかんよ。せやから、このノートは今からトイレに行ってる間、たまたまここに置き忘れる」',
       ],
       choices: [
         { reply: 'ナレーション：「前回のダメ出しを直してきた組」の欄に、自分たちの名前はまだなかった。', label: '置き忘れたノートを、そっと開く', apply: (s) => (tie(s, 'haibara', 8), inherit(s, 'haibara')) },
@@ -418,12 +444,12 @@ const CHAINS: Record<string, DevEvent[]> = {
   ookouchi: [
     {
       title: '声が小さい',
-      place: 'gakuya',
+      place: 'izakaya',
       lines: (_s, me) => [
-        'ナレーション：先輩のライブの手伝い。狭い楽屋に入るなり、大河内がこちらを見た。',
+        'ナレーション：大河内に連れられて、劇場裏の居酒屋。のれんをくぐると、奥の座敷に先輩芸人が何人もいた。',
         `${me}（ふつう）「おはようございます」`,
         '大河内（怒り）「声が小さい。夜でも“おはようございます”は、相手に届かな意味ないぞ」',
-        'ナレーション：楽屋の奥で寝ていた先輩が、その声で起きた。',
+        'ナレーション：座敷の隅で寝ていた先輩が、その声で起きた。',
       ],
       choices: [
         { reply: '大河内（笑い）「それや。夜でも朝が来たように言え」', label: 'もう一度、腹から言い直す', hint: '度胸＋', apply: (s) => (tie(s, 'ookouchi', 8), gain(s, 'guts', 2)) },
@@ -432,10 +458,10 @@ const CHAINS: Record<string, DevEvent[]> = {
       ],
     },
     {
-      title: '18年目の楽屋',
-      place: 'gakuya',
+      title: '18年目のジョッキ',
+      place: 'izakaya',
       lines: (_s, me) => [
-        'ナレーション：出番を待つ楽屋。大河内は、若手と同じ60秒の出番のために、ネタを口の中で繰り返している。',
+        'ナレーション：2回目の飲み。大河内はジョッキを置いたまま、明日の60秒の出番のネタを、口の中で繰り返している。',
         '大河内（ふつう）「売れてへんのに、なんで辞めへんのか。よう聞かれる」',
         `${me}（考え中）「……なんでですか」`,
         '大河内（笑い）「辞めるときの挨拶が、まだおもろく書けてへんねん。18年考えてるけど」',
@@ -449,14 +475,14 @@ const CHAINS: Record<string, DevEvent[]> = {
       title: '飲みより、ネタ持ってこい',
       place: 'izakaya',
       lines: (_s, me) => [
-        'ナレーション：大河内の行きつけの店。会計はもちろん大河内。',
+        'ナレーション：3回目の飲み。大河内の行きつけの店。会計はもちろん大河内。',
         '大河内（ふつう）「飲みに付き合うやつは、なんぼでもおる。ありがたいけどな」',
         '大河内（怒り）「でもライブに呼ぶのは、ネタ持ってくるやつだけや。仲ええだけのやつは呼ばれへん」',
         '大河内（笑い）「次、新ネタできたら見せに来い。飲みより、そっちの方が嬉しい。……飲みも、まあ、嬉しいけど」',
         `${me}（笑い）「どっちですか」`,
       ],
       choices: [
-        { reply: '大河内（笑い）「……ほんまに持ってきたんか。座れ、見たる」', label: '翌週、新ネタを持っていく', apply: (s) => (tie(s, 'ookouchi', 6), inherit(s, 'ookouchi')) },
+        { reply: '大河内（笑い）「……ほんまに持ってきたんか。座れ、見たる」', label: 'カバンから新ネタの台本を出す', apply: (s) => (tie(s, 'ookouchi', 6), inherit(s, 'ookouchi')) },
         {
           reply: '大河内（爆笑）「ネタ持ってきたらな！」', label: '「また飲みにも連れてってください」',
           hint: '仲の良さ＋＋',
@@ -473,9 +499,9 @@ const CHAINS: Record<string, DevEvent[]> = {
   nakaji: [
     {
       title: 'ギャラ167円',
-      place: 'baito',
+      place: 'izakaya',
       lines: (_s, me) => [
-        'ナレーション：居酒屋の厨房。休憩中のナカジが、紙を1枚ひらひらさせている。',
+        'ナレーション：バイト終わりに、ナカジと店の裏の安い居酒屋。ナカジが、紙を1枚ひらひらさせている。',
         'ナカジ（爆笑）「見て、ギャラの明細。167円」',
         `${me}（驚き）「167円！」`,
         'ナカジ（笑い）「劇場までの電車賃が片道220円。出るたびに赤字。これ額に入れて飾ってるの、俺だけだと思う」',
@@ -488,15 +514,15 @@ const CHAINS: Record<string, DevEvent[]> = {
     },
     {
       title: '自主ライブの裏側',
-      place: 'livehouse',
+      place: 'izakaya',
       lines: () => [
-        'ナレーション：ナカジが主催する自主ライブ。受付も照明もMCも、ナカジ一人。',
+        'ナレーション：2回目の飲み。ナカジが主催している自主ライブの話になった。受付も照明もMCも、ナカジ一人でやっているらしい。',
         'ナカジ（笑い）「客席10人。そのうち4人は出演者の身内。でもね、毎回来てくれる人が2人いる」',
         'ナカジ（ふつう）「その2人の名前、俺まだ知らないんだよね。もう2年なのに。今さら聞けない」',
       ],
       choices: [
         {
-          reply: 'ナレーション：2人は「佐藤です」「佐藤です」と答えた。姉妹だった。ナカジは泣きそうな顔で笑った。', label: '受付を手伝って、さりげなく名前を聞く',
+          reply: 'ナレーション：翌週、受付で名前を聞いた。2人は「佐藤です」「佐藤です」と答えた。姉妹だった。ナカジは泣きそうな顔で笑った。', label: '「次のライブ、受付やります。名前、聞いときます」',
           hint: '外の縁＋・体調−',
           apply: (s) => {
             tie(s, 'nakaji', 10)
@@ -504,14 +530,14 @@ const CHAINS: Record<string, DevEvent[]> = {
             s.condition = clamp(s.condition - 5)
           },
         },
-        { reply: 'ナカジ（笑い）「一番前で笑ってくれる人がいると、ほかのお客さんも笑っていいんだって分かるんだよ」', label: '客席の一番前で笑う', hint: '対応力＋', apply: (s) => (tie(s, 'nakaji', 6), gain(s, 'adlib', 2)) },
+        { reply: 'ナカジ（笑い）「一番前で笑ってくれる人がいると、ほかのお客さんも笑っていいんだって分かるんだよ」', label: '「次は客席の一番前で笑います」', hint: '対応力＋', apply: (s) => (tie(s, 'nakaji', 6), gain(s, 'adlib', 2)) },
       ],
     },
     {
       title: 'ナカジの忠告',
-      place: 'livehouse',
+      place: 'izakaya',
       lines: (_s, me) => [
-        'ナレーション：打ち上げのあと、ナカジがまじめな顔になった。',
+        'ナレーション：3回目の飲み。2軒目に入ったところで、ナカジがまじめな顔になった。',
         'ナカジ（ふつう）「この界隈にいたら、そのうち“事務所に内緒の営業”の話が来る。ギャラ3万、とかね」',
         'ナカジ（怒り）「それだけは、俺の紹介でも受けちゃだめ。消えていった先輩、何人も見てる」',
         'ナカジ（笑い）「167円の方が、まだ長生きできるよ」',

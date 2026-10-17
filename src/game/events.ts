@@ -358,6 +358,69 @@ export const STORIES: Record<string, StoryDef> = {
       } else s.partner.bond = clamp(s.partner.bond + 2)
     },
   },
+  // 仲がいいときほど起きる、ささいな喧嘩。放っておくと関係値が下がる【research/06 ネタ合わせで3時間無視】
+  kenka: {
+    view: (s, p) => {
+      const pn = s.partner?.name ?? '相方'
+      const v = Number(p.v ?? 0) % 3
+      return [
+        {
+          title: '言い方',
+          lines: [
+            `ナレーション：ネタ合わせの途中。${pn}が、同じところで3回目の言い直しをした。`,
+            `${s.player.callName}（怒り）「そこ、さっきも言うたやん」`,
+            `${pn}（怒り）「言い方あるやろ」`,
+            'ナレーション：ファミレスのテーブルが静かになった。ドリンクバーの氷だけが鳴っている。',
+          ],
+          choices: [
+            { reply: `${pn}（落ち込み）「……いや、俺も悪い。もう1回やろ」`, label: '「ごめん、言い方悪かった」と先に謝る', hint: '関係値＋' },
+            { reply: `ナレーション：その日、${pn}は帰るまで一言もしゃべらなかった。`, label: '「事実やろ」と言い返す', hint: '関係値−・尖り＋' },
+            { reply: `ナレーション：外の空気を吸って戻ると、${pn}がドリンクを2つ取ってきていた。`, label: '黙って一回、外に出る', hint: '関係値−' },
+          ],
+        },
+        {
+          title: '既読スルー',
+          lines: [
+            `ナレーション：${pn}に送った新ネタの台本。既読がついてから、半日たっても返事がない。`,
+            `ナレーション：同期のストーリーに、${pn}が別の同期と飲んでいる写真が上がっていた。`,
+          ],
+          choices: [
+            { reply: `${pn}（照れ）「……ごめん、ちゃんと読みたくて寝かせてた。おもろかった」`, label: '電話して、感想を聞く', hint: '関係値＋' },
+            { reply: `ナレーション：翌日、${pn}は何も言わずに台本を返してきた。赤字が一個もなかった。`, label: '「読んだ？」とだけ送る', hint: '関係値−' },
+            { reply: `ナレーション：その写真に「いいね」だけつけた。${pn}からの返事は、次の日の昼に来た。`, label: '写真に「いいね」だけする', hint: '関係値−・度胸＋' },
+          ],
+        },
+        {
+          title: 'ネタの取り分',
+          lines: [
+            `ナレーション：同期に「あのネタ、どっちが書いたん？」と聞かれた。`,
+            `${pn}（笑い）「ほぼ俺やな」`,
+            'ナレーション：ほぼ半分は、こっちが書いた。',
+          ],
+          choices: [
+            { reply: `${pn}（笑い）「……せやな。半分な。いや、6対4やな」`, label: '笑って「半分やろ」とツッコむ', hint: '関係値＋・対応力＋' },
+            { reply: `ナレーション：同期が気まずそうに席を外した。${pn}は「冗談やん」と言ったが、目が笑っていなかった。`, label: '「いや、オチは全部こっちやろ」と言い返す', hint: '関係値−' },
+            { reply: 'ナレーション：何も言わなかった。帰りの電車で、そのことばかり考えていた。', label: '黙っておく', hint: 'やる気−' },
+          ],
+        },
+      ][v]
+    },
+    resolve: (s, c, _r, p) => {
+      if (!s.partner) return
+      const v = Number(p.v ?? 0) % 3
+      if (c === 0) {
+        s.partner.bond = clamp(s.partner.bond + 3)
+        if (v === 2) gain(s, 'adlib', 2)
+      } else if (c === 1) {
+        s.partner.bond = clamp(s.partner.bond - (has(s, 'aikata') ? 4 : 10))
+        if (v === 0) s.edge += 2
+      } else if (v === 2) s.motivation = clamp(s.motivation - 5)
+      else {
+        s.partner.bond = clamp(s.partner.bond - (has(s, 'aikata') ? 2 : 6))
+        if (v === 1) gain(s, 'guts', 2)
+      }
+    },
+  },
   line_kidoku: {
     view: () => ({
       title: '同期LINE',

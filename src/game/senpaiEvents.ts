@@ -11,6 +11,77 @@ import type { GameState } from './types'
 const me = (s: GameState) => s.player.callName
 
 export const SENPAI_STORIES: Record<string, StoryDef> = {
+  // 昼・先輩ライブの手伝い。袖での受け答えしだいで、先輩の「認め」が上がりも下がりもする
+  // 正解は場面ごとに違う（v で選ぶ）。認めは、仕事に呼んでもらえるかどうかの目安
+  tetsudai_sode: {
+    view: (s, p) => {
+      const sr = s.seniors.find((x) => x.id === p.senior)
+      const n = sr?.name ?? '先輩'
+      const v = Number(p.v ?? 0)
+      // ナカジは標準語、大河内は関西弁
+      const k = (kansai: string, std: string) => (p.senior === 'nakaji' ? std : kansai)
+      const scenes = [
+        {
+          title: '袖の感想',
+          lines: [
+            `ナレーション：先輩ライブの手伝い。出番を終えた${n}が、袖に戻ってくるなりこちらを見た。`,
+            `${n}（ふつう）${k('「今の、どうやった。正直に言うてええで」', '「今の、どうだった？ 正直に言っていいよ」')}`,
+            'ナレーション：中盤の一か所、客席が静かになったところがあった。',
+          ],
+          choices: [
+            { label: '「真ん中のくだり、ちょっと静かでした」', reply: `${n}（考え中）${k('「……やっぱりな。お前、ちゃんと見てたな」', '「……やっぱり？ ちゃんと見てたんだね」')}`, hint: '認め＋' },
+            { label: '「全部ウケてました！」', reply: `${n}（ふつう）${k('「……そうか。ありがとう」', '「……そっか。ありがとう」')}`, hint: '仲＋' },
+            { label: '「自分なら、あそこはこうします」', reply: `${n}（怒り）${k('「……お前のネタちゃうねん」', '「……それ、君のネタじゃないよね」')}`, hint: '尖り＋' },
+          ],
+        },
+        {
+          title: '小道具がない',
+          lines: [
+            `ナレーション：先輩ライブの手伝い。出番の2組前、${n}が楽屋で小道具の帽子を探している。`,
+            `${n}（驚き）${k('「帽子がない。コントの最後で使うやつや」', '「帽子がない。コントの最後で使うやつ」')}`,
+            'ナレーション：本番まで、あと10分。',
+          ],
+          choices: [
+            { label: '劇場の中を走って探す', reply: `ナレーション：帽子は、前の組の芸人がかぶったまま帰ろうとしていた。${n}は「助かった」とだけ言った。`, hint: '認め＋・体調−' },
+            { label: '自分のキャップを差し出す', reply: `${n}（笑い）${k('「……色、全然ちゃうやん。でも、ないよりええわ」', '「……色、全然違うね。でも、ないよりいい」')}`, hint: '仲＋' },
+            { label: '「帽子なしでもいけますよ」', reply: `${n}（怒り）${k('「いけるかどうか決めるのは、ネタ書いたやつや」', '「いけるかどうかは、ネタを書いた人が決めるんだよ」')}`, hint: '度胸＋' },
+          ],
+        },
+        {
+          title: '出番の順番',
+          lines: [
+            `ナレーション：先輩ライブの手伝い。香盤表（出番の順番）を貼るのが今日の仕事だ。`,
+            `${n}（ふつう）${k('「なあ、俺の出番、トリの1個前やな。……誰が決めたか知ってる？」', '「ねえ、俺の出番、トリの1個前だね。……誰が決めたか知ってる？」')}`,
+            'ナレーション：決めたのは作家さんだと、社員が言っていた。',
+          ],
+          choices: [
+            { label: '「作家さんです。一番期待されてる順番らしいです」', reply: `${n}（照れ）${k('「……そういうのは、言わんでええねん」', '「……そういうのは、言わなくていいんだよ」')}`, hint: '認め＋・やる気＋' },
+            { label: '「知りません」と答える', reply: `${n}（ふつう）${k('「そうか。……まあ、ええわ」', '「そっか。……まあ、いいや」')}`, hint: '仲＋' },
+            { label: '「トリやりたかったんですか」', reply: `${n}（怒り）${k('「……そういうとこやぞ」', '「……そういうとこだよ」')}`, hint: '度胸＋' },
+          ],
+        },
+      ]
+      const sc = scenes[v % scenes.length]
+      return { title: sc.title, place: 'sodeura', lines: sc.lines, choices: sc.choices }
+    },
+    resolve: (s, c, _r, p) => {
+      const sr = s.seniors.find((x) => x.id === p.senior)
+      if (!sr) return
+      const v = Number(p.v ?? 0) % 3
+      if (c === 0) {
+        sr.respect = clamp(sr.respect + 6)
+        if (v === 1) s.condition = clamp(s.condition - 6)
+        if (v === 2) s.motivation = clamp(s.motivation + 4)
+      } else if (c === 1) {
+        sr.like = clamp(sr.like + 4)
+      } else {
+        sr.respect = clamp(sr.respect - 3)
+        if (v === 0) s.edge += 2
+        else gain(s, 'guts', 2)
+      }
+    },
+  },
+
   // 5月第2週：初めてのネタ見せの日、教室の一番後ろにいる人
   senpai_ookouchi_deai: {
     view: (s) => ({

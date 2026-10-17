@@ -2,7 +2,7 @@ import { BACKGROUND_BY_ID, PLAYER_LOOK } from './data/backgrounds'
 import { CARDS, STARTER_CARDS } from './data/cards'
 import { TOTAL_TURNS, expectedClassmates, turnOf, weekInfo } from './data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from './data/people'
-import { DEV_STORIES, classmatesOf, scheduleBondEvent, tie } from './bonds'
+import { DEV_STORIES, classmatesOf, scheduleBondEvent, seniorDrama, tie } from './bonds'
 import { applyKodawari } from './kodawari'
 import { TUNING, addSkill, clamp, count, gain, has, push, removeSkill, story, withGainScale, yen } from './core'
 import { STORIES } from './events'
@@ -226,11 +226,14 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
       // 先輩ライブの裏方。タダ。袖から見られて、知っている先輩には顔を覚えてもらえる
       s.condition = clamp(s.condition - 6)
       gain(s, 'guts', 1.5)
-      for (const sr of s.seniors) if (s.flags[`met_${sr.id}`]) sr.respect = clamp(sr.respect + 3)
+      // 認めは少しだけ。知っている先輩がいれば、袖での受け答えで上がったり下がったりする
+      for (const sr of s.seniors) if (s.flags[`met_${sr.id}`]) sr.respect = clamp(sr.respect + 1)
       if (s.flags.met_nakaji) tie(s, 'nakaji', 2)
       tie(s, 'haibara', 2)
       count(s, 'tetsudai')
       log.push(flavor('tetsudai', rng))
+      const known = s.seniors.filter((sr) => s.flags[`met_${sr.id}`] && sr.id !== 'haibara')
+      if (known.length && rng.chance(0.7)) story(s, 'tetsudai_sode', { senior: rng.pick(known).id, v: count(s, 'tetsudai_sode') })
       break
     }
     case 'rest':
@@ -254,6 +257,8 @@ function applyNight(s: GameState, a: NightAction, rng: Rng): void {
       s.safePlay += 1
       count(s, 'nomi')
       log.push(flavor('nomi', rng, { senior: senior.name }))
+      // 飲みを重ねると、その先輩の話が進む（最後の話で特殊能力を受け継げることがある）
+      seniorDrama(s, senior.id)
       if (senior.respect >= 40) {
         s.neta.polish = clamp(s.neta.polish + 5)
         log.push(flavor('nomi_neta', rng, { senior: senior.name }))
@@ -377,6 +382,8 @@ function scheduleEvents(s: GameState, rng: Rng): void {
   if (!bonded && s.pending.length === 0 && rng.chance(0.25)) {
     const pool: [string, Record<string, string | number>?][] = []
     if (s.partner) pool.push(['shinneta'], ['loan'])
+    // 相方と仲がいいときほど、ささいな喧嘩が起きやすい
+    if (s.partner && s.partner.bond >= 50) pool.push(['kenka', { v: rng.int(0, 2) }], ['kenka', { v: rng.int(0, 2) }])
     pool.push(['line_kidoku'], ['barashi'])
     if (s.player.origin === 'tokyo') pool.push(['coin_shower'])
     const friend = s.seniors.find((x) => x.like >= 40)
@@ -630,21 +637,21 @@ export function finishWeek(prev: GameState): GameState {
 
 function checkSkills(s: GameState): void {
   const c = (k: string) => s.counters[k] ?? 0
-  if (c('tsukamiUke') >= 3) addSkill(s, 'tsukami', '芸風スキル「ツカミ名人」を覚えた。')
-  if (c('neta') >= 8) addSkill(s, 'ryousan', '芸風スキル「量産型」を覚えた。')
-  if (c('level3') >= 2) addSkill(s, 'honban', '芸風スキル「本番に強い」を覚えた。')
-  if (c('hassei') >= 4) addSkill(s, 'kamanai', '芸風スキル「噛まない」を覚えた。')
-  if (c('hassei') >= 8) addSkill(s, 'koega', '芸風スキル「声がデカい」を覚えた。')
-  if (s.player.style === 'conte' && s.stats.expr >= 45) addSkill(s, 'hyoui', '芸風スキル「憑依型」を覚えた。')
-  if (s.player.style === 'manzai' && s.stats.word >= 45) addSkill(s, 'hayakuchi', '芸風スキル「早口」を覚えた。')
-  if (c('contestPass') >= 1) addSkill(s, 'battle', '芸風スキル「バトル脳」を覚えた。')
-  if (c('nomi') >= 6) addSkill(s, 'kawaigarare', '芸風スキル「かわいがられ」を覚えた。')
-  if (c('orei') >= 4) addSkill(s, 'orei', '芸風スキル「お礼が早い」を覚えた。')
+  if (c('tsukamiUke') >= 3) addSkill(s, 'tsukami', '最初の一言でつかむ舞台が、3回続いた。芸風スキル「ツカミ名人」を覚えた。')
+  if (c('neta') >= 8) addSkill(s, 'ryousan', 'ネタ作りの日を重ねて、書くのが速くなった。芸風スキル「量産型」を覚えた。')
+  if (c('level3') >= 2) addSkill(s, 'honban', '大きくウケた舞台が2回あった。本番の空気が怖くなくなった。芸風スキル「本番に強い」を覚えた。')
+  if (c('hassei') >= 4) addSkill(s, 'kamanai', '発声と滑舌の練習を続けて、口が回るようになった。芸風スキル「噛まない」を覚えた。')
+  if (c('hassei') >= 8) addSkill(s, 'koega', '発声練習を何度も重ねて、マイクなしでも後ろまで届くようになった。芸風スキル「声がデカい」を覚えた。')
+  if (s.player.style === 'conte' && s.stats.expr >= 45) addSkill(s, 'hyoui', '表現力が上がって、コントの役に入りきれるようになった。芸風スキル「憑依型」を覚えた。')
+  if (s.player.style === 'manzai' && s.stats.word >= 45) addSkill(s, 'hayakuchi', 'ワード力が上がって、言葉が詰まらずに出てくるようになった。芸風スキル「早口」を覚えた。')
+  if (c('contestPass') >= 1) addSkill(s, 'battle', '賞レースの予選を通った。勝ち方が、少し見えた。芸風スキル「バトル脳」を覚えた。')
+  if (c('nomi') >= 6) addSkill(s, 'kawaigarare', '先輩と何度も飲みに行くうちに、誘われる側になっていた。芸風スキル「かわいがられ」を覚えた。')
+  if (c('orei') >= 4) addSkill(s, 'orei', '翌朝のお礼を欠かさず送っていたら、手が勝手に動くようになった。芸風スキル「お礼が早い」を覚えた。')
   if (c('dame') >= 4) addSkill(s, 'hagane', 'ダメ出しに慣れてきた。芸風スキル「鋼のメンタル」を覚えた。')
-  if (c('baito') >= 10) addSkill(s, 'kugaku', '芸風スキル「苦学生」を覚えた。')
-  if (s.partner && s.partner.bond >= 80) addSkill(s, 'aikata', '芸風スキル「相方思い」を覚えた。')
+  if (c('baito') >= 10) addSkill(s, 'kugaku', 'バイトのシフトを10回こなした。働きながら続けるのが、当たり前になった。芸風スキル「苦学生」を覚えた。')
+  if (s.partner && s.partner.bond >= 80) addSkill(s, 'aikata', '相方との関係が、言わなくても通じるところまで来た。芸風スキル「相方思い」を覚えた。')
   if (c('ume') >= 2) addSkill(s, 'zassou', '梅組の空気にも慣れた。芸風スキル「雑草魂」を覚えた。')
-  if (c('suberi') >= 3 && s.stats.adlib >= 35) addSkill(s, 'suberikaeshi', '芸風スキル「スベり返し」を覚えた。')
+  if (c('suberi') >= 3 && s.stats.adlib >= 35) addSkill(s, 'suberikaeshi', 'スベった舞台を何度も経験して、スベったあとの一言が出るようになった。芸風スキル「スベり返し」を覚えた。')
   if (has(s, 'gakusei') && c('generalUke') >= 2 && s.stats.adlib >= 40) {
     removeSkill(s, 'gakusei', '一般のお客さんの笑いどころがつかめてきた。')
     addSkill(s, 'kurouto', '「学生お笑い臭」が化けて、芸風スキル「玄人殺し」になった。')

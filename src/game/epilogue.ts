@@ -1,5 +1,5 @@
 import { SKILL_BY_ID } from './data/skills'
-import { affinity } from './bonds'
+import { rivalOf } from './rivalEvents'
 import { has } from './core'
 import { buildReview, type Review } from './review'
 import { Rng } from './rng'
@@ -16,15 +16,15 @@ export interface ResultSummary {
 }
 
 // 遊び方で評価が分かれるように置く（scripts/balance.ts）。
-// なんとなく遊ぶとD〜E、ふつうに遊ぶとC、考えて遊ぶとA、見せ場もよく決めるとS
+// なんとなく遊ぶとE〜G、ふつうに遊ぶとD〜E、考えて遊ぶとB〜C、見せ場もよく決めるとA。Sはその中の一握り
 const RANKS: [number, string][] = [
-  [680, 'S'],
-  [615, 'A'],
-  [562, 'B'],
-  [515, 'C'],
-  [470, 'D'],
-  [430, 'E'],
-  [390, 'F'],
+  [705, 'S'],
+  [655, 'A'],
+  [605, 'B'],
+  [555, 'C'],
+  [505, 'D'],
+  [455, 'E'],
+  [410, 'F'],
   [0, 'G'],
 ]
 
@@ -88,14 +88,12 @@ export function buildEpilogue(s: GameState): ResultSummary {
   else if (friendOnly) months.push({ label: '6月', text: `${friendOnly.name}さんからは飲みには誘われる。でも、ライブには呼ばれない。` })
   else months.push({ label: '6月', text: '同期と自主ライブを打った。客席は11人。打ち上げの方が盛り上がった。' })
 
-  // 賞レース
+  // 賞レース。芸歴1年目なので、どんなに良くても準々決勝まで（決勝は何年も先の話）
   const contest = (bonus: number) => {
     const v = power + bonus + rng.int(-15, 15)
-    if (v >= 105) return '決勝進出'
-    if (v >= 92) return '準決勝進出'
-    if (v >= 80) return '準々決勝敗退'
-    if (v >= 68) return '3回戦敗退'
-    if (v >= 55) return '2回戦敗退'
+    if (v >= 98) return '準々決勝敗退'
+    if (v >= 82) return '3回戦敗退'
+    if (v >= 64) return '2回戦敗退'
     return '1回戦敗退'
   }
   const conte = contest(s.player.style === 'conte' ? 5 : -8)
@@ -104,21 +102,23 @@ export function buildEpilogue(s: GameState): ResultSummary {
     months.push({ label: '7月', text: 'コント頂も漫才天下一も、ひとりでは出られない。同期の予選を、客席から観た。' })
     months.push({ label: '11月', text: `ひとり芸王座：${conte}。${conte === '1回戦敗退' ? '受付で「お一人ですか」と聞かれた。' : '袖で、ひとりで小さくガッツポーズをした。'}` })
   } else {
-    months.push({ label: '7月', text: `コント頂：${conte}。${conte === '1回戦敗退' ? '結果ページに名前はなかった。' : ''}` })
-    months.push({
-      label: '9月',
-      text: `漫才天下一：${manzai}。${manzai.includes('3回戦') || manzai.includes('準') ? '3回戦の動画を見たお笑いファンに「青田買い」された。' : '1回戦の受付で2,000円を払い、胸に番号シールを貼った。'}`,
-    })
+    // 1年目も、やりたいネタの大会に出る
+    if (s.player.style === 'conte') months.push({ label: '7月', text: `コント頂：${conte}。${conte === '1回戦敗退' ? '結果ページに名前はなかった。' : ''}` })
+    else
+      months.push({
+        label: '9月',
+        text: `漫才天下一：${manzai}。${manzai.includes('3回戦') || manzai.includes('準') ? '3回戦の動画を見たお笑いファンに「青田買い」された。' : '1回戦の受付で2,000円を払い、胸に番号シールを貼った。'}`,
+      })
   }
 
-  const tv = so || power >= 75 || manzai.includes('決勝') || conte.includes('決勝')
+  const tv = so || power >= 88
   const buzz = s.fans >= 40 && rng.chance(0.5)
   months.push({
     label: '11月',
     text: tv
       ? pin
-        ? 'テレビの深夜番組に初出演。ギャラは全部自分のもの。……少なすぎて、割る気にもならない額だった。'
-        : 'テレビの深夜番組に初出演。ギャラは2人で割って、事務所の取り分を引いた。'
+        ? '深夜番組の「若手ネタ見せ」コーナーに、1回だけ呼ばれた。放送は30秒に切られていた。ギャラは、交通費とあまり変わらなかった。'
+        : '深夜番組の「若手ネタ見せ」コーナーに、1回だけ呼ばれた。放送は30秒に切られていた。ギャラは2人で割って、事務所の取り分を引いた。'
       : buzz
         ? 'ライブの切り抜き動画が少しだけバズった。出待ちのファンが2人できた。'
         : '劇場の出番は月1回、60秒。ギャラは1回数百円で、交通費の方が高い。',
@@ -128,7 +128,7 @@ export function buildEpilogue(s: GameState): ResultSummary {
     label: '1月',
     text:
       (tsubomi ? '入れ替え戦を勝ち抜いて、坂上劇場の「つぼみ組」に入った。' : 'のぼりざかライブで、また入れ替え戦の一歩手前で負けた。') +
-      (affinity(s, 'mido') >= 35 ? '同じ入れ替え戦に、御堂のコンビもいた。' : affinity(s, 'makabe') >= 35 ? '真壁のコンビが先につぼみ組に上がった。報告のLINEは「上がった」の4文字だった。' : ''),
+      (rivalOf(s) === 'mido' ? '同じ入れ替え戦に、御堂のコンビもいた。' : '真壁のコンビが先につぼみ組に上がった。報告のLINEは「上がった」の4文字だった。'),
   })
   if (s.kodawari) {
     const kept = (s.counters.kodawari_keep ?? 0) >= (s.counters.kodawari_bend ?? 0)
@@ -152,9 +152,7 @@ export function buildEpilogue(s: GameState): ResultSummary {
 
   const route = so
     ? '総代ルート'
-    : manzai === '決勝進出' || conte === '決勝進出'
-      ? '大当たりルート'
-      : tv
+    : tv
         ? 'テレビルート'
         : patron
           ? '秘蔵っ子ルート'
