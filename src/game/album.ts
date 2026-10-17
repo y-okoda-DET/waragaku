@@ -2,7 +2,7 @@
 import { SKILLS, type SkillKind } from './data/skills'
 import { RANKS, buildEpilogue } from './epilogue'
 import { rivalOf } from './rivalEvents'
-import { CAREERS, careerLabel } from './careers'
+import { CAREERS, MOCK_ALL_OPEN, careerLabel } from './careers'
 import type { GameState } from './types'
 
 export interface Album {
@@ -110,7 +110,7 @@ export function recordRun(s: GameState): { album: Album; fresh: string[] } {
   a.keys = [e.key, ...a.keys].slice(0, 20)
   saveAlbum(a)
   // 卒業するたびに、次の経歴で入学できるようになる
-  const opened = CAREERS[a.runs] ? [`新しいキャラクター「${careerLabel(CAREERS[a.runs].id)}」で入学できるようになった`] : []
+  const opened = !MOCK_ALL_OPEN && CAREERS[a.runs] ? [`新しいキャラクター「${careerLabel(CAREERS[a.runs].id)}」で入学できるようになった`] : []
   const shown = [...(a.runs === 1 ? ['はじめての卒業。この1年を、卒業アルバムに残した'] : fresh), ...opened]
   recorded.set(e.key, shown)
   return { album: a, fresh: shown }

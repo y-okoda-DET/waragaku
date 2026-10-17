@@ -23,6 +23,10 @@ export function unlockedCareers(runs: number): CareerId[] {
   return CAREERS.slice(0, Math.min(CAREERS.length, 1 + runs)).map((c) => c.id)
 }
 
+// テストプレイ用のモックでは、卒業しなくても全部の経歴を選べる（ユーザー指示）。本番では false にする
+export const MOCK_ALL_OPEN = true
+export const openCareers = (runs: number): CareerId[] => (MOCK_ALL_OPEN ? CAREERS.map((c) => c.id) : unlockedCareers(runs))
+
 const career = (s: GameState): string => s.player.background
 const me = (s: GameState) => s.player.callName
 const sakura = (s: GameState) => s.partner?.name === '佐倉'

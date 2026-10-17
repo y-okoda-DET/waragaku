@@ -1,6 +1,6 @@
 import { KIND_ORDER, KIWAMI_HINT, RIVAL_ENDINGS, ROUTES, type Album } from '../game/album'
 import { SKILLS } from '../game/data/skills'
-import { CAREERS } from '../game/careers'
+import { CAREERS, openCareers } from '../game/careers'
 import { SkillBadge } from './parts'
 
 // 卒業アルバム。見たもの・取ったものを周をまたいで並べ、まだのところは伏せて数だけ見せる
@@ -31,7 +31,7 @@ export function AlbumScreen({ album, onBack }: { album: Album; onBack: () => voi
         <ul className="album-list">
           {CAREERS.map((c, i) => (
             <li key={c.id} className={album.careers.includes(c.id) ? '' : 'locked'}>
-              {i > album.runs ? `？？？（あと${i - album.runs}回卒業すると）` : album.careers.includes(c.id) ? `${c.label}で卒業` : `${c.label}（まだ卒業していない）`}
+              {!openCareers(album.runs).includes(c.id) ? `？？？（あと${i - album.runs}回卒業すると）` : album.careers.includes(c.id) ? `${c.label}で卒業` : `${c.label}（まだ卒業していない）`}
             </li>
           ))}
         </ul>

@@ -5,7 +5,7 @@ import type { Gender, Role, Style } from '../game/types'
 import { outfitColor } from './looks'
 import { Avatar, HeroFace } from './parts'
 import { heroKey, portrait } from './art'
-import { CAREERS, unlockedCareers, type CareerId } from '../game/careers'
+import { CAREERS, openCareers, type CareerId } from '../game/careers'
 
 // 経歴は、卒業した回数だけ選べるようになる（1周目は高校卒業だけ）。ほかに選ぶのは名前・性別・担当・やりたいネタ
 
@@ -25,7 +25,7 @@ const FEMALE_NAMES: string[] = [
 ]
 
 export function CreateScreen({ runs, onStart, onBack }: { runs: number; onStart: (input: NewGameInput) => void; onBack: () => void }) {
-  const open = unlockedCareers(runs)
+  const open = openCareers(runs)
   const [career, setCareer] = useState<CareerId>('fresh')
   const bg = BACKGROUND_BY_ID[career]
   const [name, setName] = useState('')
