@@ -72,7 +72,7 @@ export function CreateScreen({ onStart, onBack }: { onStart: (input: NewGameInpu
       </section>
 
       <section className="card">
-        <h2>2. 性別</h2>
+        <h2>2. キャラクター</h2>
         <div className="gender-pick">
           {(['male', 'female'] as Gender[]).map((g) => (
             <button key={g} className={gender === g ? 'on' : ''} onClick={() => setGender(g)} aria-pressed={gender === g} aria-label={g === 'male' ? '男性' : '女性'}>
