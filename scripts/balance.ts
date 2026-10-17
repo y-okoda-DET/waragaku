@@ -99,6 +99,12 @@ const POLICIES: Record<string, Player> = {
     choose: anyChoice,
     hit: 0.3,
   },
+  // ふつうとうまいの間。半分くらいは考えて選ぶ
+  まあまあ: {
+    plan: (s, w, r) => (r() < 0.5 ? [smartDay(s), smartNight(s, w)] : POLICIES.ふつう.plan(s, w, r)),
+    choose: (s, n, r) => (r() < 0.5 ? lowFirst(s, n, r) : anyChoice(s, n, r)),
+    hit: 0.38,
+  },
   // 体調とやる気を保ち、低い能力を狙って伸ばす。合宿費も早めに貯める
   うまい: { plan: (s, w) => [smartDay(s), smartNight(s, w)], choose: lowFirst, hit: 0.45 },
   // うまい人が、見せ場もよく決める

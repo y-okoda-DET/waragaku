@@ -12,8 +12,11 @@ from scipy import ndimage
 
 EXPR = ['normal', 'smile', 'laugh', 'surprise', 'down', 'angry', 'think', 'shy']
 SIDE = [('normal',), ('smile', 'laugh'), ('surprise',)]
-# 2行×2列のシート（真壁の描き直し）。4コマ目はキャップを取った素顔
-QUAD = [('normal',), ('smile', 'laugh'), ('surprise',), ('bare',)]
+# 2行×2列のシート（ライバルの描き直し）。真壁の4コマ目はキャップを取った素顔、御堂の4コマ目は崩れた大笑い
+QUAD = {
+    'rival2': [('normal',), ('smile', 'laugh'), ('surprise',), ('bare',)],
+    'rival1': [('normal',), ('smile',), ('surprise',), ('laugh',)],
+}
 # 服に紫が入っていて、マゼンタのにじみ取りを弱める人
 PURPLE = {'rival1'}
 
@@ -106,7 +109,7 @@ def main():
         cols = clear.mean(0)
         if two_rows and cols[int(W * 0.4):int(W * 0.6)].max() > 0.97 and cols[int(W * 0.15):int(W * 0.35)].max() < 0.97:
             ys, xs = split_at(rows, 2, H), split_at(cols, 2, W)
-            cells = [((xs[i % 2], ys[i // 2], xs[i % 2 + 1], ys[i // 2 + 1]), names) for i, names in enumerate(QUAD)]
+            cells = [((xs[i % 2], ys[i // 2], xs[i % 2 + 1], ys[i // 2 + 1]), names) for i, names in enumerate(QUAD[ch])]
         elif two_rows:
             ys, xs = split_at(rows, 2, H), split_at(clear.mean(0), 4, W)
             cells = [((xs[i % 4], ys[i // 4], xs[i % 4 + 1], ys[i // 4 + 1]), (e,)) for i, e in enumerate(EXPR)]
