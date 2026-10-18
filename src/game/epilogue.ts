@@ -1,4 +1,5 @@
 import { SKILL_BY_ID } from './data/skills'
+import { SITE_URL } from './site'
 import { rivalOf } from './rivalEvents'
 import { epilogueTail } from './careers'
 import { has } from './core'
@@ -185,17 +186,35 @@ export function buildEpilogue(s: GameState): ResultSummary {
 
   const gradText = s.gradRank ? (s.gradRank === 1 ? '優勝（卒業総代）' : `${s.gradRank}位`) : '-'
   const review = buildReview(s, rank)
-  const shareText = [
-    `【ワラガク！卒業】${s.player.name}${s.comboName ? `（${s.comboName}）` : ''}`,
-    `称号：${review.title}`,
-    `総合${rank}｜${review.gradeLine}`,
-    `同期300人→${s.classmates}人`,
-    `講師の寸評「${review.oneLine}」`,
-    `芸人1年目：${route}`,
-    '#ワラガク',
-  ].join('\n')
+  const shareText = fitForX(
+    [
+      `【ワラガク！卒業】${s.player.name}${s.comboName ? `（${s.comboName}）` : ''}`,
+      `称号：${review.title}`,
+      `総合${rank}｜${review.gradeLine}`,
+      `同期300人→${s.classmates}人`,
+      `講師の寸評「${review.oneLine}」`,
+      `芸人1年目：${route}`,
+      '#ワラガク',
+    ],
+    `総合${rank}`,
+  )
 
   return { rank, total, gradText, route, months, shareText, review }
+}
+
+// Xの文字数の数え方（全角は2、URLは23）。上限は280
+const xWeight = (text: string): number => [...text].reduce((n, c) => n + (c.charCodeAt(0) > 0x10ff ? 2 : 1), 0)
+const X_LIMIT = 280
+
+// シェアの文の最後に公開先のURLを足す。Xの上限を超えるときは、能力ごとの評価（画像には載っている）を外して総合だけにし、
+// 名前が長くてまだ超えるなら講師の寸評も外す
+function fitForX(lines: string[], shortGrade: string): string {
+  const join = (ls: string[]) => [...ls, SITE_URL].join('\n')
+  const fits = (ls: string[]) => xWeight(ls.join('\n')) + 1 + 23 <= X_LIMIT
+  if (fits(lines)) return join(lines)
+  const short = lines.map((l) => (l.startsWith(`${shortGrade}｜`) ? shortGrade : l))
+  if (fits(short)) return join(short)
+  return join(short.filter((l) => !l.startsWith('講師の寸評')))
 }
 
 export function hasKiwami(s: GameState): boolean {

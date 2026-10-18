@@ -5,6 +5,7 @@ import type { GameState } from '../game/types'
 import { portrait } from './art'
 import { PlayerAvatar, SkillBadge } from './parts'
 import { drawShareCard } from './shareCard'
+import { track } from './track'
 import { se } from './sound'
 
 // claude.ai の公開ページで使える保存の仕組み（ないときは null。ふつうのブラウザでは window.claude がない）
@@ -19,6 +20,7 @@ export function ResultScreen({ state, onRestart, onAlbum }: { state: GameState; 
   const [shown, setShown] = useState(0)
   const [copied, setCopied] = useState(false)
   const allShown = shown >= ep.months.length
+  useEffect(() => track(`graduate-${state.player.background}-${ep.rank}`), [state.player.background, ep.rank])
   const rv = ep.review
   const parts = useMemo(() => scoreParts(state), [state])
   const goal = useMemo(() => nextGoal(state, parts.reduce((a, p) => a + p.value, 0)), [state, parts])
@@ -28,6 +30,7 @@ export function ResultScreen({ state, onRestart, onAlbum }: { state: GameState; 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(ep.shareText)
+      track('share-copy')
       setCopied(true)
     } catch {
       setCopied(false)
@@ -64,6 +67,7 @@ export function ResultScreen({ state, onRestart, onAlbum }: { state: GameState; 
     if (!card || !downloads) return
     try {
       await downloads.save({ filename: fileName, data: card.blob })
+      track('share-save')
       setSaveNote('保存しました')
     } catch (e) {
       setSaveNote((e as { code?: string }).code === 'declined' ? '' : '保存できませんでした。画像を長押しして保存してください')
@@ -73,6 +77,7 @@ export function ResultScreen({ state, onRestart, onAlbum }: { state: GameState; 
     if (!file) return
     try {
       await navigator.share({ files: [file], text: ep.shareText })
+      track('share-image')
     } catch {
       // 共有をやめたときは何もしない
     }
@@ -219,7 +224,7 @@ export function ResultScreen({ state, onRestart, onAlbum }: { state: GameState; 
           <pre className="share">{ep.shareText}</pre>
           <div className="row">
             <button onClick={copy}>{copied ? 'コピーしました' : 'テキストをコピー'}</button>
-            <a className="button" href={tweetUrl} target="_blank" rel="noreferrer">
+            <a className="button" href={tweetUrl} target="_blank" rel="noreferrer" onClick={() => track('share-x')}>
               Xに投稿
             </a>
           </div>

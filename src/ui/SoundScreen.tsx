@@ -35,6 +35,13 @@ export function SoundScreen({ onBack }: { onBack: () => void }) {
         <p className="small">スマホのマナーモード中は音が出ないことがあります。</p>
       </section>
       <section className="card">
+        <h2>実況・配信について</h2>
+        <p className="small">
+          実況・配信・動画への投稿は、届け出なしで自由にどうぞ。収益化もかまいません。タイトルか説明欄に「ワラガク！」と、遊べる場所のURLを書いてもらえるとうれしいです。
+        </p>
+        <p className="small">相方との山場（2月の「門出の袖」）から先は、サムネイルや題名で結末が分からないようにしてもらえると助かります。</p>
+      </section>
+      <section className="card">
         <h2>クレジット</h2>
         <dl className="credits">
           {CREDITS.map((c) => (

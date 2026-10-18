@@ -5,6 +5,7 @@ import { createGame, doStage, endEvents, resolveStory, runWeek, type DayAction, 
 import { buildEpilogue } from './epilogue'
 import { STORIES } from './events'
 import { TSUKKOMI_SCENES, gradeTsukkomi, gradeWord, pickScenes, playerLean, tsukkomiZones } from './showcase'
+import { SITE_URL } from './site'
 import type { GameState } from './types'
 
 // 簡単なボット。ネタ作り・ネタ合わせ・バイトを状況に応じて回す
@@ -65,6 +66,21 @@ describe('通しプレイ', () => {
     const ep = buildEpilogue(s)
     expect(ep.months.length).toBeGreaterThanOrEqual(7)
     expect(ep.shareText).toContain('称号：')
+    // Xの文字数（全角は2、URLは23として280まで）に収まり、遊べる場所のURLで終わる
+    expect(ep.shareText.endsWith(SITE_URL)).toBe(true)
+    const body = ep.shareText.slice(0, -SITE_URL.length)
+    const weight = [...body].reduce((n, c) => n + (c.charCodeAt(0) > 0x10ff ? 2 : 1), 23)
+    expect(weight).toBeLessThanOrEqual(280)
+  })
+
+  it('名前が長くてもシェアの文はXの上限に収まる', () => {
+    const s = playThrough('highschool', 1234)
+    s.player.name = '寿限無寿限無五劫の擦り切れ海砂利水'
+    s.comboName = 'ジュゲムジュゲムゴコウノ'
+    const text = buildEpilogue(s).shareText
+    const body = text.slice(0, -SITE_URL.length)
+    expect([...body].reduce((n, c) => n + (c.charCodeAt(0) > 0x10ff ? 2 : 1), 23)).toBeLessThanOrEqual(280)
+    expect(text).toContain('称号：')
   })
 
   it('同じシードなら同じ結果になる', () => {

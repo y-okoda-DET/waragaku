@@ -14,6 +14,8 @@ import { loadAlbum } from './game/album'
 import { STORIES } from './game/events'
 import { startPlaceOf } from './ui/art'
 import { se, useBgm, type Bgm } from './ui/sound'
+import { track } from './ui/track'
+import { weekInfo } from './game/data/calendar'
 
 // 出来事の場所（その結果の画面を同じ場所から始めるため）
 function storyPlace(s: GameState, key: string, params?: Record<string, string | number>): string | undefined {
@@ -45,6 +47,12 @@ export default function App() {
   useEffect(() => {
     if (onWeek && game && shown?.turn !== game.turn) setShown({ turn: game.turn, stats: { ...game.stats } })
   }, [onWeek, game, shown])
+
+  // どの月まで遊ばれたかを解析に送る（タグがなければ何もしない）
+  const month = onWeek && game ? weekInfo(game.turn).month : null
+  useEffect(() => {
+    if (month) track(`month-${month}`)
+  }, [month])
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -101,6 +109,7 @@ export default function App() {
           onStart={(input: NewGameInput) => {
             setCreating(false)
             setGame(createGame(input))
+            track(`start-${input.background ?? 'fresh'}-${input.style}`)
           }}
         />
       )
@@ -136,7 +145,7 @@ export default function App() {
           </button>
         )}
         <button className="link" onClick={() => setSoundOpen(true)}>
-          音とクレジット
+          音とクレジット・実況について
         </button>
         <p className="small center">登場する養成所・事務所・劇場・大会・人物はすべて架空です。</p>
       </div>
