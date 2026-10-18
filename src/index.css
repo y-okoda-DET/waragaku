@@ -1,0 +1,1998 @@
+/* 築豊初号明朝OFL（SIL OFL、src/assets/fonts/OFL-TsukuhouShogoMin.txt）。「幕が上がる瞬間」だけに使う：
+   タイトル、週のカード、舞台の名前、卒業の称号。使う文字だけを scripts/subset_tsukuhou.py で抜き出したもの */
+@font-face {
+  font-family: 'Tsukuhou Shogo Mincho';
+  src: url('./assets/fonts/TsukuhouShogoMin-title.woff2') format('woff2');
+  font-display: block;
+}
+
+/* V案「明るいポップ」: クリーム地・黒の太線・ひまわり色と珊瑚色 */
+:root {
+  --bg: #fffaf0;
+  --card: #fff;
+  --ink: #1a1a1a;
+  --sub: #5c5650;
+  --line: #1a1a1a;
+  --soft: #f1ebde;
+  --sun: #ffc93c;
+  --sun-light: #ffe08a;
+  --coral: #ff6b57;
+  --coral-light: #ffe3dc;
+  --accent: var(--coral);
+  --accent-ink: #fff;
+  --good: #3fae6a;
+  --warn: var(--coral);
+  --skin: #ffe2cc;
+  --buki: #2f6fb0;
+  --kuse: #c0502d;
+  --kiwami: #d99a00;
+  --gift: #8a4fc4;
+  --stroke: 2.5px;
+  --radius: 18px;
+  --display: 'Dela Gothic One', 'M PLUS Rounded 1c', sans-serif;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'M PLUS Rounded 1c', 'Hiragino Maru Gothic ProN', 'Hiragino Sans', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-text-size-adjust: 100%;
+}
+
+button,
+input,
+.button {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+.button {
+  border: var(--stroke) solid var(--line);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 0 var(--line);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+button:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--line);
+}
+button:focus-visible,
+.button:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 3px;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+input {
+  width: 100%;
+  padding: 10px 14px;
+  border: var(--stroke) solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  font-weight: 700;
+}
+
+h1,
+h2 {
+  margin: 0 0 8px;
+  line-height: 1.35;
+  font-family: var(--display);
+  font-weight: 400;
+}
+h1 {
+  font-size: 22px;
+}
+h2 {
+  font-size: 17px;
+}
+p {
+  margin: 0 0 8px;
+}
+
+.screen {
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 16px 104px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-x: clip;
+}
+
+.card {
+  position: relative;
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.small {
+  font-size: 12.5px;
+  color: var(--sub);
+}
+.center {
+  text-align: center;
+}
+.note {
+  margin-top: 10px;
+}
+
+.primary {
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 4px 0 var(--coral);
+}
+.primary:active:not(:disabled) {
+  box-shadow: 0 0 0 var(--coral);
+}
+/* ボタンは本文と同じ丸ゴシック（押すもの）。Dela Gothicは見出しと数字（見るもの）に使う */
+.big {
+  width: 100%;
+  min-height: 56px;
+  padding: 14px;
+  font-weight: 900;
+  font-size: 18px;
+}
+.sticky {
+  position: sticky;
+  bottom: 14px;
+  z-index: 2;
+}
+.link {
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 4px 0;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 背景の丸 */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* タイトル */
+.title {
+  min-height: 100vh;
+  justify-content: center;
+  text-align: center;
+  isolation: isolate;
+}
+.title-mark {
+  align-self: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 14px;
+}
+.title-logo {
+  font-family: 'Tsukuhou Shogo Mincho', var(--display);
+  font-weight: 400;
+  font-size: 58px;
+  line-height: 1.1;
+  color: var(--coral);
+  -webkit-text-stroke: 3px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--ink);
+  margin: 10px 0 14px;
+}
+/* 全角の「！」は左側があいて見えるので、前の字に寄せる */
+.title-logo .bang {
+  margin-left: -0.18em;
+}
+.title-logo small {
+  display: block;
+  margin-top: 10px;
+  font-family: 'Tsukuhou Shogo Mincho', 'M PLUS Rounded 1c', sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  color: var(--ink);
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+  letter-spacing: 0.2em;
+}
+.title-lead {
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+/* キャラクリ */
+.screen-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.screen-head h1 {
+  margin: 0;
+}
+.field {
+  display: block;
+  margin-bottom: 10px;
+}
+.field span {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.look {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.look-opts {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.swatches {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+}
+.swatch.on {
+  outline: 3px solid var(--coral);
+  outline-offset: 2px;
+}
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chips.sub {
+  margin-top: 12px;
+}
+.chip {
+  padding: 5px 12px;
+  font-size: 13px;
+  gap: 6px;
+  box-shadow: 0 2px 0 var(--line);
+}
+.chip.on,
+.seg button.on,
+.bg-item.on,
+.option.on {
+  background: var(--sun);
+}
+.bg-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.bg-item {
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  text-align: left;
+  justify-content: flex-start;
+}
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.seg button {
+  font-size: 13.5px;
+}
+.seg.career-pick {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.seg.career-pick button {
+  font-size: 12.5px;
+  padding: 8px 2px;
+  white-space: nowrap;
+}
+.seg.career-pick button:disabled {
+  color: var(--muted, #999);
+}
+
+/* 育成画面 */
+.week {
+  isolation: isolate;
+}
+.week-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.week-left {
+  font-size: 12px;
+  font-weight: 800;
+}
+.date {
+  font-family: var(--display);
+  font-size: 32px;
+  line-height: 1;
+}
+.week-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.money {
+  border: var(--stroke) solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  padding: 2px 12px;
+  font-weight: 900;
+  font-size: 15px;
+}
+.money.low {
+  background: var(--coral-light);
+}
+.week-sub {
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+.me {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+}
+.me-face {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: var(--stroke) solid var(--line);
+  background: var(--sun);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+.me-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.me-name {
+  font-weight: 900;
+  font-size: 17px;
+}
+.combo {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 800;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 8px;
+  margin-left: 6px;
+  vertical-align: 2px;
+}
+.bar {
+  display: grid;
+  grid-template-columns: 4em 1fr 2em;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.bar-track {
+  height: 12px;
+  border-radius: 6px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  overflow: hidden;
+}
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--sun);
+  transition: width 0.4s;
+}
+.bar-fill.good {
+  background: var(--good);
+}
+.bar-fill.warn {
+  background: var(--coral);
+}
+.bar-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-weight: 800;
+  font-size: 13px;
+}
+.stat b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 19px;
+}
+.stat.weak {
+  background: var(--coral-light);
+}
+.stat-row {
+  display: flex;
+  gap: 6px;
+}
+.stat-row button {
+  flex: 1;
+  font-size: 13px;
+  padding: 6px 8px;
+}
+.section-title {
+  font-family: var(--display);
+  font-size: 20px;
+  margin: 4px 0 0;
+}
+.tabs {
+  display: flex;
+  gap: 6px;
+}
+.tabs button {
+  padding: 4px 14px;
+  font-size: 13px;
+  box-shadow: 0 2px 0 var(--line);
+}
+.tabs button.on {
+  background: var(--ink);
+  color: #fff;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.tile {
+  position: relative;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2px;
+  min-height: 64px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  text-align: left;
+  box-shadow: 0 4px 0 var(--line);
+}
+.tile-name {
+  font-weight: 900;
+  font-size: 15.5px;
+  line-height: 1.3;
+}
+.tile-hint {
+  font-weight: 700;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.tile.on {
+  background: var(--sun);
+  transform: rotate(-1.5deg);
+}
+.tile-tag {
+  position: absolute;
+  right: -8px;
+  top: -11px;
+  background: var(--coral);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  border: var(--stroke) solid var(--line);
+  border-radius: 999px;
+  padding: 0 8px;
+  transform: rotate(6deg);
+}
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.skill {
+  font-size: 12.5px;
+  font-weight: 800;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  padding: 1px 10px 1px 8px;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.skill-shape {
+  font-size: 10px;
+}
+.skill-buki .skill-shape {
+  color: var(--buki);
+}
+.skill-kuse .skill-shape {
+  color: var(--kuse);
+}
+.skill-kiwami {
+  background: var(--sun-light);
+}
+.skill-kiwami .skill-shape {
+  color: var(--kiwami);
+}
+.person {
+  padding: 8px 0;
+  border-bottom: 2px dashed var(--soft);
+}
+.person:last-of-type {
+  border-bottom: none;
+}
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.option {
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 0;
+  border-radius: 14px;
+}
+.option .small {
+  color: var(--ink);
+  font-weight: 700;
+}
+.neta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.neta-slot-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 800;
+}
+.slot-label {
+  font-size: 11.5px;
+  font-weight: 900;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 8px;
+}
+.neta-slot .chips {
+  margin-top: 6px;
+}
+.power {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.warn-mark {
+  font-size: 11px;
+  color: var(--kuse);
+}
+
+/* イベント */
+.event {
+  isolation: isolate;
+}
+.event .date {
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 900;
+}
+.story h1 {
+  font-size: 21px;
+}
+.story.stage h1 {
+  font-family: 'Tsukuhou Shogo Mincho', var(--display);
+  font-size: 25px;
+}
+.story p {
+  line-height: 1.85;
+  font-weight: 600;
+}
+.stage {
+  background: var(--sun);
+  overflow: hidden;
+}
+.stage .small {
+  display: block;
+  width: fit-content;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 0 10px;
+  margin-bottom: 6px;
+}
+
+/* ネタ見せの結果 */
+.studio {
+  position: relative;
+  background: var(--sun);
+  border: var(--stroke) solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 270px;
+  padding: 14px;
+  isolation: isolate;
+}
+.studio .blob {
+  z-index: 0;
+}
+.studio-title {
+  position: relative;
+  display: inline-block;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 900;
+  border-radius: 999px;
+  padding: 2px 12px;
+  font-size: 13px;
+}
+.stage-result .studio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* 舞台名・擬音・札のあいだを等しく空ける */
+  justify-content: space-between;
+  gap: 10px;
+}
+.dokkan {
+  position: relative;
+  margin: 6px 0 4px 2px;
+  font-family: var(--display);
+  font-size: 72px;
+  line-height: 1;
+  color: var(--coral);
+  -webkit-text-stroke: 3px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(-8deg);
+}
+.level-0 .dokkan,
+.level-1 .dokkan {
+  color: #fff;
+  font-size: 54px;
+}
+.telop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.telop-text {
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-radius: 10px;
+  padding: 4px 12px;
+  font-weight: 900;
+  font-size: 19px;
+  line-height: 1.4;
+  box-shadow: 4px 4px 0 var(--line);
+}
+.telop-tag {
+  background: var(--coral);
+  color: #fff;
+  font-weight: 900;
+  font-size: 12px;
+  border: var(--stroke) solid var(--line);
+  border-radius: 8px;
+  padding: 0 8px;
+}
+.stage-result p {
+  text-align: left;
+}
+.meter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 900;
+}
+.meter-head b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 24px;
+}
+.laugh-meter {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 3px;
+  margin: 6px 0 12px;
+}
+.laugh-meter span {
+  height: 14px;
+  border-radius: 4px;
+  border: 2px solid var(--line);
+  background: var(--card);
+}
+.laugh-meter span.on {
+  background: var(--coral);
+}
+.laugh-meter span.on.edge {
+  background: var(--sun);
+}
+.level-0 .laugh-meter span.on {
+  background: #b9b2a8;
+}
+.comment {
+  font-weight: 900;
+  border-left: 5px solid var(--coral);
+  padding-left: 10px;
+  text-align: left;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(26 26 26 / 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  z-index: 10;
+}
+.modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow: auto;
+  background: var(--bg);
+  border: var(--stroke) solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 6px 0 var(--line);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.modal p {
+  font-weight: 600;
+}
+
+/* リザルト */
+.result-head {
+  background: var(--sun);
+}
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 10px;
+}
+.result-row > div:nth-child(2) {
+  flex: 1;
+}
+.share-card {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1200 / 675;
+  border: var(--stroke) solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.share-card.loading {
+  display: grid;
+  place-items: center;
+  background: var(--soft);
+  font-weight: 800;
+  color: var(--sub);
+}
+.rank {
+  font-family: var(--display);
+  font-size: 64px;
+  line-height: 1;
+  color: var(--coral);
+  -webkit-text-stroke: 3px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--ink);
+}
+.months {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.months li {
+  display: grid;
+  grid-template-columns: 3em 1fr;
+  gap: 6px;
+  font-weight: 600;
+}
+.month {
+  font-weight: 900;
+  color: var(--coral);
+}
+.route {
+  font-family: var(--display);
+  font-size: 19px;
+  text-align: center;
+}
+.share {
+  white-space: pre-wrap;
+  background: var(--soft);
+  border-radius: 12px;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 13px;
+}
+.big .go-sub {
+  display: block;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-weight: 700;
+  font-size: 11.5px;
+  opacity: 0.85;
+}
+.primary.big {
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ネタ見せの見せ場（ミニゲーム） */
+.showcase {
+  gap: 12px;
+}
+.sc-step {
+  font-weight: 900;
+  font-size: 13px;
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.sc-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 250px;
+}
+/* 舞台の絵：会場の背景に主人公と相方。高さは見せ場の間ずっと同じ */
+.sc-stage.has-bg {
+  height: clamp(220px, 36svh, 300px);
+  min-height: 0;
+  padding: 0;
+  background-size: cover;
+  background-position: center 35%;
+  flex-shrink: 0;
+}
+.sc-people {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 0;
+  pointer-events: none;
+}
+.sc-stage:not(.has-bg) .sc-people {
+  display: none;
+}
+.sc-people img {
+  height: calc(clamp(220px, 36svh, 300px) * 0.68);
+  margin: 0 -14px -6%;
+  user-select: none;
+  transition: transform 0.25s;
+}
+.sc-layer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+.sc-stage.has-bg .sc-layer {
+  padding: 10px;
+  box-sizing: border-box;
+}
+.sc-stage.has-bg .sc-line,
+.sc-stage.has-bg .sc-answer {
+  font-size: 15px;
+  padding: 6px 10px;
+}
+.sc-stage.has-bg .sc-react {
+  align-self: flex-end;
+  margin-top: auto;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 13px;
+}
+.sc-bubble,
+.sc-answer,
+.sc-react {
+  position: relative;
+  z-index: 1;
+}
+.sc-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.sc-line {
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-radius: 14px;
+  padding: 8px 12px;
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1.45;
+  box-shadow: 4px 4px 0 var(--line);
+}
+.sc-answer {
+  align-self: flex-end;
+  background: var(--coral);
+  color: #fff;
+  border: var(--stroke) solid var(--line);
+  border-radius: 14px;
+  padding: 8px 12px;
+  font-weight: 900;
+  font-size: 20px;
+  box-shadow: 4px 4px 0 var(--line);
+}
+.sc-react {
+  font-weight: 800;
+  font-size: 15px;
+}
+.sc-timer,
+.sc-ma {
+  position: relative;
+  height: 18px;
+  border: var(--stroke) solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  overflow: hidden;
+}
+.sc-timer span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--coral);
+  transition: width 1s linear;
+}
+.sc-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 2px solid var(--line);
+  border-right: 2px solid var(--line);
+}
+.sc-zone.good {
+  background: var(--sun);
+}
+.sc-zone.great {
+  background: var(--coral);
+}
+.sc-legend {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  font-size: 12px;
+  font-weight: 900;
+  margin-top: -6px;
+}
+.sc-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  border: 2px solid var(--line);
+  border-radius: 3px;
+}
+.sc-legend .good::before {
+  background: var(--sun);
+}
+.sc-legend .great::before {
+  background: var(--coral);
+}
+.sc-needle {
+  position: absolute;
+  z-index: 1;
+  top: -2px;
+  bottom: -2px;
+  width: 4px;
+  margin-left: -2px;
+  background: var(--ink);
+}
+.sc-help {
+  font-weight: 800;
+  text-align: center;
+  margin: 0;
+}
+.sc-opt {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+}
+.sc-opt.hint {
+  background: var(--sun-light);
+}
+.sc-opt.hint .small {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.sc-tap {
+  min-height: 72px;
+  font-size: 22px;
+}
+.sc-outcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0;
+}
+.sc-sound {
+  font-family: var(--display);
+  font-size: 64px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  color: var(--coral);
+  -webkit-text-stroke: 3px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(-6deg);
+}
+.grade-good .sc-sound {
+  color: var(--sun);
+  font-size: 54px;
+}
+.grade-miss .sc-sound {
+  color: #fff;
+  font-size: 44px;
+}
+.sc-label {
+  font-weight: 900;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 12px;
+}
+.summary {
+  font-weight: 800;
+  background: var(--sun-light);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.tally {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.tally span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 0;
+}
+.tally b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 20px;
+}
+.tally span.on {
+  background: var(--sun);
+}
+.sc-answer.off {
+  background: var(--card);
+  color: var(--ink);
+}
+.sc-read {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sc-read b {
+  display: inline-block;
+  min-width: 3em;
+  margin-right: 6px;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0 6px;
+  text-align: center;
+}
+
+/* 今週の企画：昼→夜の順番 */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 900;
+  font-size: 13px;
+}
+.steps > button,
+.steps > span:not([aria-hidden]) {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--sub);
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: none;
+}
+.steps .on {
+  background: var(--ink) !important;
+  color: #fff !important;
+}
+.steps button.done {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* 会話画面 */
+.adv {
+  min-height: 100svh;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+.adv-scene {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* 絵の枠は場面の途中で大きさを変えない（人の有無や選択肢の表示で伸び縮みさせない）。
+     svh はスマホのツールバーの出し入れで変わらない */
+  /* 縦長のスマホでも下が空かないように、文章の箱（140px）と余白を除いた高さを全部使う */
+  --scene-h: clamp(230px, calc(100svh - 200px), 760px);
+  height: var(--scene-h);
+  flex-shrink: 0;
+  background: var(--sun-light);
+  border: var(--stroke) solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+  cursor: pointer;
+}
+.adv-scene .blob {
+  z-index: -1;
+}
+.adv-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.adv-date {
+  font-weight: 900;
+  font-size: 12px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 10px;
+  white-space: nowrap;
+}
+.adv-cast {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 4px;
+  margin-bottom: -14px;
+}
+.adv-chara {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.adv-chara figcaption {
+  margin-top: -18px;
+  position: relative;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 0 10px;
+  font-weight: 900;
+  font-size: 12px;
+}
+.adv-scene.has-bg {
+  background-size: cover;
+  background-position: center;
+  padding-bottom: 0;
+}
+.adv-scene.has-bg .adv-cast {
+  margin: 0 -12px;
+  gap: 0;
+}
+.adv-chara.art {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.adv-chara.art img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(var(--scene-h) * 0.8);
+  object-fit: contain;
+  object-position: bottom;
+  transform-origin: bottom center;
+  /* 絵の下の方は肩がコマの端で切れているので、場面の枠の下に少し沈めて隠す */
+  transform: translateY(12%);
+  transition: transform 0.2s, filter 0.2s;
+  pointer-events: none;
+  user-select: none;
+}
+.adv-chara.art figcaption {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  margin: 0;
+  white-space: nowrap;
+}
+.adv-cast.has-focus .adv-chara:not(.focus) img {
+  transform: translateY(12%) scale(0.95);
+  filter: brightness(0.8);
+}
+.adv-cast.has-focus .adv-chara.focus {
+  z-index: 1;
+}
+.adv-chara.is-me figcaption {
+  background: var(--coral);
+  color: #fff;
+}
+.adv-box {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 140px;
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 5px 0 var(--line);
+  padding: 16px 16px 18px;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.7;
+  cursor: pointer;
+  white-space: pre-wrap;
+}
+.adv-box.talk {
+  font-weight: 900;
+}
+.adv-box:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 2px;
+}
+.adv-next {
+  position: absolute;
+  right: 14px;
+  bottom: 6px;
+  color: var(--coral);
+  animation: adv-bob 0.8s ease-in-out infinite;
+}
+.adv-count {
+  position: absolute;
+  left: 16px;
+  bottom: 6px;
+  font-size: 11px;
+  color: var(--sub);
+  font-weight: 800;
+}
+@keyframes adv-bob {
+  50% {
+    transform: translateY(3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adv-next {
+    animation: none;
+  }
+}
+.adv-after {
+  position: absolute;
+  z-index: 2;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  max-height: calc(100% - 56px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 願書：性別 */
+.gender-pick {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.gender-pick button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0 8px;
+  font-weight: 900;
+}
+.gender-pick button.on {
+  background: var(--sun);
+}
+
+/* 主人公の顔（絵） */
+.hero-face {
+  object-fit: contain;
+  object-position: bottom;
+}
+
+/* 通信簿（リザルト） */
+.skill-gift .skill-shape {
+  color: var(--gift);
+}
+.result-title {
+  margin: 12px 0 10px;
+  padding: 8px 12px;
+  border: var(--stroke) solid var(--line);
+  border-radius: 12px;
+  background: var(--sun-light);
+  display: flex;
+  flex-direction: column;
+}
+/* 総合評価の内訳：能力・特殊能力・卒業大会・ファン・業界の評価と合計 */
+.score-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+.score-parts div {
+  flex: 1 1 auto;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  padding: 4px 8px;
+  text-align: center;
+}
+.score-parts dt {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted, #6b6255);
+}
+.score-parts dd {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.score-parts .sum {
+  background: var(--ink);
+  color: #fff;
+}
+.score-parts .sum dt {
+  color: #fff;
+}
+.result-title strong {
+  font-family: 'Tsukuhou Shogo Mincho', var(--display);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.3;
+}
+.grades {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.grade-tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.grade {
+  grid-row: span 2;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--display);
+  font-size: 22px;
+  line-height: 1;
+  background: var(--soft);
+}
+.grade-label {
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--sub);
+}
+.grade-value {
+  font-weight: 700;
+}
+.grade-S {
+  background: var(--kiwami);
+  color: #fff;
+}
+.grade-A {
+  background: var(--coral);
+  color: #fff;
+}
+.grade-B {
+  background: var(--sun);
+}
+.grade-C {
+  background: #9fd8a8;
+}
+.grade-D {
+  background: #a9c8ec;
+}
+.review {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--soft);
+}
+.review p {
+  margin: 2px 0 0;
+}
+.review-face {
+  width: 64px;
+  flex: none;
+}
+.result-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+.result-facts dt {
+  color: var(--sub);
+}
+.result-facts dd {
+  margin: 0;
+  font-weight: 700;
+}
+.gifts {
+  list-style: none;
+  margin: 10px 0 0;
+  padding-left: 0;
+  font-size: 14px;
+  color: var(--sub);
+}
+
+/* 会話の名札（台本の「名前（表情）「…」」から） */
+.adv-name {
+  position: absolute;
+  top: -15px;
+  left: 14px;
+  padding: 0 12px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--sun);
+  font-size: 14px;
+  line-height: 26px;
+  font-weight: 900;
+}
+
+/* 会話：ログ */
+.adv-top-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.adv-top-left .studio-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.adv-date {
+  flex-shrink: 0;
+}
+.adv-log-btn.on {
+  background: var(--sun);
+}
+.adv-top-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.adv-log-btn {
+  font-weight: 900;
+  font-size: 12px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 10px;
+  min-height: 0;
+  box-shadow: none;
+}
+.adv-rest {
+  visibility: hidden;
+}
+.adv-log {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.adv-log-sheet {
+  width: min(100%, 520px);
+  max-height: 80dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  padding: 12px 16px 20px;
+}
+.adv-log-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 6px;
+}
+.adv-log-list p {
+  margin: 0;
+  line-height: 1.6;
+  font-weight: 700;
+}
+.adv-log-list b {
+  display: block;
+  font-size: 12px;
+  color: var(--sub);
+}
+.adv-log-list .log-choice {
+  color: var(--coral);
+  font-weight: 900;
+}
+
+/* お金が足りない予定 */
+.tile:disabled,
+.chip:disabled,
+.option:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.tile-tag.lock {
+  background: var(--line);
+  color: #fff;
+}
+.warn-note {
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--coral-light);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* 特殊能力 */
+.skill-pick {
+  all: unset;
+  cursor: pointer;
+  border-radius: 999px;
+}
+.skill-pick.on .skill {
+  outline: 3px solid var(--coral);
+}
+.skill-desc {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--sun-light);
+}
+.skill-desc p {
+  margin: 4px 0 0;
+}
+
+/* 会話：選択肢が出ても絵の大きさは変えず、文字の枠だけ詰める */
+.adv {
+  cursor: pointer;
+}
+.adv.has-after {
+  cursor: default;
+}
+.adv-after .option {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.input-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.input-card .chips {
+  gap: 8px;
+}
+.input-card .input-label {
+  margin: 0;
+}
+.input-label {
+  font-weight: 900;
+  font-size: 13px;
+  margin: 0 0 4px;
+}
+
+/* 週の切り替え：暗転して日付カードがめくれ、行動画面が下から出て、上がった能力が光る（タップで飛ばせる） */
+.week-curtain {
+  visibility: visible;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #141414;
+  display: grid;
+  place-items: center;
+  animation: curtain 2.3s ease forwards;
+  cursor: pointer;
+}
+.week-card {
+  position: relative;
+  width: min(70vw, 280px);
+  background: var(--card);
+  border: var(--stroke) solid var(--line);
+  border-radius: var(--radius);
+  text-align: center;
+  padding: 26px 12px 18px;
+  transform-origin: top center;
+  animation: card-flip 2.1s 0.15s ease both;
+  overflow: hidden;
+}
+.week-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 16px;
+  background: var(--coral);
+  border-bottom: 2px solid var(--line);
+}
+.week-card small {
+  display: block;
+  font-weight: 900;
+  font-size: 13px;
+  color: var(--ink-soft, #6b6255);
+}
+.week-card span {
+  font-family: 'Tsukuhou Shogo Mincho', var(--display);
+  font-size: 34px;
+  line-height: 1.2;
+}
+.screen.week.behind {
+  visibility: hidden;
+}
+.screen.week.week-enter:not(.behind) {
+  animation: week-rise 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+.stat {
+  position: relative;
+}
+.stat.hit {
+  animation: stat-glow 1.1s 0.5s;
+}
+.stat-up {
+  position: absolute;
+  right: 6px;
+  top: -11px;
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 1;
+  color: #fff;
+  background: var(--coral);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 6px;
+  pointer-events: none;
+  animation: stat-pop 2s 0.4s both;
+}
+@keyframes curtain {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes card-flip {
+  0% { opacity: 0; transform: perspective(600px) rotateX(-90deg); }
+  25% { opacity: 1; transform: perspective(600px) rotateX(0); }
+  75% { opacity: 1; transform: perspective(600px) rotateX(0); }
+  100% { opacity: 0; transform: perspective(600px) rotateX(90deg); }
+}
+@keyframes week-rise {
+  from { transform: translateY(60px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes stat-glow {
+  0%, 100% { background: var(--card); }
+  35% { background: var(--sun); }
+}
+@keyframes stat-pop {
+  0% { opacity: 0; transform: translateY(8px); }
+  20% { opacity: 1; transform: none; }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .week-curtain, .week-card, .screen.week.week-enter, .stat.hit, .stat-up { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+}
+
+/* 本番の点数の内訳 */
+.why h2 { margin: 0 0 6px; font-size: 14px; }
+.why-row { display: grid; grid-template-columns: 7.5em 1fr; gap: 8px; padding: 5px 0; border-top: 1px dashed var(--soft); font-size: 13px; }
+.why-row span { color: var(--sub); }
+.why-row b { font-weight: 600; }
+.why-row.total b { font-weight: 800; }
+
+/* コントの見せ場（入り・役・暗転の3つの山） */
+.sc-steps { display: flex; gap: 4px; }
+.sc-steps span { flex: 1; text-align: center; font-size: 11px; font-weight: 900; padding: 4px 2px; border: 2px solid var(--line); border-radius: 999px; background: var(--card); color: var(--sub); }
+.sc-steps span.on { background: var(--sun); color: var(--ink); }
+.sc-steps span.done { background: var(--soft); }
+.sc-steps span.done.grade-great { background: var(--coral-light); }
+.small-outcome .sc-sound { font-size: 40px; }
+.grade-good.small-outcome .sc-sound { font-size: 36px; }
+.grade-miss.small-outcome .sc-sound { font-size: 30px; }
+.role-legend { justify-content: space-between; }
+.role-legend span:not(.great)::before { display: none; }
+.sc-stage.blackout { filter: brightness(0.35); transition: filter 0.4s; }
+.conte-beats span.grade-great b { color: var(--coral); }
+.sc-tap { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+
+/* 値で色が変わるゲージ（人間関係） */
+.bar-fill.lv0 { background: var(--coral); }
+.bar-fill.lv1 { background: var(--sun); }
+.bar-fill.lv2 { background: var(--good); }
+.bar-fill.lv3 { background: var(--buki); }
+
+/* 育成画面は、スマホ1画面に収める（スクロールさせない） */
+.screen.week { padding-bottom: 16px; gap: 9px; }
+.week .date { font-size: 28px; }
+.week .week-sub { margin-top: 2px; }
+.week .me { padding: 6px 10px; gap: 10px; }
+.week .me-face { width: 58px; height: 58px; }
+.week .me-name { font-size: 15px; }
+.week .me-body { gap: 2px; }
+.week .stats { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.week .stat { position: relative; flex-direction: column; align-items: center; padding: 3px 0 2px; font-size: 10.5px; border-radius: 10px; line-height: 1.2; }
+.week .stat b { font-size: 18px; line-height: 1.1; }
+.week .stat-up { right: -2px; }
+.week .stat-row button { padding: 4px 6px; font-size: 12.5px; }
+.week .section-title { font-size: 18px; margin: 0; }
+.week .steps > button, .week .steps > span:not([aria-hidden]) { padding: 2px 10px; }
+.week .tiles { gap: 7px; }
+.week .tile { min-height: 52px; padding: 6px 10px; }
+.week .tile-name { font-size: 14.5px; }
+.week .tile-hint { font-size: 11px; line-height: 1.3; }
+.week .primary.big { padding-top: 10px; padding-bottom: 10px; }
+@media (max-height: 720px) {
+  .week .me-face { width: 46px; height: 46px; }
+  .week .tile { min-height: 46px; }
+  .week .date { font-size: 24px; }
+}
+
+/* 大会の合否・順位の発表 */
+.verdict { position: relative; z-index: 1; align-self: center; margin: 6px auto 4px; text-align: center; background: var(--card); border: 3px solid var(--line); border-radius: 14px; padding: 6px 18px 8px; box-shadow: 4px 4px 0 var(--line); transform: rotate(-3deg); animation: verdict-in 0.7s cubic-bezier(.2,1.6,.4,1) 0.6s both; }
+.verdict small { display: block; font-size: 12px; font-weight: 900; color: var(--sub); }
+.verdict b { display: block; font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1.15; }
+.verdict.good { background: var(--sun); }
+.verdict.good b { color: var(--coral); -webkit-text-stroke: 1.5px var(--ink); paint-order: stroke fill; }
+.verdict.bad { background: #e9e6e0; }
+@keyframes verdict-in { 0% { opacity: 0; transform: scale(2.4) rotate(-12deg); } 100% { opacity: 1; transform: scale(1) rotate(-3deg); } }
+@media (prefers-reduced-motion: reduce) { .verdict { animation: none; } }
+
+/* 舞台の名前と卒業の称号は「めくり」（寄席の演者名の札）のように見せる */
+.story.stage h1 .chunk {
+  display: inline-block;
+}
+.story.stage h1 {
+  display: inline-block;
+  align-self: flex-start;
+  margin: 4px 0 8px;
+  padding: 6px 16px 8px;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  background: #fffdf6;
+  border: 3px double var(--coral);
+  outline: var(--stroke) solid var(--line);
+  border-radius: 4px;
+  box-shadow: 4px 4px 0 var(--line);
+}
+.result-title {
+  position: relative;
+  align-items: center;
+  text-align: center;
+  padding: 18px 14px 16px;
+  background: #fffdf6;
+  border: 3px double var(--coral);
+  outline: var(--stroke) solid var(--line);
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--line);
+}
+.result-title .small {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-4deg);
+  background: var(--coral);
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  padding: 1px 6px 1px 10px;
+  border: 2px solid var(--line);
+  border-radius: 4px;
+}
+.result-title strong {
+  font-size: 27px;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  animation: shogo-in 0.9s cubic-bezier(.2,1.4,.4,1) 0.3s both;
+}
+@keyframes shogo-in { 0% { opacity: 0; transform: scale(1.6); letter-spacing: 0.4em; } 100% { opacity: 1; transform: scale(1); letter-spacing: 0.04em; } }
+@media (prefers-reduced-motion: reduce) { .result-title strong { animation: none; } }
+
+/* 結果画面：次の評価まであと何点か */
+.next-goal {
+  margin: 8px 0 10px;
+  padding: 8px 12px;
+  background: var(--sun-light);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  font-size: 14px;
+}
+.next-goal b {
+  font-weight: 900;
+}
+.next-goal ul {
+  margin: 4px 0 0;
+  padding-left: 1.2em;
+  color: var(--sub);
+  font-weight: 700;
+}
+
+/* 卒業アルバム */
+.album h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 15px;
+  margin: 12px 0 4px;
+}
+.album-group + .album-group {
+  border-top: 2px dashed var(--soft);
+  margin-top: 10px;
+}
+.album-list {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.album-list li {
+  font-size: 13px;
+  font-weight: 800;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  padding: 2px 10px;
+  background: var(--sun-light);
+}
+.album-list li.locked,
+.skill-locked {
+  background: var(--soft);
+  border-color: var(--soft);
+  color: var(--sub);
+}
+.album-hints {
+  margin: 8px 0 0;
+  padding-left: 0;
+  list-style: none;
+  font-size: 12.5px;
+  color: var(--sub);
+}
+.album-hints li::before {
+  content: '★？ ';
+  color: var(--kiwami);
+}
+.album-new {
+  background: var(--sun-light);
+}
+.album-new ul {
+  margin: 6px 0 0;
+  padding-left: 1.2em;
+}
