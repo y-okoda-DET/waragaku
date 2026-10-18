@@ -168,6 +168,12 @@ export function AdvScreen({ state, title, lines: script, place, startPlace, onEn
     // 画面のどこをタップしても進む（選択肢とログは除く）
     <div className={`screen adv ${done && after ? 'has-after' : ''}`} onClick={advance}>
       <div className={`adv-scene ${bg ? 'has-bg' : ''}`} style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
+        {/* 人のいない場面は、横長の背景を縦いっぱいに出すと床ばかりになる。床を切った横長のコマにして、上下は紙の地にする */}
+        {bg && (
+          <div className={`adv-wide ${shot.cast.length ? '' : 'on'}`} aria-hidden="true">
+            <span className="adv-wide-pic" style={{ backgroundImage: `url(${bg})` }} />
+          </div>
+        )}
         {!bg && (
           <>
             <span className="blob" style={{ right: -70, top: -60, width: 230, height: 230, background: 'var(--sun)' }} />

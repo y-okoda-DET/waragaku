@@ -1280,6 +1280,37 @@ p {
   background-position: center;
   padding-bottom: 0;
 }
+/* 人のいない場面の背景：床を切った横長のコマを真ん中に出し、上下は紙の地（点々）。人が出ると消えて、いつもの全面の背景に戻る */
+.adv-wide {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #fff4d6 radial-gradient(rgba(180, 130, 40, 0.3) 1px, transparent 1.3px) 0 0 / 8px 8px;
+  opacity: 0;
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+.adv-wide.on {
+  opacity: 1;
+}
+.adv-wide-pic {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48%;
+  transform: translateY(-50%);
+  height: 58%;
+  /* 絵の上から4分の3（天井から床の手前まで）だけを見せる */
+  background-size: auto 135%;
+  background-position: center 0;
+  border-top: var(--stroke) solid var(--line);
+  border-bottom: var(--stroke) solid var(--line);
+}
+@media (prefers-reduced-motion: reduce) {
+  .adv-wide {
+    transition: none;
+  }
+}
 .adv-scene.has-bg .adv-cast {
   margin: 0 -12px;
   gap: 0;
