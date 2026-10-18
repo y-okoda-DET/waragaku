@@ -19,6 +19,7 @@ import { kadodeHead, midoPartnerLine, rivalVariant } from './rivalCareers'
 // ・makabe_seen：真壁の出番を袖から観た（6月）
 // ・makabe_rival：真壁に「次は勝つ」と言った（7月）
 // ・mido_promise／makabe_promise：門出の前の夜に、決勝での約束をした（2月）
+// ・mido_tsutae：門出の前の夜に「相方に言うたれ」と背中を押した（2月）
 
 const me = (s: GameState) => s.player.callName
 
@@ -497,8 +498,10 @@ const BASE: Record<string, StoryDef> = {
           s.condition = clamp(s.condition - 8)
         }
       } else if (c === 1) {
-        if (r === 'mido') s.dokiBond = clamp(s.dokiBond + 6)
-        else {
+        if (r === 'mido') {
+          s.flags.mido_tsutae = true
+          s.dokiBond = clamp(s.dokiBond + 6)
+        } else {
           s.flags.makabe_promise = true
           s.motivation = clamp(s.motivation + 8)
         }

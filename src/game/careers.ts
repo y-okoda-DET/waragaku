@@ -229,7 +229,11 @@ export function careerEvents(s: GameState, month: number, week: number): string[
 
 // 入学式。1行目のあとに足す
 export function nyugakuLines(s: GameState): string[] {
-  if (career(s) === 'circle') return [`ナレーション：隣には${s.partner?.name ?? '相方'}。サークルの卒業ライブから、まだ3週間。同じ大学から来たのは、自分たちだけだ。`]
+  if (career(s) === 'circle')
+    return [
+      `ナレーション：隣には${s.partner?.name ?? '相方'}。サークルの卒業ライブから、まだ3週間。同じ大学から来たのは、自分たちだけだ。`,
+      ...(s.player.style === 'manzai' ? ['ナレーション：2つ前の列に、見覚えのある背中があった。御堂。3年前、学生大会の準決勝で自分たちを負かして、そのまま全国2位まで行ったコンビのツッコミだ。'] : []),
+    ]
   if (career(s) === 'salaryman') return ['ナレーション：スーツで来たのは、自分を入れて3人だけ。先月まで毎朝着ていたスーツだ。まわりは、ほとんど10歳下に見える。']
   return []
 }

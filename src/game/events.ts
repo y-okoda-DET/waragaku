@@ -578,8 +578,10 @@ export const STORIES: Record<string, StoryDef> = {
       if (!s.partner) return
       if (c === 0 && s.partner.bond + rng.int(0, 30) >= 60) {
         s.partner.bond = clamp(s.partner.bond + 10)
+        s.flags.naitei_stay = true
         s.weekLog.push(`${s.partner.name}は内定を断った。「お前とやる方がおもろいわ」`)
       } else {
+        s.flags.naitei_left = true
         s.weekLog.push(`${s.partner.name}は就職を選んだ。`)
         splitUp(s)
       }
