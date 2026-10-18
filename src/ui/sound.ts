@@ -7,7 +7,7 @@ const URLS: Record<string, string> = {}
 for (const [path, url] of Object.entries(FILES)) URLS[path.slice(path.lastIndexOf('/') + 1, -'.mp3'.length)] = url
 
 export type Bgm = 'title' | 'daily' | 'stage' | 'night' | 'grad'
-export type Se = 'tap' | 'decide' | 'laugh_big' | 'laugh_small' | 'clap' | 'cheer' | 'suberi' | 'tsukkomi' | 'buzzer' | 'rank'
+export type Se = 'tap' | 'decide' | 'laugh_big' | 'laugh_small' | 'clap' | 'cheer' | 'suberi' | 'tsukkomi' | 'buzzer' | 'rank' | 'mekuri'
 
 // ループの長さ（秒）。scripts/audio_loop.py が出した値（効果音は scripts/audio_se.py で加工）
 const LOOP: Record<Bgm | 'zawa', number> = { title: 31.689, daily: 63.271, stage: 44.448, night: 45.163, grad: 56.89, zawa: 10 }

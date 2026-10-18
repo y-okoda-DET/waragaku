@@ -4,7 +4,7 @@ SR = 32000
 # 名前: (目安, 値) LUFS で合わせるものと、短すぎてピークで合わせるもの
 T = {'se_tap':('peak',-9),'se_decide':('peak',-3),'se_tsukkomi':('peak',-2),
      'se_laugh_big':('rms',-17),'se_laugh_small':('rms',-20),'se_clap':('rms',-20),'se_cheer':('rms',-17),
-     'se_zawa':('rms',-27),'se_suberi':('rms',-21),'se_buzzer':('rms',-20),'se_rank':('rms',-17)}
+     'se_zawa':('rms',-27),'se_suberi':('rms',-21),'se_buzzer':('rms',-20),'se_rank':('rms',-17),'se_mekuri':('peak',-3)}
 for n,(k,v) in T.items():
     x = np.frombuffer(subprocess.run(['ffmpeg','-v','quiet','-i',f'/mnt/project-files/audio/se/{n}.mp3','-ac','1','-ar',str(SR),'-f','f32le','-'],capture_output=True).stdout,np.float32).copy()
     th = np.abs(x).max()*10**(-45/20)

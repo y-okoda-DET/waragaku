@@ -6,6 +6,7 @@ import { SKILL_BY_ID } from '../game/data/skills'
 import { LogPanel } from './Adv'
 import { NetaPanel } from './NetaPanel'
 import { Bar, Modal, PlayerAvatar, SkillBadge, SoundToggle } from './parts'
+import { se } from './sound'
 
 const CLASS_LABEL = { none: '-', ume: '梅組', take: '竹組', matsu: '松組' }
 
@@ -56,6 +57,8 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
   const [curtain, setCurtain] = useState(first.intro)
   useEffect(() => {
     if (!curtain) return
+    // 週の札がめくれて出てくるところで、紙をめくる音（札は0.15秒後から倒れてくる）
+    se('mekuri', 0.1)
     const t = setTimeout(() => setCurtain(false), 2300)
     return () => clearTimeout(t)
   }, [curtain])
