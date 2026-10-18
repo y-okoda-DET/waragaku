@@ -177,7 +177,8 @@ export function AdvScreen({ state, title, lines: script, place, startPlace, onEn
         <div className="adv-top">
           <span className="adv-top-left">
             <span className="studio-title">{title}</span>
-            <span className="adv-date">{weekLabel(Math.min(state.turn, 41))}</span>
+            {/* 右のボタンが3つあるので、日付は短く（5月 第4週 → 5月4週）して題名を切らさない */}
+            <span className="adv-date">{weekLabel(Math.min(state.turn, 41)).replace(' 第', '')}</span>
           </span>
           <span className="adv-top-right">
             <SoundToggle />

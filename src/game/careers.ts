@@ -30,7 +30,6 @@ export const MOCK_ALL_OPEN = true
 export const openCareers = (runs: number): CareerId[] => (MOCK_ALL_OPEN ? CAREERS.map((c) => c.id) : unlockedCareers(runs))
 
 const career = (s: GameState): string => s.player.background
-const me = (s: GameState) => s.player.callName
 const sakura = (s: GameState) => s.partner?.name === '佐倉'
 
 export const CAREER_STORIES: Record<string, StoryDef> = {
@@ -239,52 +238,6 @@ export function nyugakuLines(s: GameState): string[] {
 export function ohayoReply(s: GameState): string {
   if (career(s) === 'salaryman') return '灰原（驚き）「……ええ声。朝礼で鍛えたん？ その声、卒業まで出し続けや」'
   return '灰原（笑い）「ええ声。その声、卒業まで出し続けや」'
-}
-
-// 5月の街灯の下。ライバルとの関係の入り方を変える（台本の行を差し替え、足す）
-export function kouenLines(s: GameState, rival: 'mido' | 'makabe', lines: string[]): string[] {
-  const c = career(s)
-  if (rival === 'mido' && c === 'circle')
-    return [
-      lines[0],
-      'ナレーション：御堂。学生お笑いの全国大会で準優勝したコンビのツッコミ。3年前の準決勝で、こっちのコンビは御堂たちに負けた。打ち上げで一度だけ話したことがある。',
-      'ナレーション：向こうは、こっちのことなど覚えていないだろうと思っていた。',
-      `御堂（ふつう）「${me(s)}くん。……準決勝の、${s.partner?.name ?? '相方'}くんのとこだよね。ごめん、ここ21時から押さえてるんだ」`,
-      '御堂（笑い）「あと、さっき通りがかりに聞こえた。ボケのあとのツッコミ、0.5秒早い。……学生のときから、ずっとね」',
-    ]
-  if (rival === 'mido' && c === 'salaryman')
-    return [
-      lines[0],
-      lines[1],
-      'ナレーション：同期で敬語を使ってくるのは、御堂だけだ。年上だから、というより、距離をとるための敬語に聞こえた。',
-      `御堂（ふつう）「${me(s)}さん、ですよね。すみません、ここ21時から押さえてるんです。表情の確認、暗いとできないので」`,
-      '御堂（笑い）「あと、通りがかりに聞こえました。ボケのあとのツッコミ、0.5秒早いです。……年上の方に言うことじゃないですけど」',
-    ]
-  if (rival === 'makabe' && c === 'circle') return [...lines, '真壁（ふつう）「……学祭。教室のライブ。2年前、見た」', '真壁（ふつう）「……客、ぜんぶ知り合い。笑う前に、笑ってた」']
-  if (rival === 'makabe' && c === 'salaryman')
-    return [
-      ...lines.map((l) => (l === '真壁（ふつう）「……見てた？」' ? '真壁（ふつう）「……見てました？」' : l === '真壁（ふつう）「……ずっと。コント、するの？」' ? '真壁（ふつう）「……ずっと。コント、するんですか」' : l)),
-      '真壁（ふつう）「……スーツの人。入学式。肩、ずっと上がってた」',
-    ]
-  return lines
-}
-
-// 2月、門出の前の夜。ライバルがいちばん本音を話す場面の、最後の行の前に足す
-export function rivalNightLines(s: GameState, rival: 'mido' | 'makabe'): string[] {
-  const c = career(s)
-  if (rival === 'mido' && c === 'circle') return ['御堂（笑い）「3年前の準決勝。勝ったの僕らなのに、打ち上げで楽しそうだったの、君らのほうだった。……ずっと、それが腹立ってた」']
-  if (rival === 'mido' && c === 'salaryman')
-    return [`御堂（考え中）「……${me(s)}さん。会社、辞めるとき怖くなかった？ 相方に“辞めるな”って言っていいのか、分からなくて」`, 'ナレーション：いつの間にか、御堂の敬語が抜けていた。']
-  if (rival === 'makabe' && c === 'circle') return ['真壁（ふつう）「……学祭の教室。客、ぜんぶ知り合い。今は、知らない人。……今のほうが、いい顔」']
-  if (rival === 'makabe' && c === 'salaryman') return ['真壁（ふつう）「……会社の朝礼。6年、毎朝、おはようございます。……言ってたんですよね」', '真壁（笑い）「……わたしと、反対。……教えて、ください」']
-  return []
-}
-
-// 門出の打ち上げで、御堂が4月を振り返る一言
-export function kadodeMidoLine(s: GameState): string {
-  if (career(s) === 'circle') return '御堂（笑い）「1年でいちばん伸びたの、君らだったね。4月は、まだ学生の漫才だったのに」'
-  if (career(s) === 'salaryman') return '御堂（笑い）「1年でいちばん伸びたの、君らだったね。4月は、敬語の漫才だったのに」'
-  return '御堂（笑い）「1年でいちばん伸びたの、君らだったね。4月は“天丼”も知らなかったのに」'
 }
 
 // 卒業式。相方が隣にいるときの説明と、灰原の「両隣、見てみ」のあとに足す行

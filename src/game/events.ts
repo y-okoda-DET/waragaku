@@ -335,7 +335,17 @@ export const STORIES: Record<string, StoryDef> = {
       lines: [
         `ナレーション：2月。同期${s.classmates}人、全組が1分ネタで競う卒業大会。`,
         'ナレーション：勝ち上がった数組がもう1本やり、優勝すると卒業総代になる。',
-        rivalOf(s) === 'mido' ? '御堂（笑い）「1分なら、フリとオチだけで足りる。……君らの名前、予選の3つ後ろだね」' : '真壁（ふつう）「……決勝で」',
+        rivalOf(s) === 'mido'
+          ? s.player.background === 'circle'
+            ? '御堂（笑い）「1分なら、フリとオチだけで足りる。学生大会の予選と同じ尺だね。……君らの名前、3つ後ろ」'
+            : s.player.background === 'salaryman'
+              ? `御堂（笑い）「1分なら、フリとオチだけで足りますよ。……${s.player.callName}さんたちの名前、予選の3つ後ろですね」`
+              : '御堂（笑い）「1分なら、フリとオチだけで足りる。……君らの名前、予選の3つ後ろだね」'
+          : s.player.background === 'circle'
+            ? '真壁（ふつう）「……決勝で。知らない客の前で」'
+            : s.player.background === 'salaryman'
+              ? '真壁（ふつう）「……決勝で。待ってます」'
+              : '真壁（ふつう）「……決勝で」',
       ],
       choices: [],
     }),

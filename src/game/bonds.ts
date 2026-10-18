@@ -4,6 +4,7 @@ import { addSkill, clamp, gain, has, story } from './core'
 import type { StoryDef } from './events'
 import type { Rng } from './rng'
 import type { GameState } from './types'
+import { rivalVariant } from './rivalCareers'
 
 // 友好度と発展イベント（パワプロの「イベントキャラ」にあたる）
 // ・友好度は画面に出さない。相方は bond、先輩は like、それ以外は ties に持つ
@@ -37,6 +38,10 @@ export const BOND_CHARS: BondChar[] = [
 
 export const BOND_BY_ID: Record<string, BondChar> = Object.fromEntries(BOND_CHARS.map((c) => [c.id, c]))
 
+// この1年のライバル。漫才なら御堂、コントなら真壁。もう1人は1年を通して出てこない
+export const rivalOf = (s: GameState): 'mido' | 'makabe' => (s.player.style === 'conte' ? 'makabe' : 'mido')
+const present = (s: GameState, c: BondChar) => c.group !== 'rival' || c.id === rivalOf(s)
+
 const START: Record<BondGroup, number> = { douki: 10, senior: 10, teacher: 10, rival: 5, town: 10 }
 
 // 何段目の発展イベントが、友好度いくつ・いつから起きるか
@@ -59,7 +64,7 @@ export function affinity(s: GameState, id: string): number {
 // 友好度を動かす。人たらしは、同期と先輩との仲が深まりやすい
 export function tie(s: GameState, id: string, n: number): void {
   const c = BOND_BY_ID[id]
-  if (!c) return
+  if (!c || !present(s, c)) return
   const amount = n > 0 && has(s, 'hitorashi') && (c.group === 'douki' || c.group === 'senior' || c.group === 'rival') ? Math.round(n * 1.5) : n
   if (isPartner(s, id)) {
     s.partner!.bond = clamp(s.partner!.bond + amount)
@@ -76,7 +81,7 @@ export function tie(s: GameState, id: string, n: number): void {
 
 // 同期（相方以外の相方候補とライバル）
 export function classmatesOf(s: GameState): string[] {
-  return BOND_CHARS.filter((c) => (c.group === 'douki' || c.group === 'rival') && !isPartner(s, c.id)).map((c) => c.id)
+  return BOND_CHARS.filter((c) => (c.group === 'douki' || c.group === 'rival') && present(s, c) && !isPartner(s, c.id)).map((c) => c.id)
 }
 
 // 先輩の特殊能力は、仲（like）と認め（respect）が両方とも基準を超えていないともらえない。足りなければ、次の飲みでもう一度その話になる
@@ -107,6 +112,7 @@ const stepOf = (s: GameState, id: string) => s.counters[`dev_${id}`] ?? 0
 // その週に起きる発展イベントを1つ選ぶ。起きたら true
 export function scheduleBondEvent(s: GameState, rng: Rng): boolean {
   const ready = BOND_CHARS.filter((c) => {
+    if (!present(s, c)) return false
     const step = stepOf(s, c.id)
     const chain = CHAINS[c.id]
     if (step >= chain.length) return false
@@ -835,12 +841,16 @@ export const DEV_STORIES: Record<string, StoryDef> = Object.fromEntries(
     chain.map((ev, i): [string, StoryDef] => [
       `dev_${id}_${i}`,
       {
-        view: (s) => ({
-          title: ev.title,
-          place: ev.place,
-          lines: ev.lines(s, s.player.callName, isPartner(s, id)),
-          choices: ev.choices.map((c) => ({ label: c.label, hint: c.hint, reply: c.reply })),
-        }),
+        view: (s) => {
+          // ライバルは、大学お笑い・元会社員の書き分けがあればそちらを使う（効果は同じ）
+          const v = rivalVariant(s, `dev_${id}_${i}`)
+          return {
+            title: ev.title,
+            place: ev.place,
+            lines: v?.lines ?? ev.lines(s, s.player.callName, isPartner(s, id)),
+            choices: ev.choices.map((c, k) => ({ label: v?.choices[k]?.label ?? c.label, hint: c.hint, reply: v?.choices[k]?.reply ?? c.reply })),
+          }
+        },
         resolve: (s, c, rng) => ev.choices[c]?.apply(s, rng),
       },
     ]),

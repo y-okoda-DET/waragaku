@@ -1,5 +1,6 @@
 import { clamp, gain } from './core'
 import type { StoryDef } from './events'
+import { rivalOf } from './bonds'
 import { recall } from './kodawari'
 import type { GameState } from './types'
 
@@ -9,7 +10,7 @@ import type { GameState } from './types'
 interface Scene {
   title: string
   place: string
-  lines: (me: string) => string[]
+  lines: (me: string, s: GameState) => string[]
   choices: { label: string; reply?: string; hint?: string; apply: (s: GameState) => void }[]
 }
 
@@ -117,9 +118,9 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
       {
         title: '頼まれたネタ',
         place: 'famires',
-        lines: () => [
+        lines: (_me, s) => [
           'ナレーション：堂島のネタ帳に、知らない字でメモが挟まっていた。',
-          '堂島（落ち込み）「……御堂に、ネタ1本書いてくれって頼まれてん。作家として」',
+          `堂島（落ち込み）「……${rivalOf(s) === 'mido' ? '御堂' : '真壁'}に、ネタ1本書いてくれって頼まれてん。作家として」`,
           '堂島（考え中）「書くのは好きや。でも、自分で言う方がもっと好きやと思ってた」',
         ],
         choices: [
@@ -296,7 +297,7 @@ export const PARTNER_STORIES: Record<string, StoryDef> = {
     view: (s, p) => {
       const sc = scriptOf(s)?.scenes[Number(p.n)]
       if (!sc) return { title: '相方', lines: ['ナレーション：相方と、いつものファミレスでネタを合わせた。'], choices: [] }
-      return { title: sc.title, place: sc.place, lines: [...sc.lines(s.player.callName), ...(Number(p.n) === 2 ? recall(s) : [])], choices: sc.choices.map((c) => ({ label: c.label, hint: c.hint, reply: c.reply })) }
+      return { title: sc.title, place: sc.place, lines: [...sc.lines(s.player.callName, s), ...(Number(p.n) === 2 ? recall(s) : [])], choices: sc.choices.map((c) => ({ label: c.label, hint: c.hint, reply: c.reply })) }
     },
     resolve: (s, c, _r, p) => scriptOf(s)?.scenes[Number(p.n)]?.choices[c]?.apply(s),
   },
