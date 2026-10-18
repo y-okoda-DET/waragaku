@@ -113,10 +113,8 @@ export interface GameState {
   seniors: Senior[]
   dokiBond: number // 同期の結束
   staffEval: number // 作家・社員の評価
-  outsideRep: number // 外の縁（自主ライブ界隈）
   fans: number
   safePlay: number // 気を遣った回数（多いと「無難」扱い）
-  edge: number // 尖り
   risk: number // 業界リスク（隠し）
   cards: string[]
   neta: Neta

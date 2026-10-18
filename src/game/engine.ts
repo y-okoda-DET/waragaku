@@ -73,10 +73,8 @@ export function createGame(raw: NewGameInput): GameState {
     seniors: INITIAL_SENIORS.map((x) => ({ ...x })),
     dokiBond: 20,
     staffEval: 10,
-    outsideRep: input.background === 'chika' ? 25 : input.background === 'circle' ? 20 : 5,
     fans: 0,
     safePlay: 0,
-    edge: 0,
     risk: 0,
     cards: [...STARTER_CARDS, ...(bg.cards ?? [])],
     neta: { cards: { tsukami: 't_jikoshoukai', tenkai: input.style === 'conte' ? 'k_konbini' : 'k_aruaru', ochi: input.style === 'conte' ? 'o_hanten' : 'o_mouee' }, polish: 15 },
@@ -212,7 +210,6 @@ function applyDay(s: GameState, a: DayAction, rng: Rng): void {
       s.condition = clamp(s.condition - 6)
       gain(s, 'guts', 2)
       gain(s, 'adlib', 1.5)
-      s.outsideRep = clamp(s.outsideRep + (has(s, 'chika') ? 6 : 3))
       count(s, 'jishulive')
       tie(s, 'nakaji', 3)
       tie(s, 'shihainin', 2)
@@ -404,7 +401,7 @@ function scheduleEvents(s: GameState, rng: Rng): void {
     if (s.player.origin === 'tokyo') pool.push(['coin_shower'])
     const friend = s.seniors.find((x) => x.like >= 40)
     if (friend) pool.push(['hikkoshi', { senior: friend.id }])
-    if (s.outsideRep >= 30 && !s.flags.chokueigyou_seen && month >= 10) pool.push(['chokueigyou'], ['chokueigyou'])
+    if ((s.counters.jishulive ?? 0) >= 4 && !s.flags.chokueigyou_seen && month >= 10) pool.push(['chokueigyou'], ['chokueigyou'])
     const [key, params] = rng.pick(pool)
     story(s, key, params)
   }

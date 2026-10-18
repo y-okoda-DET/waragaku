@@ -131,18 +131,17 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
       <span className="blob" style={{ left: -40, top: 320, width: 120, height: 120, background: 'var(--coral-light)' }} />
 
       <header className="week-head">
-        <div>
-          <div className="date">{weekLabel(state.turn)}</div>
-          <div className="week-sub">
-            のこり{TOTAL_TURNS - state.turn}週 ／ 同期 {state.classmates}人{state.classRank !== 'none' && ` ／ ${CLASS_LABEL[state.classRank]}`}
-          </div>
-        </div>
+        <div className="date">{weekLabel(state.turn)}</div>
         <div className="week-head-right">
           <SoundToggle />
           <button className="adv-log-btn" onClick={() => setLog(true)}>
             ログ
           </button>
           <div className={`money ${state.money < 20000 ? 'low' : ''}`}>¥{state.money.toLocaleString()}</div>
+        </div>
+        {/* 2行目は横幅いっぱいに使い、組の名前が折り返さないようにする */}
+        <div className="week-sub">
+          のこり{TOTAL_TURNS - state.turn}週 ／ 同期 {state.classmates}人{state.classRank !== 'none' && ` ／ ${CLASS_LABEL[state.classRank]}`}
         </div>
       </header>
 

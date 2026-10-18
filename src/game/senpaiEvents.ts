@@ -31,7 +31,7 @@ export const SENPAI_STORIES: Record<string, StoryDef> = {
           choices: [
             { label: '「真ん中のくだり、ちょっと静かでした」', reply: `${n}（考え中）${k('「……やっぱりな。お前、ちゃんと見てたな」', '「……やっぱり？ ちゃんと見てたんだね」')}`, hint: '認め＋' },
             { label: '「全部ウケてました！」', reply: `${n}（ふつう）${k('「……そうか。ありがとう」', '「……そっか。ありがとう」')}`, hint: '仲＋' },
-            { label: '「自分なら、あそこはこうします」', reply: `${n}（怒り）${k('「……お前のネタちゃうねん」', '「……それ、君のネタじゃないよね」')}`, hint: '尖り＋' },
+            { label: '「自分なら、あそこはこうします」', reply: `${n}（怒り）${k('「……お前のネタちゃうねん」', '「……それ、君のネタじゃないよね」')}`, hint: '度胸＋' },
           ],
         },
         {
@@ -76,8 +76,7 @@ export const SENPAI_STORIES: Record<string, StoryDef> = {
         sr.like = clamp(sr.like + 4)
       } else {
         sr.respect = clamp(sr.respect - 3)
-        if (v === 0) s.edge += 2
-        else gain(s, 'guts', 2)
+        gain(s, 'guts', 2)
       }
     },
   },

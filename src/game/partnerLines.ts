@@ -266,7 +266,7 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
         ],
         choices: [
           { reply: 'ナレーション：佐倉はスマホを伏せて、いつもより大きな声でネタ合わせを始めた。', label: '見なかったことにする', hint: '関係値＋', apply: (s) => bond(s, 4) },
-          { reply: '佐倉（驚き）「……見てたんか。……ほな、空にする。今ここで」', label: '「ゴミ箱も空にしとけよ」', hint: '関係値＋・尖り＋', apply: (s) => (bond(s, 6), (s.edge += 1)) },
+          { reply: '佐倉（驚き）「……見てたんか。……ほな、空にする。今ここで」', label: '「ゴミ箱も空にしとけよ」', hint: '関係値＋', apply: (s) => (bond(s, 6)) },
         ],
       },
       {

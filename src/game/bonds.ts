@@ -298,10 +298,10 @@ const CHAINS: Record<string, DevEvent[]> = {
         { reply: '岸辺（怒り）「赤くない。照明」', label: '「耳、赤いで」', hint: '対応力＋', apply: (s) => (tie(s, 'kishibe', 6), gain(s, 'adlib', 2)) },
         {
           reply: '岸辺（考え中）「……知ってる。だから、ここに来たの」', label: '「声だけじゃ笑いは取れへんで」',
-          hint: '尖り＋',
+          hint: '度胸＋',
           apply: (s) => {
             tie(s, 'kishibe', 3)
-            s.edge += 3
+            gain(s, 'guts', 2)
           },
         },
       ],
@@ -468,7 +468,7 @@ const CHAINS: Record<string, DevEvent[]> = {
       ],
       choices: [
         { reply: '大河内（照れ）「……ほな、もうちょっと書くの遅らせるわ」', label: '「その挨拶、聞く日は来ないでほしいです」', hint: 'やる気＋', apply: (s) => (tie(s, 'ookouchi', 10), (s.motivation = clamp(s.motivation + 8))) },
-        { reply: '大河内（笑い）「アホか。……まあ、1行目くらいは聞いたるわ」', label: '「一緒に考えましょか」', hint: 'ワード力＋・尖り＋', apply: (s) => (tie(s, 'ookouchi', 6), gain(s, 'word', 2), (s.edge += 2)) },
+        { reply: '大河内（笑い）「アホか。……まあ、1行目くらいは聞いたるわ」', label: '「一緒に考えましょか」', hint: 'ワード力＋', apply: (s) => (tie(s, 'ookouchi', 6), gain(s, 'word', 2)) },
       ],
     },
     {
@@ -523,10 +523,10 @@ const CHAINS: Record<string, DevEvent[]> = {
       choices: [
         {
           reply: 'ナレーション：翌週、受付で名前を聞いた。2人は「佐藤です」「佐藤です」と答えた。姉妹だった。ナカジは泣きそうな顔で笑った。', label: '「次のライブ、受付やります。名前、聞いときます」',
-          hint: '外の縁＋・体調−',
+          hint: 'ファン＋・体調−',
           apply: (s) => {
             tie(s, 'nakaji', 10)
-            s.outsideRep = clamp(s.outsideRep + 5)
+            s.fans += 3
             s.condition = clamp(s.condition - 5)
           },
         },
@@ -587,7 +587,7 @@ const CHAINS: Record<string, DevEvent[]> = {
       ],
       choices: [
         { reply: '辻堂（ふつう）「礼はええ。直してこい」', label: '「ありがとうございます！」', hint: 'やる気＋', apply: (s) => (tie(s, 'tsujido', 10), (s.motivation = clamp(s.motivation + 8))) },
-        { reply: '辻堂（笑い）「……そういうとこや。おもんないけどな」', label: '「半分も正解でしたか」', hint: '尖り＋・度胸＋', apply: (s) => (tie(s, 'tsujido', 8), gain(s, 'guts', 2), (s.edge += 2)) },
+        { reply: '辻堂（笑い）「……そういうとこや。おもんないけどな」', label: '「半分も正解でしたか」', hint: '度胸＋', apply: (s) => (tie(s, 'tsujido', 8), gain(s, 'guts', 2)) },
       ],
     },
     {
@@ -674,7 +674,7 @@ const CHAINS: Record<string, DevEvent[]> = {
         `${me}（怒り）「……」`,
       ],
       choices: [
-        { reply: '御堂（笑い）「いいね。1年後、覚えてたら言ってよ」', label: '「1年後、同じこと言えるか見とくわ」', hint: '度胸＋・尖り＋', apply: (s) => (tie(s, 'mido', 8), gain(s, 'guts', 2), (s.edge += 2)) },
+        { reply: '御堂（笑い）「いいね。1年後、覚えてたら言ってよ」', label: '「1年後、同じこと言えるか見とくわ」', hint: '度胸＋', apply: (s) => (tie(s, 'mido', 8), gain(s, 'guts', 2)) },
         { reply: '御堂（驚き）「……え、本気で？ ……今の、ちょっと面白かった」', label: '「“天丼”って何？ 食べるやつ？」', hint: '対応力＋', apply: (s) => (tie(s, 'mido', 6), gain(s, 'adlib', 2)) },
         { reply: '御堂（ふつう）「……聞こえてるでしょ。顔に出てる」', label: '聞こえないふりをする', hint: '発想力＋', apply: (s) => (tie(s, 'mido', 3), gain(s, 'idea', 2)) },
       ],

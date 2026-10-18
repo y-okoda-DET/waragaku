@@ -71,14 +71,13 @@ export const STORIES: Record<string, StoryDef> = {
         '辻堂（笑い）「4年もやってたら、もう芸歴9年やな」',
         'ナレーション：計算が合わない。でも教室の何人かが笑った。期待されているのか、試されているのか。',
       ],
-      choices: [{ reply: '辻堂（ふつう）「謙遜は舞台でスベってからでええ」', label: '「そんなことないです」と笑う', hint: '先輩の印象＋' }, { reply: '辻堂（笑い）「ほな見とくわ。芸歴9年分な」', label: '「見ててください」と言い切る', hint: 'やる気＋・尖り＋' }],
+      choices: [{ reply: '辻堂（ふつう）「謙遜は舞台でスベってからでええ」', label: '「そんなことないです」と笑う', hint: '先輩の印象＋' }, { reply: '辻堂（笑い）「ほな見とくわ。芸歴9年分な」', label: '「見ててください」と言い切る', hint: 'やる気＋' }],
     }),
     resolve: (s, c) => {
       s.teacherEval += 5
       if (c === 0) s.safePlay += 1
       else {
         s.motivation = clamp(s.motivation + 8)
-        s.edge += 5
       }
     },
   },
@@ -364,7 +363,7 @@ export const STORIES: Record<string, StoryDef> = {
         `${s.partner?.name}（ふつう）「……ちょっと辛すぎますね」`,
         `${s.partner?.name}（笑い）「じゃ、帰りますか！」`,
       ],
-      choices: [{ reply: `${s.partner?.name}（笑い）「カレー、次は甘口でお願いします」`, label: '笑って許す', hint: '関係値＋・やる気−' }, { reply: `${s.partner?.name}（驚き）「……そんな怒る？ ……ごめん。次から30分前に来る」`, label: '本気で怒る', hint: '関係値−・尖り＋' }],
+      choices: [{ reply: `${s.partner?.name}（笑い）「カレー、次は甘口でお願いします」`, label: '笑って許す', hint: '関係値＋・やる気−' }, { reply: `${s.partner?.name}（驚き）「……そんな怒る？ ……ごめん。次から30分前に来る」`, label: '本気で怒る', hint: '関係値−' }],
     }),
     resolve: (s, c) => {
       if (!s.partner) return
@@ -373,7 +372,6 @@ export const STORIES: Record<string, StoryDef> = {
         s.motivation = clamp(s.motivation - 5)
       } else {
         s.partner.bond = clamp(s.partner.bond - (has(s, 'aikata') ? 2 : 6))
-        s.edge += 2
       }
     },
   },
@@ -434,7 +432,7 @@ export const STORIES: Record<string, StoryDef> = {
           ],
           choices: [
             { reply: `${pn}（落ち込み）「……いや、俺も悪い。もう1回やろ」`, label: '「ごめん、言い方悪かった」と先に謝る', hint: '関係値＋' },
-            { reply: `ナレーション：その日、${pn}は帰るまで一言もしゃべらなかった。`, label: '「事実やろ」と言い返す', hint: '関係値−・尖り＋' },
+            { reply: `ナレーション：その日、${pn}は帰るまで一言もしゃべらなかった。`, label: '「事実やろ」と言い返す', hint: '関係値−' },
             { reply: `ナレーション：外の空気を吸って戻ると、${pn}がドリンクを2つ取ってきていた。`, label: '黙って一回、外に出る', hint: '関係値−' },
           ],
         },
@@ -473,7 +471,6 @@ export const STORIES: Record<string, StoryDef> = {
         if (v === 2) gain(s, 'adlib', 2)
       } else if (c === 1) {
         s.partner.bond = clamp(s.partner.bond - (has(s, 'aikata') ? 4 : 10))
-        if (v === 0) s.edge += 2
       } else if (v === 2) s.motivation = clamp(s.motivation - 5)
       else {
         s.partner.bond = clamp(s.partner.bond - (has(s, 'aikata') ? 2 : 6))
@@ -540,7 +537,6 @@ export const STORIES: Record<string, StoryDef> = {
         s.flags.jacket = true
       } else {
         senior.like = clamp(senior.like - 3)
-        s.edge += 1
       }
     },
   },
@@ -559,7 +555,7 @@ export const STORIES: Record<string, StoryDef> = {
         s.money += 30000
         s.risk += 60
         s.weekLog.push('車で待機して、10分ネタをやって帰った。3万円が手元に残った。')
-      } else s.edge += 2
+      }
     },
   },
   naitei: {

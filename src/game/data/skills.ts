@@ -47,7 +47,7 @@ export const SKILLS: SkillDef[] = [
   { id: 'awasema', name: 'ネタ合わせ魔', kind: 'gift', desc: 'ネタ合わせで完成度が上がりやすく、疲れにくい' },
   { id: 'yomi', name: '講師の読み', kind: 'gift', desc: 'ネタ見せで講師の評価が上がりやすい' },
   { id: 'mitomesase', name: 'ネタで認めさせる', kind: 'gift', desc: 'ウケたとき、先輩に認められやすい' },
-  { id: 'chika', name: '地下の顔', kind: 'gift', desc: '自主ライブでファンと外の縁が増えやすい' },
+  { id: 'chika', name: '地下の顔', kind: 'gift', desc: '自主ライブでファンが増えやすい' },
   { id: 'kyuushuu', name: 'ダメ出し吸収', kind: 'gift', desc: 'ネタ見せでスベるほど発想とワードが伸びる' },
   { id: 'homerare', name: '褒められ上手', kind: 'gift', desc: 'やる気が下がりにくい' },
   { id: 'makezu', name: '負けず嫌い', kind: 'gift', desc: '講師や審査員の前で実力が出る' },
