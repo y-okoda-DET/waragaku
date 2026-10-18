@@ -768,7 +768,7 @@ export const YEAR_STORIES: Record<string, StoryDef> = {
                 s.player.background === 'circle'
                   ? '御堂（笑い）「卒業おめでとう。……4月からは、シードなしの同業者だね」'
                   : s.player.background === 'salaryman'
-                    ? '御堂（笑い）「卒業おめでとうございます。……あ、4月からは、ただの同業者だね」'
+                    ? '御堂（笑い）「卒業おめでとう。……4月からは、ただの同業者だね」'
                     : '御堂（笑い）「卒業おめでとう。……4月からは、ただの同業者だね」',
               ]
             : []),

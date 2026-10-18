@@ -339,7 +339,7 @@ export const STORIES: Record<string, StoryDef> = {
           ? s.player.background === 'circle'
             ? '御堂（笑い）「1分なら、フリとオチだけで足りる。学生大会の予選と同じ尺だね。……君らの名前、3つ後ろ」'
             : s.player.background === 'salaryman'
-              ? `御堂（笑い）「1分なら、フリとオチだけで足りますよ。……${s.player.callName}さんたちの名前、予選の3つ後ろですね」`
+              ? `御堂（笑い）「1分なら、フリとオチだけで足りるよ。……${s.player.callName}さんたちの名前、予選の3つ後ろだね」`
               : '御堂（笑い）「1分なら、フリとオチだけで足りる。……君らの名前、予選の3つ後ろだね」'
           : s.player.background === 'circle'
             ? '真壁（ふつう）「……決勝で。知らない客の前で」'

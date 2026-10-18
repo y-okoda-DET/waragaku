@@ -118,6 +118,7 @@ export function scheduleBondEvent(s: GameState, rng: Rng): boolean {
     if (step >= chain.length) return false
     if (c.group === 'douki' && s.turn < 2) return false // 相方見つけ会のあとから
     if (c.group === 'senior') return false // 先輩の話は、飲みに行ったときに進む（seniorDrama）
+    if (c.group === 'rival' && s.turn <= turnOf(5, 4)) return false // 街灯の下（5/4）で初めて話してから
     if (s.turn < STEP_FROM[step]) return false
     if (s.turn - (s.counters[`devAt_${c.id}`] ?? -99) < GAP) return false
     return affinity(s, c.id) >= STEP_NEED[step]
