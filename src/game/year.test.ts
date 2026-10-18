@@ -35,6 +35,13 @@ describe('1年間の流れ', () => {
       expect(seen).toContain(key)
   })
 
+  it('相方がいれば、門出の予選の前に袖の場面があり、賭けに乗ると予選の結果に相方の1行が入る', () => {
+    const { s, seen } = play(5, () => 0)
+    expect(seen).toContain('aikata_yama')
+    expect(seen.indexOf('aikata_yama')).toBeGreaterThan(seen.indexOf('grad_intro'))
+    expect(s.flags.aikata_yama).toBe(true)
+  })
+
   it('漫才なら御堂、コントなら真壁の場面が1年のうちに起きる', () => {
     const manzai = play(5, () => 0).seen
     for (const key of ['rival_kouen', 'rival_sode_mido', 'rival_kekka_page', 'rival_bus', 'rival_waku', 'rival_jiko_ato', 'rival_yoru', 'rival_kadode_ato']) expect(manzai).toContain(key)

@@ -1,4 +1,4 @@
-import { clamp, gain } from './core'
+import { clamp, gain, push } from './core'
 import type { StoryDef } from './events'
 import { rivalOf } from './bonds'
 import { recall } from './kodawari'
@@ -11,11 +11,13 @@ interface Scene {
   title: string
   place: string
   lines: (me: string, s: GameState) => string[]
-  choices: { label: string; reply?: string; hint?: string; apply: (s: GameState) => void }[]
+  choices: { label: string; reply?: string | string[]; hint?: string; apply: (s: GameState) => void }[]
 }
 
 interface PartnerScript {
   scenes: [Scene, Scene, Scene] // 6月・9月・2月の相方の場面
+  yama: Scene // 門出の予選の直前、袖で。2月の場面で抱えていたものに、相方が舞台の上で答えを出す（1つ目の選択肢が、相方の賭けに乗る）
+  yamaHit: (s: GameState) => string // 賭けに乗ったとき、門出の結果に足す1行
   flub: (me: string) => string[] // 12月、セリフが飛ぶ直前のネタ
   saved: string[] // 飛んだのを拾えた夜
   cold: string // 拾えなかった夜
@@ -75,6 +77,24 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
         ],
       },
     ],
+    yama: {
+      title: '門出の袖',
+      place: 'sodeura',
+      lines: (me) => [
+        'ナレーション：卒業大会「門出」の予選。出番の3つ前。袖のカーテンの隙間から、向井が客席を見ている。',
+        '向井（驚き）「……親父、おる。いちばん後ろ。店、休んできたんや。定休日ちゃうのに」',
+        '向井（落ち込み）「3月までに、店継ぐか決めるって約束してん。……今日のネタ見て、決めるって」',
+        '向井（考え中）「なあ、ツカミ。あれ、やってええ？ 6月の、お客さん全員と目合わせるやつ」',
+        `${me}（驚き）「今日の客、300人おるぞ」`,
+        '向井（笑い）「1人0.4秒や。いける」',
+      ],
+      choices: [
+        { label: '「やれ。最後に親父さんと目合わせろ」', reply: '向井（照れ）「……おう。いちばん最後や」', hint: '関係値＋・やる気＋', apply: (s) => (bond(s, 10), (s.motivation = clamp(s.motivation + 6)), (s.flags.aikata_yama = true)) },
+        { label: '「ツカミは台本どおり。親父さんには、ネタで見せたれ」', reply: '向井（笑い）「……せやな。定食も、いつもの味がいちばんや」', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 6)), bond(s, 4)) },
+        { label: '「店休んでまで来たんや。それがもう答えやろ」', reply: ['向井（驚き）「……そうなん？」', '向井（照れ）「……ほな、なおさらスベられへんな」'], hint: 'やる気＋', apply: (s) => ((s.motivation = clamp(s.motivation + 8)), bond(s, 6)) },
+      ],
+    },
+    yamaHit: () => 'ツカミで、向井は300人と順番に目を合わせにいった。最後の1人は、いちばん後ろの席の定食屋の親父だった。親父は、手を振り返していた。',
     flub: (me) => ['向井（笑い）「僕ね、将来は定食屋やりたいんですよ」', `${me}（ふつう）「ええやん。何定食出すん？」`],
     saved: ['向井（照れ）「ごめん。“定食屋”って言うた瞬間、親父の顔が浮かんでもうて」', '向井（笑い）「でも、今日いちばんウケたな」'],
     cold: 'ナレーション：いつもなら真っ先に打ち上げの店を探す向井が、今日は何も言わずに帰っていった。',
@@ -129,6 +149,22 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
         ],
       },
     ],
+    yama: {
+      title: '門出の袖',
+      place: 'sodeura',
+      lines: (_me, s) => [
+        'ナレーション：卒業大会「門出」の予選。出番の3つ前。堂島がネタ帳の最後のページを破って、黙って渡してきた。',
+        `堂島（ふつう）「${rivalOf(s) === 'mido' ? '御堂' : '真壁'}に頼まれたネタ、結局渡さんかった。……最後の1行だけ、こっちに持ってきた」`,
+        '堂島（考え中）「今日のオチ、これに替えたい。まだ誰も聞いたことない1行や。ウケるかは、知らん」',
+        'ナレーション：紙には、堂島の字で1行だけ書いてあった。読んだ瞬間、声が出そうになった。',
+      ],
+      choices: [
+        { label: '「替えよう。お前の1行で終わろう」', reply: '堂島（照れ）「……言うのは、お前やけどな」', hint: '関係値＋・やる気＋', apply: (s) => (bond(s, 10), (s.motivation = clamp(s.motivation + 6)), (s.flags.aikata_yama = true)) },
+        { label: '「いつものオチでいく。その1行は決勝用や」', reply: '堂島（笑い）「……決勝、行く気やな」', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 6)), bond(s, 4)) },
+        { label: '「その1行、お前が言え」', reply: ['堂島（驚き）「……俺が言うんか」', '堂島（笑い）「……ほな、声、出すわ。ぼそぼそやけど」'], hint: '度胸＋', apply: (s) => (gain(s, 'guts', 3), bond(s, 6)) },
+      ],
+    },
+    yamaHit: () => 'オチは、堂島が書いた1行だった。誰も聞いたことのない1行で、客席が一拍遅れて、割れた。袖に戻ると、堂島はネタ帳に何か書き足していた。',
     flub: (me) => ['堂島（ふつう）「僕ね、ネタ帳を失くしたことがあるんですよ」', `${me}（驚き）「大変やん。どこで？」`],
     saved: ['堂島（考え中）「飛んだとこ、メモしとく」', '堂島（照れ）「……ウケた理由、初めて書けそうや」'],
     cold: 'ナレーション：堂島は楽屋の隅でネタ帳を開いたまま、一行も書かずに帰っていった。',
@@ -183,6 +219,22 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
         ],
       },
     ],
+    yama: {
+      title: '門出の袖',
+      place: 'sodeura',
+      lines: (_me, s) => [
+        'ナレーション：卒業大会「門出」の予選。出番の3つ前。岸辺が客席のいちばん後ろを見ている。',
+        '岸辺（驚き）「……主宰が来てる。いちばん後ろ。神様の席」',
+        '岸辺（落ち込み）「春の公演の返事、まだしてないの。……今日の舞台を見られたら、もう逃げられない」',
+        `岸辺（考え中）「ねえ。今日だけ、${s.player.style === 'conte' ? 'コント' : '漫才'}の途中で一回、芝居していい？ 台本にないの。わたしの、いちばん得意なやつ」`,
+      ],
+      choices: [
+        { label: '「やれ。主宰に、ここでの主役を見せたれ」', reply: '岸辺（笑い）「……主役は、ふたりよ」', hint: '関係値＋・やる気＋', apply: (s) => (bond(s, 10), (s.motivation = clamp(s.motivation + 6)), (s.flags.aikata_yama = true)) },
+        { label: '「芝居はなし。ネタで返事しよ」', reply: '岸辺（ふつう）「……それが、いちばん厳しい返事かもね」', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 6)), bond(s, 4)) },
+        { label: '「後ろの席まで、声届けよ」', reply: '岸辺（照れ）「……届かせる。劇団で鍛えた声だから」', hint: '表現力＋', apply: (s) => (gain(s, 'expr', 3), bond(s, 6)) },
+      ],
+    },
+    yamaHit: () => 'ネタの途中で、岸辺が一度だけ台本にない芝居をした。いちばん後ろの席で、劇団の主宰が立ち上がって拍手していた。',
     flub: (me) => ['岸辺（笑い）「わたし、昔、劇団にいたんです」', `${me}（ふつう）「へえ。どんな役？」`],
     saved: ['岸辺（照れ）「……芝居では、台詞を飛ばしたことなんて一度もなかったのに」', '岸辺（笑い）「でも、今日のがいちばんウケた。悔しい」'],
     cold: 'ナレーション：岸辺はメイクも落とさずに、振り返りもせず帰っていった。',
@@ -234,6 +286,24 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
         ],
       },
     ],
+    yama: {
+      title: '門出の袖',
+      place: 'sodeura',
+      lines: (me) => [
+        'ナレーション：卒業大会「門出」の予選。出番の3つ前。いつもしゃべり続けている早瀬が、黙っている。',
+        '早瀬（ふつう）「……親、来てる。仕送り止めた日から、初めて」',
+        '早瀬（考え中）「……今日だけ、最後の一言だけ、ゆっくり、しゃべって、いい？」',
+        'ナレーション：早瀬がゆっくりしゃべるのを聞くのは、壁越しの電話以来だった。',
+        `${me}（驚き）「お前の早口、ネタの軸やぞ」`,
+        '早瀬（笑い）「知ってるせやから最後の一言だけや」',
+      ],
+      choices: [
+        { label: '「やれ。最後の一言だけ、ゆっくりや」', reply: '早瀬（照れ）「……ありがと。……いや、ありがとう」', hint: '関係値＋・やる気＋', apply: (s) => (bond(s, 10), (s.motivation = clamp(s.motivation + 6)), (s.flags.aikata_yama = true)) },
+        { label: '「いつもの早口で、親を置いていけ」', reply: '早瀬（爆笑）「置いていくわ全員置いていくわ」', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 6)), bond(s, 4)) },
+        { label: '早瀬の背中を、壁を叩くみたいにトンと叩く', reply: 'ナレーション：少しして、トン、と1回だけ返ってきた。', hint: 'やる気＋', apply: (s) => ((s.motivation = clamp(s.motivation + 8)), bond(s, 6)) },
+      ],
+    },
+    yamaHit: () => '早瀬は、最後の一言だけゆっくり言った。それまでの早口との落差で、会場がその日いちばん沸いた。客席の真ん中で、早瀬の母親がハンカチで顔を覆っていた。',
     flub: (me) => ['早瀬（笑い）「僕ね早口言葉がめっちゃ得意なんですよ」', `${me}（ふつう）「ほな言うてみ」`],
     saved: ['早瀬（照れ）「ごめん頭真っ白なってんけどお前の拾い方めっちゃ良かったからあれ毎回やろ」', `ナレーション：飛ばした本人が、いちばん早口だった。`],
     cold: 'ナレーション：帰り道も、アパートの廊下も同じ方向なのに、一言もしゃべらなかった。壁の向こうは、朝まで静かだった。',
@@ -271,15 +341,36 @@ export const PARTNER_SCRIPTS: Record<string, PartnerScript> = {
         ],
       },
       {
-        title: '承諾の期限',
+        title: '研修の写真',
         place: 'famires',
-        lines: () => ['佐倉（ふつう）「内定の、最終の返事の期限、今月末やねん」', '佐倉（考え中）「4年やってきて、今がいちばん迷ってる」'],
+        lines: () => [
+          'ナレーション：佐倉がスマホを見ている。大学の同期のSNS。断った会社の、入社前研修の集合写真だ。',
+          '佐倉（笑い）「ほんまやったら、この右から3番目に俺がおってん」',
+          '佐倉（考え中）「断ったん、後悔はしてへん。……してへんけど、写真はよう見てまう」',
+        ],
         choices: [
           { reply: '佐倉（笑い）「……その計算、辻堂さんと一緒やな」', label: '「4年やったら、あと1年もいけるやろ」', hint: '関係値＋', apply: (s) => bond(s, 6) },
           { reply: 'ナレーション：戻ってくると、佐倉はメロンソーダとコーラを混ぜていた。少しだけ笑っていた。', label: '何も言わずに、ドリンクバーを取りに行く', hint: '体調＋', apply: (s) => (s.condition = clamp(s.condition + 4)) },
         ],
       },
     ],
+    yama: {
+      title: '門出の袖',
+      place: 'sodeura',
+      lines: (me) => [
+        'ナレーション：卒業大会「門出」の予選。出番の3つ前。佐倉がネタ帳を開いて、学祭の鉄板のページを見ている。',
+        '佐倉（ふつう）「今日、サークルの後輩も、断った会社の同期も、観に来てる」',
+        '佐倉（考え中）「……最後に、学祭の鉄板を入れたい。あれで終わったら、絶対ウケる。知ってる客は」',
+        `${me}（ふつう）「知らん客は？」`,
+        '佐倉（落ち込み）「……分からん。分からんから、入れたいんかもしれん」',
+      ],
+      choices: [
+        { label: '「入れよう。ただし、オチは1個ずらす」', reply: '佐倉（笑い）「……6月のお前と、同じこと言うてる」', hint: '関係値＋・やる気＋', apply: (s) => (bond(s, 10), (s.motivation = clamp(s.motivation + 6)), (s.flags.aikata_yama = true)) },
+        { label: '「鉄板は、学祭に置いてこ」', reply: '佐倉（照れ）「……せやな。卒業や」', hint: 'ネタの完成度＋', apply: (s) => ((s.neta.polish = clamp(s.neta.polish + 6)), bond(s, 4)) },
+        { label: '「後輩の前で、知らんネタでスベったろ」', reply: '佐倉（爆笑）「最悪の先輩やな。……やろ」', hint: '度胸＋', apply: (s) => (gain(s, 'guts', 3), bond(s, 6)) },
+      ],
+    },
+    yamaHit: () => '最後に、学祭の鉄板をやった。オチを1個ずらして。知り合いの席より先に、知らない客の席から笑いが来た。佐倉は、学祭のときよりいい顔をしていた。',
     flub: (me) => ['佐倉（笑い）「僕ら、大学で4年やってたんですよ」', `${me}（ふつう）「芸歴9年やな」`],
     saved: ['佐倉（照れ）「……学祭では、一回も飛ばしたことなかったのに」', '佐倉（笑い）「でも今日の笑いの方が、学祭よりずっと重かった」'],
     cold: 'ナレーション：佐倉はサークルの後輩からのLINEに既読もつけずに、黙って帰っていった。',
@@ -291,8 +382,19 @@ export function scriptOf(s: GameState): PartnerScript | undefined {
   return s.partner ? PARTNER_SCRIPTS[s.partner.name] : undefined
 }
 
-// 6月・9月・2月の相方の場面
+// 6月・9月・2月の相方の場面と、門出の袖（相方の山場）
 export const PARTNER_STORIES: Record<string, StoryDef> = {
+  aikata_yama: {
+    view: (s) => {
+      const y = scriptOf(s)?.yama
+      if (!y) return { title: '門出の袖', lines: [], choices: [] }
+      return { title: y.title, place: y.place, lines: y.lines(s.player.callName, s), choices: y.choices.map((c) => ({ label: c.label, hint: c.hint, reply: c.reply })) }
+    },
+    resolve: (s, c) => {
+      scriptOf(s)?.yama.choices[c]?.apply(s)
+      push(s, { type: 'stage', kind: 'grad_prelim' })
+    },
+  },
   aikata_scene: {
     view: (s, p) => {
       const sc = scriptOf(s)?.scenes[Number(p.n)]

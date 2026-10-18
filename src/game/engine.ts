@@ -6,6 +6,7 @@ import { DEV_STORIES, classmatesOf, scheduleBondEvent, seniorDrama, tie } from '
 import { applyKodawari } from './kodawari'
 import { TUNING, addSkill, clamp, count, gain, has, push, removeSkill, story, withGainScale, yen } from './core'
 import { STORIES } from './events'
+import { scriptOf } from './partnerLines'
 import { flavor } from './data/flavor'
 import { LUCKY, LUCKY_CHANCE } from './data/lucky'
 import { RIVAL_SCHEDULE, rivalOf } from './rivalEvents'
@@ -587,6 +588,9 @@ function applyStageEffects(s: GameState, r: GameState['lastStage'] & {}, rng: Rn
       const p = 1 / (1 + Math.exp(-(r.score - 100) / 9))
       const rank = Math.max(1, Math.min(groups, Math.round((1 - p) * groups) + rng.int(0, 2)))
       r.rank = rank
+      // 袖で相方の賭けに乗っていたら、その舞台の1行を足す
+      const hit = s.flags.aikata_yama && scriptOf(s)?.yamaHit(s)
+      if (hit) r.lines.push(hit)
       r.lines.push(`予選の順位は${groups}組中${rank}位。`)
       r.verdict = { head: `予選 ${groups}組中`, text: rank <= 8 ? `${rank}位 決勝進出！` : `${rank}位`, good: rank <= 8 }
       if (rank <= 8) {

@@ -1,6 +1,6 @@
 import { DEV_STORIES, affinity, classmatesOf, tie } from './bonds'
 import { kodawariOf } from './kodawari'
-import { PARTNER_STORIES } from './partnerLines'
+import { PARTNER_STORIES, scriptOf } from './partnerLines'
 import { YEAR_STORIES } from './yearEvents'
 import { RIVAL_STORIES, rivalOf } from './rivalEvents'
 import { SENPAI_STORIES } from './senpaiEvents'
@@ -349,7 +349,8 @@ export const STORIES: Record<string, StoryDef> = {
       ],
       choices: [],
     }),
-    resolve: (s) => push(s, { type: 'stage', kind: 'grad_prelim' }),
+    // 相方がいれば、予選の前に袖の場面（相方の山場）をはさむ。その場面のあとで予選に出る
+    resolve: (s) => (scriptOf(s) ? story(s, 'aikata_yama') : push(s, { type: 'stage', kind: 'grad_prelim' })),
   },
   // ここから通年のランダムイベント
   park: {
