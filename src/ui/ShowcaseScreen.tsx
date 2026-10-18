@@ -3,6 +3,7 @@ import { AUDIENCE_TASTE, LEAN_LABEL, gradeBlackout, gradeConte, gradeRole, grade
 import { STAGES, conditionWarning } from '../game/stage'
 import type { GameState, StageKind } from '../game/types'
 import { background, charaKey, heroKey, portrait, type Expr } from './art'
+import { se } from './sound'
 
 const GRADE_SOUND: Record<ShowcaseGrade, string> = { great: 'ドッ', good: 'クスッ', miss: 'シーン…' }
 
@@ -81,7 +82,18 @@ const FACES: Record<ShowcaseGrade | 'wait', [Expr, Expr]> = {
   good: ['smile', 'smile'],
   miss: ['surprise', 'down'],
 }
-function Stage({ state, kind, mood = 'wait', blackout = false, children }: { state: GameState; kind: StageKind; mood?: ShowcaseGrade | 'wait'; blackout?: boolean; children: ReactNode }) {
+// 客席の反応の音。結果が出た瞬間だけ鳴らす（最初から結果の出ている画面では鳴らさない）
+const LAUGH = { great: 'laugh_big', good: 'laugh_small', miss: 'suberi' } as const
+function Stage({ state, kind, mood = 'wait', blackout = false, tsukkomi = false, children }: { state: GameState; kind: StageKind; mood?: ShowcaseGrade | 'wait'; blackout?: boolean; tsukkomi?: boolean; children: ReactNode }) {
+  const prev = useRef(mood)
+  useEffect(() => {
+    if (prev.current === mood) return
+    prev.current = mood
+    if (mood === 'wait') return
+    const hit = tsukkomi && mood !== 'miss'
+    if (hit) se('tsukkomi')
+    se(LAUGH[mood], hit ? 0.25 : 0)
+  }, [mood, tsukkomi])
   const bg = background(VENUE[kind])
   const [me, you] = FACES[mood]
   const hero = portrait(heroKey(state.player.gender, state.player.background), me)
@@ -235,7 +247,7 @@ function TsukkomiGame({ state, kind, scene, partner, nextLabel, onDone }: { stat
 
   return (
     <>
-      <Stage state={state} kind={kind} mood={result ? result.grade : 'wait'}>
+      <Stage state={state} kind={kind} mood={result ? result.grade : 'wait'} tsukkomi={result?.label !== 'ツッコミ忘れ'}>
         <div className="sc-bubble">
           <span className="telop-tag">{speaker(partner, scene.conte)}</span>
           <span className="sc-line">「{scene.boke.slice(0, shown)}」</span>

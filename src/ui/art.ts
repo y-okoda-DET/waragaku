@@ -144,3 +144,6 @@ export function exprOf(line: string): Expr {
   for (const [re, e] of EXPR_RULES) if (re.test(line)) return e
   return 'normal'
 }
+
+// 夜の外の絵（公園・駅前）。会話画面のBGMを夜の曲にする目安
+export const isNightBg = (url?: string) => !!url && (url === ART.bg_kouen || url === ART.bg_ekimae)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { weekLabel } from '../game/data/calendar'
 import { storyView } from '../game/events'
 import { conditionWarning, STAGES } from '../game/stage'
@@ -6,6 +6,7 @@ import type { GameState, StageKind, StageResult } from '../game/types'
 import { AdvScreen } from './Adv'
 import { pushLog } from './log'
 import { NetaPanel } from './NetaPanel'
+import { se } from './sound'
 
 export function StoryScreen({ state, eventKey, params, onChoose }: { state: GameState; eventKey: string; params?: Record<string, string | number>; onChoose: (choice: number, text?: string) => void }) {
   const view = storyView(state, eventKey, params)
@@ -96,6 +97,11 @@ const LEVEL_CELLS = [2, 4, 7, 10]
 
 export function StageResultView({ result }: { result: StageResult }) {
   const cells = LEVEL_CELLS[result.level]
+  // 結果の拍手。爆笑なら歓声、ウケたら拍手。まばらとスベりは見せ場で鳴らした音で足りる
+  useEffect(() => {
+    if (result.level === 3) se('cheer', 0.2)
+    else if (result.level === 2) se('clap', 0.2)
+  }, [result.level])
   return (
     <div className={`stage-result level-${result.level}`}>
       <div className="studio">

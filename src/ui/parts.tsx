@@ -3,6 +3,7 @@ import { SKILL_BY_ID } from '../game/data/skills'
 import type { Gender, PlayerProfile } from '../game/types'
 import { heroKey, portrait } from './art'
 import { outfitColor } from './looks'
+import { setSound, useSound } from './sound'
 
 export function Avatar({ hair, outfit, size = 48, long = false }: { hair: string; outfit: string; size?: number; long?: boolean }) {
   return (
@@ -72,5 +73,24 @@ export function Modal({ title, children, onNext, nextLabel = '次へ' }: { title
         </button>
       </div>
     </div>
+  )
+}
+
+// 音のオン・オフ。会話画面と週の画面の右上に置く（題名が隠れないよう、記号ひとつにする。消すと斜線が入る）
+export function SoundToggle() {
+  const s = useSound()
+  return (
+    <button
+      className={`adv-log-btn ${s.on ? '' : 'muted'}`}
+      aria-pressed={s.on}
+      aria-label={s.on ? '音を消す' : '音を出す'}
+      title={s.on ? '音を消します' : '音を出します'}
+      onClick={(e) => {
+        e.stopPropagation()
+        setSound({ on: !s.on })
+      }}
+    >
+      ♪
+    </button>
   )
 }

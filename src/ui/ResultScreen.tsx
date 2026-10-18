@@ -5,6 +5,7 @@ import type { GameState } from '../game/types'
 import { portrait } from './art'
 import { PlayerAvatar, SkillBadge } from './parts'
 import { drawShareCard } from './shareCard'
+import { se } from './sound'
 
 // claude.ai の公開ページで使える保存の仕組み（ないときは null。ふつうのブラウザでは window.claude がない）
 type Downloads = { save: (r: { filename: string; data: Blob }) => Promise<unknown> }
@@ -22,6 +23,7 @@ export function ResultScreen({ state, onRestart, onAlbum }: { state: GameState; 
   const parts = useMemo(() => scoreParts(state), [state])
   const goal = useMemo(() => nextGoal(state, parts.reduce((a, p) => a + p.value, 0)), [state, parts])
   const tsujido = portrait('tsujido', 'think')
+  useEffect(() => se('rank', 0.3), [])
 
   const copy = async () => {
     try {

@@ -9,9 +9,11 @@ import { ShowcaseScreen } from './ui/ShowcaseScreen'
 import { pickScenes, type Scene } from './game/showcase'
 import { WeekScreen } from './ui/WeekScreen'
 import { AlbumScreen } from './ui/AlbumScreen'
+import { SoundScreen } from './ui/SoundScreen'
 import { loadAlbum } from './game/album'
 import { STORIES } from './game/events'
 import { startPlaceOf } from './ui/art'
+import { se, useBgm, type Bgm } from './ui/sound'
 
 // 出来事の場所（その結果の画面を同じ場所から始めるため）
 function storyPlace(s: GameState, key: string, params?: Record<string, string | number>): string | undefined {
@@ -32,6 +34,7 @@ export default function App() {
   // 最後に行動選択の画面を見せた週と、そのときの能力。週が変わったら切り替えの演出を入れ、上がった能力を光らせる
   const [shown, setShown] = useState<{ turn: number; stats: Stats } | null>(null)
   const [albumOpen, setAlbumOpen] = useState(false)
+  const [soundOpen, setSoundOpen] = useState(false)
   const saved = load()
 
   useEffect(() => {
@@ -71,6 +74,22 @@ export default function App() {
   useEffect(() => {
     if (albumOpen) window.scrollTo(0, 0)
   }, [albumOpen])
+  // 画面ごとの曲。会話画面（ポップアップと出来事）は、会話画面の側で場面に合わせて決める
+  let bgm: Bgm | null | undefined
+  let zawa = false
+  if (albumOpen || !game) bgm = 'title'
+  else if (game.phase === 'result') bgm = 'grad'
+  else if (popup) bgm = undefined
+  else if (stageShown) bgm = 'stage'
+  else if (game.phase === 'week') bgm = 'daily'
+  else if (game.pending[0]?.type === 'story') bgm = undefined
+  else if (game.pending[0]) {
+    // 本番前は曲と客席のざわめき。ネタの最中は音楽を止め、笑い声だけにする
+    bgm = scenes ? null : 'stage'
+    zawa = !scenes
+  }
+  useBgm(bgm, zawa ? 'zawa' : null)
+  if (soundOpen) return <SoundScreen onBack={() => setSoundOpen(false)} />
   if (albumOpen) return <AlbumScreen album={loadAlbum()} onBack={() => setAlbumOpen(false)} />
 
   if (!game) {
@@ -116,6 +135,9 @@ export default function App() {
             卒業アルバム
           </button>
         )}
+        <button className="link" onClick={() => setSoundOpen(true)}>
+          音とクレジット
+        </button>
         <p className="small center">登場する養成所・事務所・劇場・大会・人物はすべて架空です。</p>
       </div>
     )
@@ -186,7 +208,10 @@ export default function App() {
           }}
         />
       )
-    else body = <StageIntro state={game} kind={ev.kind} onNeta={setGame} onPerform={() => setScenes(pickScenes(game, ev.kind))} />
+    else body = <StageIntro state={game} kind={ev.kind} onNeta={setGame} onPerform={() => {
+      se('buzzer')
+      setScenes(pickScenes(game, ev.kind))
+    }} />
   }
 
   // 結果は会話画面で読み切ってから、次のイベントに進む

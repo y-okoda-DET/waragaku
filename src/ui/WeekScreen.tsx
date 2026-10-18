@@ -5,7 +5,7 @@ import { STAT_KEYS, STAT_LABEL, type GameState, type StatKey } from '../game/typ
 import { SKILL_BY_ID } from '../game/data/skills'
 import { LogPanel } from './Adv'
 import { NetaPanel } from './NetaPanel'
-import { Bar, Modal, PlayerAvatar, SkillBadge } from './parts'
+import { Bar, Modal, PlayerAvatar, SkillBadge, SoundToggle } from './parts'
 
 const CLASS_LABEL = { none: '-', ume: '梅組', take: '竹組', matsu: '松組' }
 
@@ -138,6 +138,7 @@ export function WeekScreen({ state, onRun, onNeta, intro = false, gains = {} }: 
           </div>
         </div>
         <div className="week-head-right">
+          <SoundToggle />
           <button className="adv-log-btn" onClick={() => setLog(true)}>
             ログ
           </button>

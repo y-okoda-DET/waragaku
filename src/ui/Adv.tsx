@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { weekLabel } from '../game/data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from '../game/data/people'
 import type { GameState } from '../game/types'
-import { backgrounds, charaKey, exprOf, portrait, type Expr } from './art'
+import { backgrounds, charaKey, exprOf, isNightBg, portrait, type Expr } from './art'
 import { shotsOf } from './scene'
 import { LOG, pushLog } from './log'
 import { isSeen, lineKey, markSeen } from './seen'
 import { parseLine } from './script'
 import { HAIR, OUTFITS } from './looks'
-import { Avatar, PlayerAvatar } from './parts'
+import { Avatar, PlayerAvatar, SoundToggle } from './parts'
+import { useBgm, type Bgm } from './sound'
 
 // パワプロ式の会話画面。上に登場人物、下のメッセージ枠をタップすると1行ずつ進む
 // 最後の行まで読むと、選択肢（または入力欄）が出る。選択肢がなければタップで終わる
@@ -157,7 +158,11 @@ export function AdvScreen({ state, title, lines: script, place, startPlace, onEn
   const talking = line.trimStart().startsWith('「')
   const focus = shot.speaker ?? (shot.cast.length === 1 ? shot.cast[0] : undefined)
   const exprFor = (n: string): Expr => (n !== focus ? 'normal' : n === cur?.speaker && cur.expr ? cur.expr : exprOf(line))
-  const bg = backgrounds(title, lines, place, dayLines, startPlace)[index]
+  const bgs = backgrounds(title, lines, place, dayLines, startPlace)
+  const bg = bgs[index]
+  // 曲は場面の始まりで決め、途中では変えない。卒業と1年目の締めは卒業の曲、夜の外や夜の場面は夜の曲
+  const [bgm] = useState<Bgm>(() => (/卒業|1年目/.test(title) ? 'grad' : /夜/.test(title) || isNightBg(bgs[0]) ? 'night' : 'daily'))
+  useBgm(bgm)
 
   return (
     // 画面のどこをタップしても進む（選択肢とログは除く）
@@ -175,6 +180,7 @@ export function AdvScreen({ state, title, lines: script, place, startPlace, onEn
             <span className="adv-date">{weekLabel(Math.min(state.turn, 41))}</span>
           </span>
           <span className="adv-top-right">
+            <SoundToggle />
             <button
               className="adv-log-btn"
               onClick={(e) => {
