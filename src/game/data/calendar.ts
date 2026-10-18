@@ -24,6 +24,9 @@ export function weekLabel(turn: number): string {
   return `${month}月 第${week}週`
 }
 
+// 画面の日付の札。最後の週のあと（卒業式）は「3月」とだけ出す
+export const dateLabel = (turn: number): string => (turn >= TOTAL_TURNS ? '3月' : weekLabel(turn))
+
 // 在籍者数の目安。入学時300人、夏に半分、卒業時は100人前後【research/01,02,06】
 export function expectedClassmates(turn: number): number {
   const points: [number, number][] = [

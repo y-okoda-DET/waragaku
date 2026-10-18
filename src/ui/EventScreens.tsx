@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { weekLabel } from '../game/data/calendar'
+import { dateLabel } from '../game/data/calendar'
 import { storyView } from '../game/events'
 import { conditionWarning, STAGES } from '../game/stage'
 import type { GameState, StageKind, StageResult } from '../game/types'
@@ -60,7 +60,7 @@ export function StageIntro({ state, kind, onPerform, onNeta }: { state: GameStat
   const [edit, setEdit] = useState(false)
   return (
     <div className="screen event">
-      <div className="date small">{weekLabel(Math.min(state.turn, 41))}</div>
+      <div className="date small">{dateLabel(state.turn)}</div>
       <article className="card story stage">
         <div className="small">{spec.venue}</div>
         <h1>

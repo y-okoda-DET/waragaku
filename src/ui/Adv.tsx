@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { weekLabel } from '../game/data/calendar'
+import { dateLabel } from '../game/data/calendar'
 import { CIRCLE_PARTNER, INITIAL_SENIORS, PARTNER_CANDIDATES } from '../game/data/people'
 import type { GameState } from '../game/types'
 import { backgrounds, charaKey, exprOf, isNightBg, portrait, type Expr } from './art'
@@ -184,7 +184,7 @@ export function AdvScreen({ state, title, lines: script, place, startPlace, onEn
           <span className="adv-top-left">
             <span className="studio-title">{title}</span>
             {/* 右のボタンが3つあるので、日付は短く（5月 第4週 → 5月4週）して題名を切らさない */}
-            <span className="adv-date">{weekLabel(Math.min(state.turn, 41)).replace(' 第', '')}</span>
+            {!/1年目/.test(title) && <span className="adv-date">{dateLabel(state.turn).replace(' 第', '')}</span>}
           </span>
           <span className="adv-top-right">
             <SoundToggle />
